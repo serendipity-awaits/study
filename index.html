@@ -254,6 +254,15 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .dn2.on{fill:#fff}
 .dp2{text-anchor:middle;font:500 6.5px var(--font-mono);fill:var(--muted)}
 @media (max-width:640px){.mstats{grid-template-columns:1fr 1fr}.mstats>div:last-child{grid-column:1/-1}.md-grid{grid-template-columns:minmax(0,1fr)}.journey{height:28px}.js-seg b{font-size:9.5px;padding-top:7px}.views button{padding:8px 10px}}
+.unit-tools{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+.xbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;color:var(--muted)}
+.xbtn:hover{border-color:var(--bad);color:var(--bad)}
+.addbox{display:flex;flex-direction:column;gap:10px;border:1.5px dashed var(--line);border-radius:12px;padding:12px}
+.addpick{display:flex;flex-direction:column;gap:8px}
+.lchips{display:flex;flex-wrap:wrap;gap:6px}
+.lchip{width:40px;height:40px;border-radius:9px;border:1.5px solid var(--c);background:var(--surface);font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--fg)}
+.lchip.pt{background:color-mix(in srgb,var(--c) 30%,var(--surface))}
+.lchip.dn{background:var(--c);color:#fff}
 .fpaused{display:flex;flex-direction:column;gap:8px;align-items:center}
 .fconfirm{background:var(--bad-soft);color:var(--fg);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:center;max-width:420px}
 .btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
@@ -730,7 +739,7 @@ const roundPlanTotalBy = (r, date) => {
 // ---------- state ----------
 const LS_KEY = 'cfa-l1-pacer-v1', AKEY = 'cfa-l1-pacer-auth';
 let auth = null; try { auth = JSON.parse(localStorage.getItem(AKEY) || 'null'); } catch(e) {}
-let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25};
+let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}};
 try { const raw = localStorage.getItem(LS_KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
 S.plans = cleanPlans(S.plans) || [basePlan(S.cfg)];
 delete S.cfg;
@@ -751,7 +760,7 @@ function persist(docId, getData){
     finally { inflight[docId] = false; }
   }, 700);
 }
-const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm}));
+const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td}));
 const saveLog = d => persist('d'+d, () => ({date:d, h:(S.logs[d]||{}).h||{}, memo:(S.logs[d]||{}).memo||'', at:Date.now()}));
 const $ = id => document.getElementById(id);
 function setSave(t){ $('saveState').textContent = t; }
@@ -1158,7 +1167,42 @@ function todayTargets(ref){
   if (!units.length && p && p.kind === 'review') units = behindUnits(ref).slice(0, 1);
   if (en === 'low' && units.length) units = [units.find(u => !S.c[u.k]) || units[0]];
   if (en === 'high') units = units.concat(nextUndone(ref, 1).filter(x => !units.some(u => u.k === x.k)));
+  const td = S.td[ref] || {};
+  units = units.filter(u => !(td.rm || []).includes(u.k));
+  for (const k of td.add || []) if (!units.some(u => u.k === k) && validKey(k)) units.push(unitOf(k));
   return units;
+}
+const validKey = k => { const [s1, r1, i1] = String(k).split('|'); return SMAP[s1] && [1,2,3].includes(+r1) && +i1 >= 1 && +i1 <= SMAP[s1].L; };
+const unitOf = k => { const [s1, r1, i1] = k.split('|'); return {s:s1, r:+r1, i:+i1, k}; };
+function tdEdit(ref, k, op){
+  const td = S.td[ref] = S.td[ref] || {add:[], rm:[]}; td.add = td.add || []; td.rm = td.rm || [];
+  if (op === 'add') { td.rm = td.rm.filter(x => x !== k); if (!todayTargets(ref).some(u => u.k === k)) td.add.push(k); }
+  else if (op === 'rm') { if (td.add.includes(k)) td.add = td.add.filter(x => x !== k); else if (!td.rm.includes(k)) td.rm.push(k); }
+  else if (op === 'undo') td.rm = td.rm.filter(x => x !== k);
+  if (!td.add.length && !td.rm.length) delete S.td[ref];
+  saveProgress(); renderAll();
+}
+let addOpen = false, addSub = null, addRound = null;
+function addPanel(ref, units){
+  const next = (() => { for (const d of ALL_DAYS) { if (d <= ref) continue; for (const u of unitsOf(PLAN[d])) if (!S.c[u.k] && !units.some(x => x.k === u.k)) return u; } return null; })();
+  const rmd = ((S.td[ref] || {}).rm || []).filter(validKey).map(unitOf);
+  const quick = next ? `<button type="button" class="btn primary" data-add="${next.k}">＋ 다음 강의 추가 · ${unitName(next)}${next.r > 1 ? ' (R' + next.r + ')' : ''}</button>` : '';
+  let pick = '';
+  if (addOpen) {
+    const r = addRound || curRound(), sub = addSub || (next ? next.s : ordered()[0].k);
+    const lecs = []; for (let i = 1; i <= SMAP[sub].L; i++) { const k = key(sub, r, i); if (!units.some(u => u.k === k)) lecs.push(`<button type="button" class="lchip${S.c[k] ? ' dn' : stepsDoneN(k) ? ' pt' : ''}" data-add="${k}" style="--c:${col(sub)}" aria-label="${SMAP[sub].n} ${i}강 추가">${i}</button>`); }
+    pick = `<div class="addpick">
+      <div class="otabs" role="tablist" aria-label="회독">${[1,2,3].map(x => `<button type="button" class="otab${x === r ? ' on' : ''}" data-ar="${x}">R${x}</button>`).join('')}</div>
+      <div class="otabs" role="tablist" aria-label="과목">${ordered().map(x => `<button type="button" class="otab${x.k === sub ? ' on' : ''}" data-as="${x.k}">${x.n}</button>`).join('')}</div>
+      <div class="lchips">${lecs.join('') || '<span class="note">이 과목은 모두 오늘 목록에 있어요</span>'}</div>
+      <span class="note">진한 칸 = 이미 끝낸 강의 · 연한 칸 = 일부만 한 강의</span>
+    </div>`;
+  }
+  return `<div class="addbox">
+    <div class="adj-btns">${quick}<button type="button" class="btn" id="addMore" aria-expanded="${addOpen}">${addOpen ? '닫기' : '다른 강의 고르기'}</button></div>
+    ${pick}
+    ${rmd.length ? `<div class="note">오늘에서 뺀 강의: ${rmd.map(u => `${unitName(u)} <button type="button" class="linkbtn" data-undo="${u.k}">되돌리기</button>`).join(' · ')}<br>뺀 강의는 "밀린 강의"로 남아요. 계획 조정에서 다시 배치하면 남은 날짜에 나눠집니다.</div>` : ''}
+  </div>`;
 }
 function weekInfo(ref){
   const d0 = pd(ref); d0.setDate(d0.getDate() - ((d0.getDay() + 6) % 7));
@@ -1182,7 +1226,7 @@ function renderToday(){
         const bar = st === 'l' && !on ? `<div class="lbar"><span style="width:${Math.min(100, (S.lm[u.k] || 0) / LEC_MIN * 100)}%"></span></div>` : '';
         return `<button type="button" class="st${on ? ' on' : ''}${now ? ' now' : ''}" data-step="${u.k}|${st}" aria-pressed="${on}"><span class="bx">${on ? '✓' : ''}</span><span class="nm">${nm}${bar}</span><span class="meta">${meta}</span></button>`;
       }).join('');
-      return `<div class="unit${isCur ? ' cur' : ''}${done ? ' done' : ''}" style="--c:${col(u.s)}"><div class="unit-h"><b>${SMAP[u.s].full} ${u.i}강</b><span class="pill neutral">R${u.r} ${PH_TXT[u.r][0]}${done ? ' · 완료' : ''}</span></div><div class="steps2">${steps}</div></div>`;
+      return `<div class="unit${isCur ? ' cur' : ''}${done ? ' done' : ''}" style="--c:${col(u.s)}"><div class="unit-h"><b>${SMAP[u.s].full} ${u.i}강</b><span class="unit-tools"><span class="pill neutral">R${u.r} ${PH_TXT[u.r][0]}${done ? ' · 완료' : ''}${(S.td[ref] && (S.td[ref].add || []).includes(u.k)) ? ' · 추가함' : ''}</span><button type="button" class="xbtn" data-rm="${u.k}" aria-label="${unitName(u)} 오늘에서 빼기" title="오늘에서 빼기">✕ 빼기</button></span></div><div class="steps2">${steps}</div></div>`;
     }).join('');
   } else if (p) {
     main = `<div class="unit" style="--c:var(--accent)"><div class="unit-h"><b>${p.label}</b><span class="pill neutral">${PH_TXT[p.phase][0]}</span></div><p class="note" style="margin:0">${whatText(p)}</p></div>`;
@@ -1208,6 +1252,7 @@ function renderToday(){
           <div class="chipsel" role="group" aria-label="집중 길이"><span>집중 한 번</span>${[15, 25, 45].map(m => `<button type="button" data-fm="${m}" class="${S.fm === m ? 'on' : ''}" aria-pressed="${S.fm === m}">${m}분</button>`).join('')}<span class="note">강의 1개 90분 ≈ ${Math.ceil(LEC_MIN / S.fm)}번</span></div>
         </div>
         ${main}
+        ${addPanel(ref, units)}
         ${behind ? `<p class="note">지난 계획 중 아직 안 한 강의가 ${behind}개 있어요. 괜찮아요. 대시보드의 <b>계획 조정</b>에서 "이대로 적용"을 누르면 남은 날짜에 다시 나눠 줍니다.</p>` : ''}
       </div>
       <div class="tb-side">
@@ -1221,6 +1266,12 @@ $('todayView').addEventListener('click', e => {
   const t = e.target;
   const stb = t.closest('[data-step]');
   if (stb) { const [s1, r1, i1, st] = stb.dataset.step.split('|'), k = `${s1}|${r1}|${i1}`; setStep(k, st, !stepDone(k, st)); saveProgress(); renderAll(); return; }
+  const ad = t.closest('[data-add]'); if (ad) { tdEdit(clampDay(TODAY), ad.dataset.add, 'add'); setSave(unitName(unitOf(ad.dataset.add)) + '을 오늘 목록에 추가했어요'); return; }
+  const rmb = t.closest('[data-rm]'); if (rmb) { tdEdit(clampDay(TODAY), rmb.dataset.rm, 'rm'); setSave(unitName(unitOf(rmb.dataset.rm)) + '을 오늘에서 뺐어요. 괜찮아요!'); return; }
+  const ub = t.closest('[data-undo]'); if (ub) { tdEdit(clampDay(TODAY), ub.dataset.undo, 'undo'); return; }
+  if (t.closest('#addMore')) { addOpen = !addOpen; renderToday(); return; }
+  const ar = t.closest('[data-ar]'); if (ar) { addRound = +ar.dataset.ar; renderToday(); return; }
+  const as = t.closest('[data-as]'); if (as) { addSub = as.dataset.as; renderToday(); return; }
   const enb = t.closest('[data-en]'); if (enb) { S.en[clampDay(TODAY)] = enb.dataset.en; saveProgress(); renderToday(); return; }
   const fmb = t.closest('[data-fm]'); if (fmb) { S.fm = +fmb.dataset.fm; saveProgress(); renderToday(); return; }
   const gb = t.closest('#goBtn'); if (gb) startFocus(gb.dataset.k, gb.dataset.st);
@@ -1478,7 +1529,7 @@ const WORKER = 'https://app.cfa-study-pacer.workers.dev';
 const API = /\.workers\.dev$/.test(location.hostname) ? '' : WORKER;
 const loggedIn = () => !!auth;
 function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
-function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm}; }
+function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td}; }
 function payload(){ return JSON.stringify({...payloadObj(), updatedAt:S.updatedAt || 0}); }
 function saveAuth(){ try { if (auth) localStorage.setItem(AKEY, JSON.stringify(auth)); else localStorage.removeItem(AKEY); } catch(e) {} }
 async function api(path, opt = {}){
@@ -1497,7 +1548,7 @@ const srvErr = e => !e ? '' : e.status === 0 ? '서버에 연결할 수 없습�
 function onAuthLost(e){ if (e && e.status === 401 && auth) { auth = null; saveAuth(); setSync(); renderSyncPanel(); } }
 function adopt(r){
   S.c = r.c || {}; S.m = r.m || {}; if (typeof r.goal === 'number') S.goal = r.goal;
-  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; if (typeof r.fm === 'number') S.fm = r.fm;
+  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {}; if (typeof r.fm === 'number') S.fm = r.fm;
   S.logs = r.logs || {}; S.plans = cleanPlans(r.plans) || S.plans; S.updatedAt = r.updatedAt || Date.now();
   writeLS(); rebuild(); resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7);
   $('goal').value = S.goal; hoursSig = ''; renderAll();
@@ -1786,7 +1837,7 @@ if (!(window.claude && window.claude.use)) initGoogle();
         }
       }
       if (snap.metadata && snap.metadata.hasPendingWrites) return;
-      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {}; S.st = prog.st || {}; S.lm = prog.lm || {}; S.en = prog.en || {}; if (typeof prog.fm === 'number') S.fm = prog.fm;
+      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {}; S.st = prog.st || {}; S.lm = prog.lm || {}; S.en = prog.en || {}; S.td = prog.td || {}; if (typeof prog.fm === 'number') S.fm = prog.fm;
         const np = cleanPlans(prog.plans) || (prog.cfg ? [basePlan(prog.cfg)] : null);
         if (np && JSON.stringify(np) !== JSON.stringify(S.plans)) { const wasDirty = draftDirty(); S.plans = np; rebuild(); if (!wasDirty) resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7); } if (typeof prog.goal === 'number') { S.goal = prog.goal; if (document.activeElement !== $('goal')) $('goal').value = S.goal; } }
       for (const d2 in logs) if (!inflight['d'+d2] && !timers_pending('d'+d2)) S.logs[d2] = logs[d2];
