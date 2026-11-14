@@ -1392,14 +1392,30 @@ function renderSyncPanel0(){
   if (loggedIn()) {
     b.innerHTML = `${codeCard()}<div class="sync-on"><span class="pill good">로그인됨</span><b>${esc(auth.username)}</b><span class="note">기록이 서버에 저장됩니다 · 마지막 동기화 ${lastSync || '-'}</span></div>
       ${auth.google ? '<div class="note">구글 계정이 연결돼 있어요. 어느 기기에서든 "Google로 계속하기"로 로그인할 수 있습니다.</div>' : (gClientId ? '<div class="glink"><span class="note">구글 계정을 연결하면 비밀번호 없이 로그인할 수 있어요.</span><div id="gLink"></div></div>' : '')}
-      ${auth.hasRecovery === false && !auth.google && !shownCode ? '<div class="warn-box"><b>복구 코드가 아직 없습니다.</b> 비밀번호를 잊으면 계정을 되찾을 수 없으니 지금 만들어 두세요. <button class="btn primary" id="mkCode" type="button">복구 코드 만들기</button></div>' : ''}
+      ${emailBox()}
+      ${auth.hasRecovery === false && !auth.google && !auth.email && !shownCode ? '<div class="warn-box"><b>복구 코드가 아직 없습니다.</b> 비밀번호를 잊으면 계정을 되찾을 수 없으니 지금 만들어 두세요. <button class="btn primary" id="mkCode" type="button">복구 코드 만들기</button></div>' : ''}
       <div class="adj-btns"><button class="btn primary" id="syncNow" type="button">지금 동기화</button><button class="btn" id="toPw" type="button">${auth.hasPassword === false ? '비밀번호 만들기' : '비밀번호 변경'}</button>${auth.hasRecovery !== false && auth.hasPassword !== false ? '<button class="btn" id="mkCode" type="button">복구 코드 새로 만들기</button>' : ''}<button class="btn" id="logout" type="button">로그아웃</button></div>
       ${loginView === 'pw' ? `<form class="login-box" id="pwForm">${auth.hasPassword === false ? '<p class="note" style="margin:0">구글 없이도 로그인하고 싶을 때만 만드세요.</p>' : '<div class="field"><label for="opw">현재 비밀번호</label><input id="opw" type="password" autocomplete="current-password" required></div>'}<div class="field"><label for="npw1">새 비밀번호</label><input id="npw1" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="npw2">한 번 더</label><input id="npw2" type="password" autocomplete="new-password" minlength="8" required></div><div><button class="btn primary" type="submit">비밀번호 바꾸기</button></div></form>` : ''}
       <label class="chk"><input type="checkbox" id="wipe"> 로그아웃할 때 이 기기에 남은 기록도 지우기 (공용 PC라면 체크)</label>`;
     return;
   }
+  if (loginView === 'reset' && emailOn && resetMode === 'email') {
+    b.innerHTML = `<div class="ltabs"><button type="button" class="otab" data-lv="login">← 로그인으로</button><button type="button" class="otab on" data-rm="email">이메일로 찾기</button><button type="button" class="otab" data-rm="code">복구 코드로 찾기</button></div>
+      <form class="login-box" id="forgotForm">
+        <h3 style="margin:0">아이디·비밀번호 찾기</h3>
+        <p class="note" style="margin:0">내 계정에 등록한 이메일로 6자리 인증번호를 보내드려요. 번호를 넣으면 아이디를 알려드리고 새 비밀번호를 정할 수 있어요.</p>
+        <div class="field"><label for="fmail">이메일</label><input id="fmail" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required value="${esc(fState.email || '')}" ${fState.sent ? 'readonly' : ''}></div>
+        ${fState.sent ? `<div class="field"><label for="fcode">인증번호</label><input id="fcode" class="num" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required placeholder="6자리"></div>
+        <div class="field"><label for="upw">새 비밀번호</label><input id="upw" type="password" autocomplete="new-password" minlength="8" required placeholder="8자 이상"></div>
+        <div class="field"><label for="upw2">한 번 더</label><input id="upw2" type="password" autocomplete="new-password" minlength="8" required></div>
+        <div class="adj-btns" style="align-items:center"><button class="btn primary" id="authGo" type="submit">확인하고 새 비밀번호로 바꾸기</button><button type="button" class="linkbtn" id="fResend">번호 다시 받기</button></div>
+        <p class="note">메일이 안 보이면 스팸함을 확인해 주세요. 번호는 10분 동안 쓸 수 있어요.</p>`
+        : `<div><button class="btn primary" id="authGo" type="submit">인증번호 받기</button></div>`}
+      </form>`;
+    return;
+  }
   if (loginView === 'reset') {
-    b.innerHTML = `<div class="ltabs"><button type="button" class="otab" data-lv="login">← 로그인으로</button></div>
+    b.innerHTML = `<div class="ltabs"><button type="button" class="otab" data-lv="login">← 로그인으로</button>${emailOn ? '<button type="button" class="otab" data-rm="email">이메일로 찾기</button><button type="button" class="otab on" data-rm="code">복구 코드로 찾기</button>' : ''}</div>
       <form class="login-box" id="resetForm">
         <h3 style="margin:0">아이디·비밀번호 찾기</h3>
         <p class="note" style="margin:0"><b>복구 코드</b>만 넣으면 아이디를 알려드리고 새 비밀번호를 정할 수 있어요. 아이디는 몰라도 됩니다. 복구 코드는 한 번 쓰면 새 코드로 바뀝니다.</p>
@@ -1407,22 +1423,38 @@ function renderSyncPanel0(){
         <div class="field"><label for="upw">새 비밀번호</label><input id="upw" type="password" autocomplete="new-password" minlength="8" required placeholder="8자 이상"></div>
         <div class="field"><label for="upw2">한 번 더</label><input id="upw2" type="password" autocomplete="new-password" minlength="8" required></div>
         <div><button class="btn primary" id="authGo" type="submit">새 비밀번호로 바꾸기</button></div>
-        <p class="note">복구 코드도 잃어버렸다면 계정을 되찾을 수 없습니다. 이 기기에 남은 기록은 그대로 있으니, 새 아이디로 가입하면 이 기기의 기록이 새 계정으로 옮겨집니다.</p>
+        <p class="note">${emailOn ? '복구 코드가 없으면 "이메일로 찾기"를 쓰세요.' : '복구 코드도 잃어버렸다면 계정을 되찾을 수 없습니다.'} 이 기기에 남은 기록은 그대로 있으니, 새 아이디로 가입하면 이 기기의 기록이 새 계정으로 옮겨집니다.</p>
       </form>`;
     return;
   }
   const su = loginView === 'signup';
   b.innerHTML = `<div class="ltabs"><button type="button" class="otab${!su ? ' on' : ''}" data-lv="login">로그인</button><button type="button" class="otab${su ? ' on' : ''}" data-lv="signup">처음이면 회원가입</button></div>
     <form class="login-box" id="${su ? 'signupForm' : 'loginForm'}">
-      <div class="field"><label for="uid">아이디</label><input id="uid" autocomplete="username" autocapitalize="none" spellcheck="false" required pattern="[A-Za-z0-9_.\\-]{3,30}" placeholder="영문·숫자 3~30자"></div>
+      <div class="field"><label for="uid">${su ? '아이디' : '아이디·이메일'}</label><input id="uid" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="${su ? '이메일 추천 (예: me@gmail.com)' : '아이디 또는 이메일'}"></div>
       <div class="field"><label for="upw">비밀번호</label><input id="upw" type="password" autocomplete="${su ? 'new-password' : 'current-password'}" minlength="8" required placeholder="8자 이상"></div>
       ${su ? '<div class="field"><label for="upw2">한 번 더</label><input id="upw2" type="password" autocomplete="new-password" minlength="8" required></div>' : ''}
       <div class="adj-btns" style="align-items:center"><button class="btn primary" id="authGo" type="submit">${su ? '가입하고 로그인' : '로그인'}</button>${su ? '' : '<button type="button" class="linkbtn" data-lv="reset">아이디·비밀번호를 잊었나요?</button>'}</div>
       ${gClientId ? '<div class="gor"><span>또는</span></div><div id="gBtn"></div>' : ''}
-      <p class="note">${su ? '아이디와 비밀번호만 있으면 됩니다. 이메일은 받지 않습니다. 가입하면 비밀번호를 잊었을 때 쓰는 복구 코드를 한 번 보여드리니 꼭 적어두세요. 지금 이 기기에 있는 기록은 가입하면 그대로 서버로 옮겨집니다.' : '휴대폰과 PC에서 같은 아이디로 로그인하면 같은 기록이 보입니다.'}</p>
+      <p class="note">${su ? '아이디로 <b>이메일 주소</b>를 쓰면 잊어버릴 일이 없어요. 가입 후 내 계정에서 그 이메일을 인증해 두면, 비밀번호를 잊었을 때 이메일로 인증번호를 받아 찾을 수 있습니다. 가입하면 예비용 복구 코드도 한 번 보여드립니다. 지금 이 기기에 있는 기록은 가입하면 그대로 서버로 옮겨집니다.' : '휴대폰과 PC에서 같은 아이디로 로그인하면 같은 기록이 보입니다.'}</p>
     </form>`;
 }
-let shownCode = '', gClientId = null, gReady = false;
+let shownCode = '', gClientId = null, gReady = false, emailOn = false, resetMode = 'email';
+let eState = {email:'', sent:false}, fState = {email:'', sent:false};
+const looksEmail = t => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(t || '');
+function emailBox(){
+  if (!emailOn) return '';
+  if (auth.email && !eState.force) return `<div class="note">✉️ 인증된 이메일: <b>${esc(auth.email)}</b> · 비밀번호를 잊으면 이 주소로 인증번호를 받을 수 있어요.${auth.username !== auth.email ? ' <button type="button" class="linkbtn" id="eAsId">이 이메일을 아이디로 쓰기</button>' : ''}</div>`;
+  const pre = eState.email || (looksEmail(auth.username) ? auth.username : '');
+  return `<form class="warn-box" id="emailForm" style="flex-direction:column;align-items:stretch">
+    <b>비밀번호 찾기용 이메일 등록</b>
+    <span class="note">등록해 두면 비밀번호를 잊었을 때 이메일로 인증번호를 받아 찾을 수 있어요. Resend에 가입한 이메일 주소만 받을 수 있습니다.</span>
+    <div class="field"><label for="email1">이메일</label><input id="email1" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required value="${esc(pre)}" ${eState.sent ? 'readonly' : ''}></div>
+    ${eState.sent ? `<div class="field"><label for="ecode">인증번호</label><input id="ecode" class="num" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required placeholder="메일로 온 6자리"></div>
+      ${!looksEmail(auth.username) ? '<label class="chk"><input type="checkbox" id="eUseId"> 이 이메일을 아이디로도 쓰기</label>' : ''}
+      <div class="adj-btns" style="align-items:center"><button class="btn primary" type="submit">확인</button><button type="button" class="linkbtn" id="eResend">번호 다시 받기</button><button type="button" class="linkbtn" id="eChange">주소 바꾸기</button></div>`
+      : '<div><button class="btn primary" type="submit">인증번호 받기</button></div>'}
+  </form>`;
+}
 function renderGButtons(){
   if (!gReady || !window.google || !google.accounts) return;
   for (const id of ['gBtn', 'gLink']) { const el = $(id); if (el && !el.childElementCount) google.accounts.id.renderButton(el, {theme:'outline', size:'large', text: id === 'gLink' ? 'signin_with' : 'continue_with', shape:'pill', locale:'ko', width: Math.min(300, el.parentElement.clientWidth || 300)}); }
@@ -1440,6 +1472,7 @@ async function onGoogle(resp){
 function initGoogle(){
   if (mode === 'db') return;
   api('/api/config', {noAuth:true}).then(c => {
+    if (c.email) { emailOn = true; renderSyncPanel(); }
     if (!c.googleClientId) return;
     gClientId = c.googleClientId;
     const sc = document.createElement('script'); sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true;
@@ -1469,11 +1502,40 @@ $('syncPanel').addEventListener('submit', async e => {
     $('authGo').disabled = true; syncMsg(su ? '가입 중…' : '로그인 중…');
     try {
       const r = await api(su ? '/api/signup' : '/api/login', {method:'POST', body:{username, password}, noAuth:true});
-      auth = {token:r.token, username:r.username, hasRecovery: su ? true : r.hasRecovery !== false, google: !!r.google, hasPassword: true}; saveAuth(); setSync(); loginView = 'main';
+      auth = {token:r.token, username:r.username, hasRecovery: su ? true : r.hasRecovery !== false, google: !!r.google, hasPassword: true, email: r.email || null}; saveAuth(); setSync(); loginView = 'main';
       if (r.recoveryCode) shownCode = r.recoveryCode;
       await srvPull();
       syncMsg(su ? '가입했습니다. 아래 복구 코드를 꼭 적어두세요' : '로그인했습니다 · 기록을 불러왔습니다');
     } catch (err) { syncMsg(srvErr(err)); const b = $('authGo'); if (b) b.disabled = false; }
+  } else if (f.id === 'emailForm') {
+    const btn = f.querySelector('[type=submit]'); btn.disabled = true;
+    try {
+      if (!eState.sent) {
+        eState.email = $('email1').value.trim();
+        const r = await api('/api/email', {method:'POST', body:{email: eState.email}});
+        eState.sent = true; renderSyncPanel(); syncMsg(r.sentTo + '로 인증번호를 보냈어요. 스팸함도 확인해 주세요'); const c = $('ecode'); if (c) c.focus();
+      } else {
+        const useAsId = !!($('eUseId') && $('eUseId').checked) || looksEmail(auth.username) && auth.username === eState.email.toLowerCase();
+        const r = await api('/api/email/confirm', {method:'POST', body:{code: $('ecode').value, useAsId}});
+        auth.email = r.email; auth.username = r.username; saveAuth(); eState = {email:'', sent:false}; setSync(); renderSyncPanel();
+        syncMsg('이메일을 인증했어요. 이제 비밀번호를 잊어도 이메일로 찾을 수 있습니다');
+      }
+    } catch (err) { onAuthLost(err); syncMsg(srvErr(err)); btn.disabled = false; }
+  } else if (f.id === 'forgotForm') {
+    const btn = $('authGo'); btn.disabled = true;
+    try {
+      if (!fState.sent) {
+        fState.email = $('fmail').value.trim();
+        await api('/api/forgot', {method:'POST', body:{email: fState.email}, noAuth:true});
+        fState.sent = true; renderSyncPanel(); syncMsg('인증번호를 보냈어요. 메일이 안 보이면 스팸함을 확인해 주세요'); const c = $('fcode'); if (c) c.focus();
+      } else {
+        if ($('upw').value !== $('upw2').value) { syncMsg('두 비밀번호가 다릅니다'); btn.disabled = false; return; }
+        const r = await api('/api/forgot/confirm', {method:'POST', body:{email: fState.email, code: $('fcode').value, password: $('upw').value}, noAuth:true});
+        auth = {token:r.token, username:r.username, hasRecovery:true, email:r.email, hasPassword:true}; saveAuth(); setSync(); loginView = 'main'; fState = {email:'', sent:false};
+        await srvPull();
+        syncMsg(`찾았어요! 아이디는 "${r.username}" 입니다. 새 비밀번호로 로그인했어요`);
+      }
+    } catch (err) { syncMsg(srvErr(err)); const b2 = $('authGo'); if (b2) b2.disabled = false; }
   } else if (f.id === 'resetForm') {
     const code = $('rcode').value, password = $('upw').value;
     if (password !== $('upw2').value) { syncMsg('두 비밀번호가 다릅니다'); return; }
@@ -1494,7 +1556,12 @@ $('syncPanel').addEventListener('submit', async e => {
 });
 $('syncPanel').addEventListener('click', async e => {
   const t = e.target;
-  const lv = t.closest('[data-lv]'); if (lv) { loginView = lv.dataset.lv; renderSyncPanel(); const f = $('uid'); if (f) f.focus(); return; }
+  const lv = t.closest('[data-lv]'); if (lv) { loginView = lv.dataset.lv; fState = {email:'', sent:false}; renderSyncPanel(); const f = $('uid'); if (f) f.focus(); return; }
+  const rm = t.closest('[data-rm]'); if (rm) { resetMode = rm.dataset.rm; renderSyncPanel(); return; }
+  if (t.closest('#eChange')) { eState = {email:'', sent:false}; renderSyncPanel(); return; }
+  if (t.closest('#eResend')) { try { await api('/api/email', {method:'POST', body:{email: eState.email}}); syncMsg('인증번호를 다시 보냈어요'); } catch (err) { syncMsg(srvErr(err)); } return; }
+  if (t.closest('#fResend')) { try { await api('/api/forgot', {method:'POST', body:{email: fState.email}, noAuth:true}); syncMsg('인증번호를 다시 보냈어요'); } catch (err) { syncMsg(srvErr(err)); } return; }
+  if (t.closest('#eAsId')) { eState = {email: auth.email, sent:false}; try { await api('/api/email', {method:'POST', body:{email: auth.email}}); eState.sent = true; eState.force = true; renderSyncPanel(); syncMsg('확인을 위해 인증번호를 보냈어요. 번호를 넣고 "아이디로도 쓰기"를 체크하세요'); } catch (err) { syncMsg(srvErr(err)); } return; }
   if (t.closest('#mkCode')) {
     try { const r = await api('/api/recovery-code', {method:'POST'}); shownCode = r.recoveryCode; auth.hasRecovery = true; saveAuth(); renderSyncPanel(); syncMsg('새 복구 코드를 만들었습니다. 이전 코드는 이제 쓸 수 없습니다'); }
     catch (err) { onAuthLost(err); syncMsg(srvErr(err)); }
@@ -1544,7 +1611,7 @@ $('bkFile').addEventListener('change', async e => {
 renderSyncPanel(); setSync();
 if (auth && !(window.claude && window.claude.use)) {
   srvPull().catch(e => { onAuthLost(e); syncMsg(srvErr(e)); });
-  api('/api/me').then(r => { if (auth) { auth.hasRecovery = !!r.hasRecovery; auth.google = !!r.google; auth.hasPassword = r.hasPassword !== false; saveAuth(); renderSyncPanel(); if (!r.hasRecovery && !r.google) syncMsg('복구 코드가 없습니다 · 내 계정에서 만들어 두세요'); } }).catch(() => {});
+  api('/api/me').then(r => { if (auth) { auth.hasRecovery = !!r.hasRecovery; auth.google = !!r.google; auth.hasPassword = r.hasPassword !== false; auth.email = r.email || null; auth.username = r.username || auth.username; saveAuth(); setSync(); renderSyncPanel(); if (!r.hasRecovery && !r.google && !r.email) syncMsg(emailOn ? '비밀번호 찾기용 이메일을 아직 등록하지 않았어요 · 내 계정에서 등록해 두세요' : '복구 코드가 없습니다 · 내 계정에서 만들어 두세요'); } }).catch(() => {});
 }
 if (!(window.claude && window.claude.use)) initGoogle();
 
