@@ -86,7 +86,7 @@ async function login(req, env) {
   const name = username.toLowerCase(), now = Date.now();
   const u = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(name).first();
   if (!u) { await pbkdf2(password, '00'.repeat(16)); return bad(); }
-  if (u.locked_until > now) return fail(429, `비밀번호를 여러 번 틀려서 잠겼습니다. ${Math.ceil((u.locked_until - now) / 60000)}분 뒤에 다시 해보세요`);
+  if (u.locked_until > now) return fail(429, '비밀번호를 여러 번 틀려서 잠겼습니다. ' + Math.ceil((u.locked_until - now) / 60000) + '분 뒤에 다시 해보세요');
   if (!same(await pbkdf2(password, u.salt), u.hash)) {
     const fails = u.fails + 1;
     if (fails >= LOCK_AFTER) await env.DB.prepare('UPDATE users SET fails = 0, locked_until = ? WHERE id = ?').bind(now + LOCK_MIN * 60000, u.id).run();
