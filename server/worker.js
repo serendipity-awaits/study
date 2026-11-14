@@ -58,9 +58,23 @@ async function newSession(env, userId) {
 async function currentUser(req, env) {
   const m = /^Bearer ([0-9a-f]{64})$/.exec(req.headers.get('Authorization') || '');
   if (!m) return null;
-  const row = await env.DB.prepare('SELECT s.user_id AS id, u.username FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires > ?')
+  const row = await env.DB.prepare('SELECT s.user_id AS id, u.username, u.recovery_hash IS NOT NULL AS has_recovery FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires > ?')
     .bind(await sha256(m[1]), Date.now()).first();
   return row || null;
+}
+// 복구 코드: 헷갈리는 글자(0/O, 1/I)를 뺀 32글자로 20자리 = 100비트
+const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function newCode() {
+  const b = crypto.getRandomValues(new Uint8Array(20));
+  const c = [...b].map(x => CODE_ABC[x & 31]).join('');
+  return c.slice(0, 5) + '-' + c.slice(5, 10) + '-' + c.slice(10, 15) + '-' + c.slice(15, 20);
+}
+const normCode = c => typeof c === 'string' ? c.toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+const codeHash = c => sha256('recovery:' + normCode(c));
+async function issueCode(env, userId) {
+  const code = newCode();
+  await env.DB.prepare('UPDATE users SET recovery_hash = ? WHERE id = ?').bind(await codeHash(code), userId).run();
+  return code;
 }
 const validName = u => typeof u === 'string' && /^[A-Za-z0-9_.-]{3,30}$/.test(u);
 const validPw = p => typeof p === 'string' && p.length >= 8 && p.length <= 200;
@@ -76,7 +90,7 @@ async function signup(req, env) {
   const salt = rand(16), hash = await pbkdf2(password, salt);
   const r = await env.DB.prepare('INSERT INTO users (username, salt, hash, created) VALUES (?, ?, ?, ?)').bind(name, salt, hash, Date.now()).run();
   const id = r.meta.last_row_id;
-  return json({ token: await newSession(env, id), username: name });
+  return json({ token: await newSession(env, id), username: name, recoveryCode: await issueCode(env, id) });
 }
 
 async function login(req, env) {
@@ -94,7 +108,31 @@ async function login(req, env) {
     return bad();
   }
   if (u.fails) await env.DB.prepare('UPDATE users SET fails = 0 WHERE id = ?').bind(u.id).run();
-  return json({ token: await newSession(env, u.id), username: u.username });
+  return json({ token: await newSession(env, u.id), username: u.username, hasRecovery: !!u.recovery_hash });
+}
+
+// 비밀번호 찾기: 아이디 + 복구 코드로 새 비밀번호를 정합니다. 쓴 복구 코드는 버리고 새 코드를 줍니다.
+async function resetPassword(req, env) {
+  const { username, code, password } = await readJson(req);
+  const bad = () => fail(401, '아이디 또는 복구 코드가 맞지 않습니다');
+  if (!validName(username) || normCode(code).length !== 20) return bad();
+  if (!validPw(password)) return fail(400, '새 비밀번호는 8자 이상으로 정해주세요');
+  const now = Date.now();
+  const u = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username.toLowerCase()).first();
+  if (!u) return bad();
+  if (u.locked_until > now) return fail(429, '여러 번 틀려서 잠겼습니다. ' + Math.ceil((u.locked_until - now) / 60000) + '분 뒤에 다시 해보세요');
+  if (!u.recovery_hash || !same(await codeHash(code), u.recovery_hash)) {
+    const fails = u.fails + 1;
+    if (fails >= LOCK_AFTER) await env.DB.prepare('UPDATE users SET fails = 0, locked_until = ? WHERE id = ?').bind(now + LOCK_MIN * 60000, u.id).run();
+    else await env.DB.prepare('UPDATE users SET fails = ? WHERE id = ?').bind(fails, u.id).run();
+    return bad();
+  }
+  const salt = rand(16), hash = await pbkdf2(password, salt);
+  await env.DB.batch([
+    env.DB.prepare('UPDATE users SET salt = ?, hash = ?, fails = 0, locked_until = 0 WHERE id = ?').bind(salt, hash, u.id),
+    env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(u.id),
+  ]);
+  return json({ token: await newSession(env, u.id), username: u.username, recoveryCode: await issueCode(env, u.id) });
 }
 
 async function changePassword(req, env, me) {
@@ -144,11 +182,14 @@ export default {
       const route = req.method + ' ' + url.pathname;
       if (route === 'POST /api/signup') return await signup(req, env);
       if (route === 'POST /api/login') return await login(req, env);
+      if (route === 'POST /api/reset') return await resetPassword(req, env);
       const me = await currentUser(req, env);
       if (!me) return fail(401, '로그인이 필요합니다');
       if (route === 'GET /api/data') return await getData(env, me);
       if (route === 'PUT /api/data') return await putData(req, env, me);
       if (route === 'POST /api/password') return await changePassword(req, env, me);
+      if (route === 'GET /api/me') return json({ username: me.username, hasRecovery: !!me.has_recovery });
+      if (route === 'POST /api/recovery-code') return json({ recoveryCode: await issueCode(env, me.id) });
       if (route === 'POST /api/logout') {
         await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await sha256((req.headers.get('Authorization') || '').slice(7))).run();
         return json({ ok: true });

@@ -3,3 +3,5 @@ CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username
 CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS data (user_id INTEGER PRIMARY KEY, body TEXT NOT NULL, updated_at INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
+-- 비밀번호 찾기용 복구 코드 (해시만 저장)
+ALTER TABLE users ADD COLUMN recovery_hash TEXT;
