@@ -247,6 +247,15 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .ml .mn{font:600 9.5px var(--font-mono);fill:var(--bg);stroke:none}
 .ml .mt{font:700 12.5px var(--font-body)}
 .ml .mp{font:600 10.5px var(--font-mono)}
+.yj{cursor:pointer;outline:none}
+.yj:focus-visible .yj-body{filter:drop-shadow(0 0 2px var(--accent))}
+.yj-body{transform-box:fill-box;transform-origin:50% 100%}
+@media (prefers-reduced-motion:no-preference){.yj-body{animation:yjBob 1.8s ease-in-out infinite}.yj-body.walk{animation:yjHop .3s ease-in-out infinite}}
+@keyframes yjBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes yjHop{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-2px) rotate(-3deg)}75%{transform:translateY(-2px) rotate(3deg)}}
+.say-t{font:700 11px var(--font-body);fill:var(--fg)}
+.yj-card{position:relative;padding-left:62px!important}
+.yj-av{position:absolute;left:14px;bottom:8px;height:64px;width:auto}
 .md-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
 .md-map{width:100%;max-width:460px;max-height:420px;height:auto;justify-self:center}
 .md-side{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
@@ -1131,7 +1140,7 @@ function setView(v, dir){
   const el = $(v + 'View');
   el.classList.remove('slide-l','slide-r'); void el.offsetWidth; el.classList.add(dir || (VIEWS.indexOf(v) > from ? 'slide-l' : 'slide-r'));
   if (v === 'today') renderToday();
-  if (v === 'map') renderMap();
+  if (v === 'map') { mapEnter = true; renderMap(); }
   document.querySelector('.views').scrollIntoView({block:'nearest'});
 }
 document.querySelector('.views').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) setView(b.dataset.view); });
@@ -1465,6 +1474,54 @@ function mapStatus(r){
   for (const k of order) { let d = 0; for (let i = 1; i <= SMAP[k].L; i++) { const kk = key(k, r, i); if (S.c[kk]) d++; else if (!here) here = {s:k, i}; } per[k] = d; done += d; }
   return {order, per, done, here};
 }
+const YJ_SRC = 'data:image/webp;base64,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';
+let yjAnim = null, yjFace = 1, yjSay = '', mapHereIdx = 0, mapSeq = [], mapEnter = false, yjSayIdx = 0;
+const yjSeq = r => { const out = []; for (const k of mapOrder(r)) for (let i = 1; i <= SMAP[k].L; i++) out.push({s:k, i}); return out; };
+const yjPt = (seq, idx) => { const q = seq[Math.max(0, Math.min(seq.length - 1, idx))]; const [c, rr] = MAP.lect[q.s][q.i - 1]; return MAP.px(c, rr); };
+function yjBubble(text, x, y){
+  const w = Math.min(190, [...text].length * 10.2 + 18), [Wd] = MAP.size;
+  let bx = -w / 2; if (x + bx < 4) bx = 4 - x; if (x + bx + w > Wd - 4) bx = Wd - 4 - x - w;
+  const below = y - 104 < -58;   // near the top edge the bubble goes under her feet
+  const ry = below ? 10 : -104, ty = below ? 25 : -89;
+  const tail = below ? `<path d="M-4,10.6 L0,5 L4,10.6 Z" fill="var(--surface)" stroke="var(--fg)" stroke-width="1.2" stroke-linejoin="round"/><rect x="-5" y="9.6" width="10" height="2.4" fill="var(--surface)"/>`
+                     : `<path d="M-4,-82.6 L0,-77 L4,-82.6 Z" fill="var(--surface)" stroke="var(--fg)" stroke-width="1.2" stroke-linejoin="round"/><rect x="-5" y="-84" width="10" height="2.4" fill="var(--surface)"/>`;
+  return `<g class="say" pointer-events="none"><rect x="${bx.toFixed(1)}" y="${ry}" width="${w.toFixed(1)}" height="22" rx="11" fill="var(--surface)" stroke="var(--fg)" stroke-width="1.2"/>${tail}<text x="${(bx + w / 2).toFixed(1)}" y="${ty}" text-anchor="middle" class="say-t">${esc(text)}</text></g>`;
+}
+function yjWalk(from, to){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || from === to) return;
+  const step = from < to ? 1 : -1, idxs = []; for (let i = from; i !== to + step; i += step) idxs.push(i);
+  const pts = (idxs.length > 26 ? idxs.filter((_, j) => j % Math.ceil(idxs.length / 26) === 0 || j === idxs.length - 1) : idxs).map(i => yjPt(mapSeq, i));
+  const per = 300, t0 = performance.now(), round = mapRound;
+  yjAnim = {round, cur: pts[0]};
+  const tick = now => {
+    if (!yjAnim || yjAnim.round !== round) return;
+    const f = Math.max(0, (now - t0) / per), k = Math.min(pts.length - 1, Math.floor(f)), u = Math.min(1, f - k);
+    const a = pts[k], b = pts[Math.min(pts.length - 1, k + 1)];
+    const x = a[0] + (b[0] - a[0]) * u, y = a[1] + (b[1] - a[1]) * u - Math.sin(u * Math.PI) * 3;
+    if (Math.abs(b[0] - a[0]) > .5) yjFace = b[0] < a[0] ? -1 : 1;
+    yjAnim.cur = [x, y];
+    const g = $('yj'); if (g) { g.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`); const fl = $('yjFlip'); if (fl) fl.setAttribute('transform', `scale(${yjFace},1)`); const bd = g.querySelector('.yj-body'); if (bd && !bd.classList.contains('walk')) bd.classList.add('walk'); }
+    if (f < pts.length - 1) requestAnimationFrame(tick); else { yjAnim = null; renderMap(); }
+  };
+  requestAnimationFrame(tick);
+}
+function yjAfterRender(){
+  const keyL = 'cfa-yj-last-' + mapRound; let last = null;
+  try { last = localStorage.getItem(keyL); } catch(_) {}
+  last = last == null ? null : +last;
+  if (mapEnter && !yjAnim) {
+    mapEnter = false;
+    const from = last != null && last !== mapHereIdx ? last : Math.max(0, mapHereIdx - 2);
+    if (from !== mapHereIdx) yjWalk(from, mapHereIdx);
+  } else if (last != null && last !== mapHereIdx && !yjAnim) yjWalk(last, mapHereIdx);
+  try { localStorage.setItem(keyL, String(mapHereIdx)); } catch(_) {}
+}
+function yjTalk(){
+  const st = mapStatus(mapRound), left = UNITS.length - st.done, nxt = st.here ? st.order[st.order.indexOf(st.here.s) + 1] : null;
+  const lines = ['오늘도 5분만 같이 해볼까?', '여기까지 온 거 정말 대단해!', `${left}강 남았어. 같이 가자!`, '쉬어가도 괜찮아. 다시 오면 돼 🙂', nxt ? `다음 나라는 ${SMAP[nxt].n}이야!` : '마지막 나라야, 힘내!', `벌써 ${st.done}강 왔어! 👏`];
+  yjSay = lines[yjSayIdx++ % lines.length]; renderMap();
+  clearTimeout(yjTalk.t); yjTalk.t = setTimeout(() => { yjSay = ''; renderMap(); }, 4000);
+}
 function renderMap(){
   if (view !== 'map') return;
   const r = mapRound, st = mapStatus(r), N = UNITS.length, pct = Math.round(st.done / N * 100);
@@ -1486,8 +1543,10 @@ function renderMap(){
     route += `<path d="M${a[0].toFixed(1)},${a[1].toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${b[0].toFixed(1)},${b[1].toFixed(1)}" fill="none" stroke="var(--fg)" stroke-width="${fin ? 2.6 : 1.6}" stroke-dasharray="${fin ? '0' : '5 5'}" opacity="${fin ? .75 : .4}"/>`;
   }
   const labels = SUBJ.map(s => { const [x, y] = MAP.centroid[s.k], p = Math.round(st.per[s.k] / s.L * 100), n = st.order.indexOf(s.k) + 1; return `<g class="ml" data-ms="${s.k}"><circle cx="${x.toFixed(1)}" cy="${(y - 15).toFixed(1)}" r="8" fill="var(--fg)"/><text x="${x.toFixed(1)}" y="${(y - 11.5).toFixed(1)}" class="mn">${n}</text><text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" class="mt">${SMAP[s.k].n}</text><text x="${x.toFixed(1)}" y="${(y + 17).toFixed(1)}" class="mp">${p === 100 ? '정복 ✓' : p + '%'}</text></g>`; }).join('');
-  let flag = '';
-  if (st.here) { const [c, rr] = MAP.lect[st.here.s][st.here.i - 1], [x, y] = MAP.px(c, rr); flag = `<g class="flag" pointer-events="none"><line x1="${x}" y1="${y}" x2="${x}" y2="${y - 30}" stroke="var(--fg)" stroke-width="2"/><path d="M${x},${y - 30} l17,5 l-17,6 z" fill="var(--bad)"/><circle cx="${x}" cy="${y}" r="3.5" fill="var(--fg)"/></g>`; }
+  const seq = yjSeq(r), hereIdx = st.here ? seq.findIndex(q => q.s === st.here.s && q.i === st.here.i) : seq.length - 1;
+  const pos0 = yjAnim && yjAnim.round === r ? yjAnim.cur : yjPt(seq, hereIdx);
+  const flag = `<g id="yj" class="yj" transform="translate(${pos0[0].toFixed(1)},${pos0[1].toFixed(1)})" role="button" tabindex="0" aria-label="여정이: 눌러서 응원 듣기"><ellipse cx="0" cy="1" rx="11" ry="3.5" fill="rgba(0,0,0,.28)"/><g class="yj-body${yjAnim && yjAnim.round === r ? ' walk' : ''}"><g id="yjFlip" transform="scale(${yjFace},1)"><image href="${YJ_SRC}" x="-12.1" y="-76" width="24.2" height="76"/></g></g>${yjBubble(yjSay || (st.here ? `${SMAP[st.here.s].n} ${st.here.i}강으로 가는 중!` : '전부 정복했어! 🎉'), pos0[0], pos0[1])}</g>`;
+  mapHereIdx = hereIdx; mapSeq = seq;
   const strip = st.order.map(k => `<div class="js-seg${st.here && st.here.s === k ? ' cur' : ''}" style="flex:${SMAP[k].L};--c:var(--s-${k})" title="${SMAP[k].full} ${st.per[k]}/${SMAP[k].L}"><span style="width:${st.per[k] / SMAP[k].L * 100}%"></span><b>${SMAP[k].n}</b></div>`).join('');
   const sel = mapSel ? SMAP[mapSel] : null;
   let detail = '';
@@ -1505,15 +1564,18 @@ function renderMap(){
     <div class="tb-head"><h2>R${r} 진도 지도</h2><div class="otabs" role="tablist" aria-label="회독 선택">${[1,2,3].map(x => `<button type="button" role="tab" class="otab${x === r ? ' on' : ''}" data-mr="${x}" aria-selected="${x === r}">${x}회독</button>`).join('')}</div></div>
     <div class="mstats"><div><span class="label">전체 진도</span><b class="big">${pct}<small>%</small></b><span class="note">${st.done}/${N}강</span></div>
       <div><span class="label">정복한 나라</span><b class="big">${conquered}<small>/10</small></b><span class="note">과목 = 나라</span></div>
-      <div><span class="label">지금 위치</span><b class="here-t">${st.here ? `${SMAP[st.here.s].full} ${st.here.i}강` : '전부 정복! 🎉'}</b><span class="note">${st.here ? `${st.order.indexOf(st.here.s) + 1}번째 나라 · 남은 ${N - st.done}강` : ''}</span></div></div>
+      <div class="yj-card"><img src="${YJ_SRC}" alt="" class="yj-av"><span class="label">여정이의 지금 위치</span><b class="here-t">${st.here ? `${SMAP[st.here.s].full} ${st.here.i}강` : '전부 정복! 🎉'}</b><span class="note">${st.here ? `${st.order.indexOf(st.here.s) + 1}번째 나라 · 남은 ${N - st.done}강` : ''}</span></div></div>
     <div class="journey" aria-label="여행 경로 진행 막대">${strip}</div>
-    <div class="panel mapbox"><svg class="wmap" viewBox="0 0 ${Wd.toFixed(0)} ${Ht.toFixed(0)}" role="img" aria-label="과목별 진도 지도"><rect width="100%" height="100%" fill="var(--sea)" rx="10"/>${hexes}${borders}${route}${labels}${flag}</svg>
-      <div class="cal-foot"><span><span class="sw" style="background:var(--s-fi)"></span>완료한 강의</span><span><span class="sw" style="background:color-mix(in srgb,var(--s-fi) 45%,var(--land))"></span>일부 단계만</span><span><span class="sw" style="background:color-mix(in srgb,var(--s-fi) 12%,var(--land))"></span>아직</span><span>━ 지나온 길 · ┅ 갈 길</span><span>🚩 지금 여기</span><span>나라를 누르면 크게 볼 수 있어요</span></div></div>
+    <div class="panel mapbox"><svg class="wmap" viewBox="0 -62 ${Wd.toFixed(0)} ${(Ht + 62).toFixed(0)}" role="img" aria-label="과목별 진도 지도"><rect x="0" y="-62" width="${Wd.toFixed(0)}" height="${(Ht + 62).toFixed(0)}" fill="var(--sea)" rx="10"/>${hexes}${borders}${route}${labels}${flag}</svg>
+      <div class="cal-foot"><span><span class="sw" style="background:var(--s-fi)"></span>완료한 강의</span><span><span class="sw" style="background:color-mix(in srgb,var(--s-fi) 45%,var(--land))"></span>일부 단계만</span><span><span class="sw" style="background:color-mix(in srgb,var(--s-fi) 12%,var(--land))"></span>아직</span><span>━ 지나온 길 · ┅ 갈 길</span><span>👧 여정이 = 지금 여기 (눌러 보세요)</span><span>나라를 누르면 크게 볼 수 있어요</span></div></div>
     ${detail}`;
+  yjAfterRender();
 }
+$('mapView').addEventListener('keydown', e => { if (e.target.closest('#yj') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); yjTalk(); } });
 $('mapView').addEventListener('click', e => {
   const t = e.target;
-  const mr = t.closest('[data-mr]'); if (mr) { mapRound = +mr.dataset.mr; renderMap(); return; }
+  if (t.closest('#yj')) { yjTalk(); return; }
+  const mr = t.closest('[data-mr]'); if (mr) { mapRound = +mr.dataset.mr; yjAnim = null; mapEnter = true; renderMap(); return; }
   const ms = t.closest('[data-ms]'); if (ms) { mapSel = mapSel === ms.dataset.ms ? null : ms.dataset.ms; renderMap(); if (mapSel) setTimeout(() => { const d = document.querySelector('.md'); if (d) d.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'nearest'}); }, 30); return; }
   if (t.closest('#mdClose')) { mapSel = null; renderMap(); return; }
   if (t.closest('#mdQ')) { qSub = mapSel; setView('dash'); renderQ(); $('qSec').scrollIntoView({block:'start'}); }
