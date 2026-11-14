@@ -1,0 +1,1083 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1E4FD8">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>CFA L1 페이스메이커</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: summary strip → phase timeline → calendar + day log side by side → subject lecture grids → hour charts */
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --sunk:#E9EDF3; --line:#D8DEE7;
+  --fg:#16202E; --muted:#5B6678; --faint:#8A94A5;
+  --accent:#1E4FD8; --accent-soft:#E3EAFC; --on-accent:#FFFFFF;
+  --good:#1D8A55; --good-soft:#DDF3E7; --warn:#B7791F; --warn-soft:#FBEFD8; --bad:#C2363F; --bad-soft:#FBE2E3;
+  --heat:30,79,216;
+  --s-quant:#D9622F; --s-econ:#B98A0E; --s-corp:#6F8526; --s-fsa:#23855A; --s-equity:#14889A;
+  --s-fi:#2C5ED0; --s-deriv:#6A4CCB; --s-alt:#A83E8E; --s-pm:#C83F55; --s-ethics:#55606E;
+  --font-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F141C; --surface:#171E29; --sunk:#1F2835; --line:#2B3646;
+  --fg:#E6EBF2; --muted:#9AA6B8; --faint:#6D798B;
+  --accent:#7C9BFF; --accent-soft:#1F2C4D; --on-accent:#0F141C;
+  --good:#4CC98A; --good-soft:#163527; --warn:#E5B04E; --warn-soft:#3A2E16; --bad:#F2737B; --bad-soft:#3D1D21;
+  --heat:124,155,255;
+  --s-quant:#F08B5E; --s-econ:#E0B53C; --s-corp:#A3BC52; --s-fsa:#4DBF8A; --s-equity:#3FC0D0;
+  --s-fi:#6E95F5; --s-deriv:#9B84F0; --s-alt:#D873BE; --s-pm:#F07A8D; --s-ethics:#A0ABBA;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F141C; --surface:#171E29; --sunk:#1F2835; --line:#2B3646;
+  --fg:#E6EBF2; --muted:#9AA6B8; --faint:#6D798B;
+  --accent:#7C9BFF; --accent-soft:#1F2C4D; --on-accent:#0F141C;
+  --good:#4CC98A; --good-soft:#163527; --warn:#E5B04E; --warn-soft:#3A2E16; --bad:#F2737B; --bad-soft:#3D1D21;
+  --heat:124,155,255;
+  --s-quant:#F08B5E; --s-econ:#E0B53C; --s-corp:#A3BC52; --s-fsa:#4DBF8A; --s-equity:#3FC0D0;
+  --s-fi:#6E95F5; --s-deriv:#9B84F0; --s-alt:#D873BE; --s-pm:#F07A8D; --s-ethics:#A0ABBA;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-size:24px;font-weight:700;letter-spacing:-.01em}
+h2{font-size:16px;font-weight:700}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+
+/* header */
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.head-l{display:flex;flex-direction:column;gap:4px}
+.head-r{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dday{display:flex;align-items:baseline;gap:8px;background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px}
+.dday b{font-family:var(--font-mono);font-size:22px;font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.chip.ok .dot{background:var(--good)}
+button.chip{border:0;cursor:pointer} button.chip:disabled{cursor:default}
+button.chip:not(:disabled):hover{background:var(--line)}
+.sync-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px}
+.sync-grid>div{display:flex;flex-direction:column;gap:10px;min-width:0}
+#syncBody{display:flex;flex-direction:column;gap:10px}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.steps a{color:var(--accent);font-weight:600}
+.tok-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center}
+.tok-row input{font:inherit;font-family:var(--font-mono);font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);min-width:0}
+.sync-on{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+label.btn{cursor:pointer;display:inline-flex;align-items:center}
+@media (max-width:820px){.sync-grid{grid-template-columns:minmax(0,1fr)}.tok-row{grid-template-columns:minmax(0,1fr) auto}.tok-row .label{grid-column:1/-1}.tok-row input{font-size:16px}} .chip.local .dot{background:var(--warn)}
+
+/* summary */
+.summary{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.today{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.big{font-family:var(--font-mono);font-size:28px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.big small{font-size:14px;color:var(--muted);font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.neutral{background:var(--sunk);color:var(--muted)}
+.today-items{display:flex;flex-wrap:wrap;gap:6px}
+.sbadge{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px 3px 8px;border-radius:6px;background:var(--sunk)}
+.sbadge i{width:8px;height:8px;border-radius:2px;background:var(--c)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.done{background:var(--good-soft);border-color:transparent;color:var(--good)}
+.pace-rows{display:flex;flex-direction:column;gap:6px}
+.pace-row{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;font-size:12px}
+.bar{height:8px;border-radius:4px;background:var(--sunk);position:relative;overflow:hidden}
+.bar>span{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:4px}
+.bar>em{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--fg);opacity:.55}
+
+/* timeline */
+.timeline{position:relative;display:flex;height:44px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.tl-seg{display:flex;flex-direction:column;justify-content:center;padding:0 10px;min-width:0;font-size:12px;border-right:1px solid var(--bg);overflow:hidden}
+.tl-seg b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-seg span{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-seg.p1{background:color-mix(in srgb,var(--accent) 14%,var(--surface))}
+.tl-seg.p2{background:color-mix(in srgb,var(--accent) 24%,var(--surface))}
+.tl-seg.p3{background:color-mix(in srgb,var(--accent) 34%,var(--surface))}
+.tl-seg.p4{background:color-mix(in srgb,var(--s-pm) 26%,var(--surface))}
+.tl-seg.p5{background:color-mix(in srgb,var(--s-pm) 40%,var(--surface))}
+.tl-now{position:absolute;top:0;bottom:0;width:2px;background:var(--fg)}
+.tl-now::after{content:"오늘";position:absolute;top:2px;left:4px;font-size:10px;font-weight:700;background:var(--fg);color:var(--bg);padding:0 4px;border-radius:3px}
+.tl-legend{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px;font-size:12px}
+.tl-legend div{min-width:0}
+.tl-legend b{display:block}
+
+/* calendar + day panel */
+.cal-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:16px;align-items:start}
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-nav .btn{padding:4px 10px}
+.cal-title{font-weight:700;font-size:16px;min-width:110px;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-dow{font-size:11px;font-weight:600;color:var(--muted);text-align:center;padding-bottom:2px}
+.cal-dow.sun{color:var(--bad)}
+.day{position:relative;min-height:86px;border-radius:7px;border:1px solid var(--line);padding:5px 6px;text-align:left;display:flex;flex-direction:column;gap:3px;min-width:0;background:var(--surface);overflow:hidden}
+.day:hover{border-color:var(--muted)}
+.day.out{visibility:hidden}
+.day.off{background:var(--sunk);opacity:.55;cursor:default}
+.day.sel{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.day.is-today .dn{background:var(--fg);color:var(--bg);border-radius:4px;padding:0 4px}
+.day .heat{position:absolute;inset:0;pointer-events:none}
+.day .top{display:flex;justify-content:space-between;align-items:center;gap:4px;position:relative}
+.dn{font-family:var(--font-mono);font-size:12px;font-weight:600}
+.dh{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--accent)}
+.dplan{position:relative;font-size:10.5px;line-height:1.3;color:var(--muted);display:flex;flex-direction:column;gap:1px}
+.dplan span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:3px}
+.dplan i{flex:none;width:6px;height:6px;border-radius:2px;background:var(--c)}
+.dcheck{position:absolute;right:5px;bottom:4px;font-size:11px;font-weight:700;color:var(--good)}
+.dmemo{position:absolute;left:6px;bottom:5px;width:6px;height:6px;border-radius:50%;background:var(--warn)}
+.cal-foot{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+.cal-foot span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+.dp{display:flex;flex-direction:column;gap:14px;position:sticky;top:12px}
+.dp-date{font-size:18px;font-weight:700}
+.dp-plan{background:var(--sunk);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.dp-plan .what{font-size:12px;color:var(--muted)}
+.hours{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.hrow{display:grid;grid-template-columns:8px minmax(0,1fr) 64px;align-items:center;gap:7px;font-size:12.5px}
+.hrow i{width:8px;height:8px;border-radius:2px;background:var(--c)}
+.hrow label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hrow input{width:64px;font:inherit;font-family:var(--font-mono);font-size:13px;text-align:right;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+.hrow input.has{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,var(--surface))}
+textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.dp-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);padding-top:10px}
+.save-state{font-size:12px;color:var(--muted)}
+
+/* subjects */
+.subjects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.subj{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0;box-shadow:inset 3px 0 0 var(--c)}
+.subj-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.subj-h h3{font-size:15px}
+.subj-meta{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.round{display:grid;grid-template-columns:30px minmax(0,1fr) 44px;gap:8px;align-items:center}
+.round .rl{font-size:11px;font-weight:700;color:var(--muted)}
+.round .rc{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:right}
+.cells{display:flex;flex-wrap:wrap;gap:3px}
+.cell{width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:var(--sunk);font-family:var(--font-mono);font-size:9px;color:var(--faint);padding:0;display:grid;place-items:center}
+.cell:hover{border-color:var(--c)}
+.cell.on{background:var(--c);border-color:var(--c);color:var(--surface)}
+.subj-tasks{display:flex;gap:6px;flex-wrap:wrap}
+.tog{font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px dashed var(--line);background:transparent;color:var(--muted)}
+.tog.on{border-style:solid;border-color:var(--good);background:var(--good-soft);color:var(--good)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:16px}
+.hbars{display:flex;flex-direction:column;gap:7px}
+.hbar{display:grid;grid-template-columns:118px minmax(0,1fr) 52px;gap:8px;align-items:center;font-size:12.5px}
+.hbar .t{height:12px;background:var(--sunk);border-radius:3px;position:relative;overflow:hidden}
+.hbar .t span{position:absolute;inset:0 auto 0 0;background:var(--c);border-radius:3px}
+.hbar .v{font-family:var(--font-mono);font-size:12px;text-align:right}
+.hbar .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-wrap{overflow-x:auto}
+.goal-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.goal-row input{width:56px;font-family:var(--font-mono);font-size:13px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);text-align:right}
+.milestones{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.ms{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:left;font-size:13px}
+.ms .box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--faint);flex:none;display:grid;place-items:center;font-size:11px;color:var(--on-accent)}
+.ms.on .box{background:var(--good);border-color:var(--good)}
+.ms.on{color:var(--muted)}
+.ms .d{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--faint)}
+.note{font-size:12px;color:var(--muted)}
+.adj{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px}
+.adj-col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.olist{display:flex;flex-direction:column;gap:4px}
+.orow{display:grid;grid-template-columns:22px 10px minmax(0,1fr) auto 34px 34px;gap:8px;align-items:center;padding:5px 6px 5px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.orow.moved{border-color:var(--accent);background:var(--accent-soft)}
+.orow .ix{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.orow i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.orow b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orow .rm{font-family:var(--font-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.orow .rm.zero{color:var(--good)}
+.otabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.otab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.otab.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.otabs .linkbtn{margin-left:auto}
+.linkbtn:disabled{color:var(--faint);cursor:default}
+.mv{width:34px;height:30px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-size:11px;padding:0}
+.mv:hover:not(:disabled){background:var(--sunk)}
+.mv:disabled{opacity:.3;cursor:default}
+.when{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px}
+.when label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.when input{accent-color:var(--accent);width:16px;height:16px;margin:0}
+.preview{background:var(--sunk);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.preview .pv-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.preview .pv-end{font-family:var(--font-mono);font-size:18px;font-weight:600}
+.pv-days{display:flex;flex-direction:column;gap:3px;font-size:12px}
+.pv-days div{display:grid;grid-template-columns:78px minmax(0,1fr);gap:8px}
+.pv-days span:first-child{font-family:var(--font-mono);color:var(--muted)}
+.pv-days span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adj-btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn:disabled{opacity:.45;cursor:default;filter:none}
+.hist{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.hist .hrow2{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.linkbtn{border:0;background:none;color:var(--accent);font-weight:600;font-size:12px;padding:4px 0}
+@media (max-width:980px){.adj{grid-template-columns:minmax(0,1fr)}}
+.speed-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.spd{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,52px);gap:6px;align-items:center;background:var(--sunk);border-radius:8px;padding:8px 10px;font-size:12px}
+.spd b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spd label{display:flex;flex-direction:column;gap:2px;font-size:10.5px;color:var(--muted);text-align:center}
+.spd input{width:100%;font-family:var(--font-mono);font-size:13px;padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);text-align:center}
+.spd .wk{grid-column:1/-1;font-size:11px;color:var(--muted)}
+.day.wkend{background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.dmini{display:none;position:relative;align-items:center;gap:2px;flex-wrap:wrap;font-family:var(--font-mono);font-size:10px;color:var(--muted)}
+.dmini i{width:6px;height:6px;border-radius:2px;background:var(--c)}
+.mnav{display:none}
+section,aside{scroll-margin-top:12px}
+@media (max-width:980px){
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .mnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+    padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+  .mnav button{border:0;background:transparent;font-size:13px;font-weight:600;padding:10px 4px;border-radius:8px;color:var(--fg)}
+  .mnav button:active{background:var(--sunk)}
+}
+@media (max-width:640px){
+  .dmini{display:flex}
+  .cell{width:26px;height:26px;font-size:10px}
+  .hrow input{width:100%;height:38px;font-size:16px}
+  .hrow{grid-template-columns:8px minmax(0,1fr) 88px}
+  textarea{font-size:16px}
+  .goal-row input,.spd input{font-size:16px}
+  h1{font-size:21px}
+  .dday b{font-size:18px}
+  .tog{padding:7px 12px}
+  .ms{padding:11px 12px}
+}
+
+@media (max-width:980px){
+  .summary{grid-template-columns:1fr 1fr}
+  .cal-layout{grid-template-columns:minmax(0,1fr)}
+  .dp{position:static}
+  .stats{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .summary{grid-template-columns:minmax(0,1fr)}
+  .subjects{grid-template-columns:minmax(0,1fr)}
+  .tl-legend{grid-template-columns:1fr 1fr}
+  .tl-seg span{display:none}
+  .day{min-height:54px;padding:3px 4px}
+  .dplan{display:none}
+  .hours{grid-template-columns:minmax(0,1fr)}
+  .hbar{grid-template-columns:90px minmax(0,1fr) 46px}
+}
+@media (prefers-reduced-motion:no-preference){.bar>span,.hbar .t span{transition:width .3s ease}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="head-l">
+      <span class="label" id="periodLabel">CFA Level I</span>
+      <h1>CFA L1 페이스메이커</h1>
+      <span class="muted" id="todayLine"></span>
+    </div>
+    <div class="head-r">
+      <button type="button" class="chip" id="sync" aria-controls="syncPanel"><span class="dot"></span><span id="syncText">불러오는 중</span></button>
+      <div class="dday"><span>학습 마감</span><b id="dday">D-0</b></div>
+    </div>
+  </header>
+
+  <section class="panel" id="syncPanel" hidden aria-label="기기 간 동기화">
+    <div class="sec-head"><h2>기기 간 동기화 · 백업</h2><span class="note" id="syncMsg"></span></div>
+    <div class="sync-grid">
+      <div id="syncBody"></div>
+      <div class="bk">
+        <span class="label">백업</span>
+        <p class="note">기록 전체를 파일로 저장하거나, 저장해 둔 파일로 되돌립니다.</p>
+        <div class="adj-btns"><button class="btn" id="bkSave" type="button">백업 파일 저장</button><label class="btn" for="bkFile">백업 불러오기</label><input id="bkFile" type="file" accept="application/json,.json" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="summary" aria-label="요약">
+    <div class="card today">
+      <div class="sec-head" style="margin:0"><span class="label" id="todayLabel">오늘의 계획</span><span class="pill neutral" id="todayPhase"></span></div>
+      <div class="today-items" id="todayItems"></div>
+      <div class="note" id="todayWhat"></div>
+      <div><button class="btn primary" id="todayDone" type="button">오늘 계획 완료</button></div>
+    </div>
+    <div class="card">
+      <span class="label">강의 페이스</span>
+      <div class="big" id="paceBig">0</div>
+      <div id="pacePill"></div>
+      <div class="pace-rows" id="paceRows"></div>
+    </div>
+    <div class="card">
+      <span class="label">누적 공부시간</span>
+      <div class="big" id="hTotal">0<small> h</small></div>
+      <div id="hPill"></div>
+      <div class="note" id="hNote"></div>
+      <div class="goal-row"><label for="goal">하루 목표</label><input id="goal" type="number" min="0" max="16" step="0.5" value="4"><span>시간</span></div>
+    </div>
+    <div class="card">
+      <span class="label">전체 진도 (3회독 기준)</span>
+      <div class="big" id="allPct">0<small>%</small></div>
+      <div class="bar"><span id="allBar" style="width:0"></span></div>
+      <div class="note" id="allNote"></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="학습 단계">
+    <div class="sec-head"><h2>학습 단계</h2><span class="note" id="endNote"></span></div>
+    <div class="timeline" id="timeline"></div>
+    <div class="tl-legend" id="tlLegend"></div>
+  </section>
+
+  <section class="panel" id="adjSec" aria-label="계획 조정">
+    <div class="sec-head"><h2>계획 조정</h2><span class="note">지난 날짜의 계획은 그대로 두고, 적용한 날부터 남은 강의만 새 순서·분량으로 다시 배치합니다</span></div>
+    <div class="adj">
+      <div class="adj-col">
+        <div class="sec-head" style="margin:0"><span class="label">과목 순서 (회독별)</span><span class="note">▲▼로 이동</span></div>
+        <div class="otabs" id="otabs" role="tablist" aria-label="회독 선택"></div>
+        <div class="olist" id="olist"></div>
+      </div>
+      <div class="adj-col">
+        <div class="sec-head" style="margin:0"><span class="label">하루 분량 (강)</span></div>
+        <div class="speed-grid" id="speedGrid"></div>
+        <div class="when" role="radiogroup" aria-label="적용 시작일">
+          <span class="label">적용 시작</span>
+          <label><input type="radio" name="when" id="whenToday" value="today" checked> 오늘부터</label>
+          <label><input type="radio" name="when" id="whenTom" value="tomorrow"> 내일부터</label>
+        </div>
+        <div class="preview" id="preview"></div>
+        <div class="adj-btns">
+          <button class="btn primary" id="applyBtn" type="button">이대로 적용</button>
+          <button class="btn" id="resetDraft" type="button">변경 취소</button>
+        </div>
+        <div class="hist" id="hist"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cal-layout" id="calSec" aria-label="달력과 기록">
+    <div class="panel">
+      <div class="sec-head">
+        <h2>학습 달력</h2>
+        <div class="cal-nav">
+          <button class="btn" id="prevM" type="button" aria-label="이전 달">‹</button>
+          <span class="cal-title num" id="monthTitle"></span>
+          <button class="btn" id="nextM" type="button" aria-label="다음 달">›</button>
+          <button class="btn" id="goToday" type="button">오늘</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-foot">
+        <span><span class="sw" style="background:rgba(var(--heat),.12)"></span>1–2h</span>
+        <span><span class="sw" style="background:rgba(var(--heat),.28)"></span>3–4h</span>
+        <span><span class="sw" style="background:rgba(var(--heat),.46)"></span>5h+</span>
+        <span><span class="sw" style="background:var(--warn);border-radius:50%;width:7px;height:7px"></span>메모 있음</span>
+        <span style="color:var(--good);font-weight:700">✓ 계획 완료</span>
+      </div>
+    </div>
+
+    <aside class="panel dp" id="dayPanel" aria-label="선택한 날 기록">
+      <div>
+        <span class="label" id="dpPhase"></span>
+        <div class="dp-date" id="dpDate"></div>
+      </div>
+      <div class="dp-plan">
+        <div class="today-items" id="dpItems"></div>
+        <div class="what" id="dpWhat"></div>
+        <div><button class="btn" id="dpDone" type="button">계획 완료 체크</button></div>
+      </div>
+      <div>
+        <div class="sec-head" style="margin-bottom:8px"><span class="label">과목별 공부 시간 (h)</span><span class="note">0.5 단위</span></div>
+        <div class="hours" id="hours"></div>
+      </div>
+      <div>
+        <label class="label" for="memo" style="display:block;margin-bottom:6px">메모</label>
+        <textarea id="memo" placeholder="오늘 배운 핵심, 헷갈린 개념, 오답 포인트를 적어두세요"></textarea>
+      </div>
+      <div class="dp-total">
+        <span class="save-state" id="saveState">입력하면 자동 저장됩니다</span>
+        <span><span class="note">합계 </span><b class="num" id="dpTotal" style="font-size:18px">0.0</b><span class="note"> h</span></span>
+      </div>
+    </aside>
+  </section>
+
+  <section id="subjSec" aria-label="과목별 진도">
+    <div class="sec-head"><h2>과목별 진도표</h2><span class="note">칸을 누르면 해당 강의를 완료로 표시합니다 · R1 강의+슈바이저 노트 · R2 슈바이저 재독+Ecosystem · R3 요약·오답+QBank</span></div>
+    <div class="subjects" id="subjects"></div>
+  </section>
+
+  <section class="panel" aria-label="모의고사와 파이널">
+    <div class="sec-head"><h2>Mock Exams · Final Review</h2><span class="note">완료하면 체크하세요</span></div>
+    <div class="milestones" id="milestones"></div>
+  </section>
+
+  <section class="stats" id="statSec" aria-label="공부시간 통계">
+    <div class="panel">
+      <div class="sec-head"><h2>과목별 누적 시간</h2><span class="note">괄호는 시험 비중</span></div>
+      <div class="hbars" id="subjHours"></div>
+    </div>
+    <div class="panel">
+      <div class="sec-head"><h2>주간 공부 시간</h2><span class="note" id="wkNote"></span></div>
+      <div class="wk-wrap"><svg id="weekly" width="100%" height="200" role="img" aria-label="주별 공부 시간 막대그래프"></svg></div>
+    </div>
+  </section>
+</div>
+<nav class="mnav" aria-label="빠른 이동">
+  <button type="button" data-go="dayPanel">오늘 기록</button>
+  <button type="button" data-go="calSec">달력</button>
+  <button type="button" data-go="subjSec">진도표</button>
+  <button type="button" data-go="statSec">통계</button>
+  <button type="button" data-go="adjSec">계획 조정</button>
+</nav>
+
+<script>
+(() => {
+'use strict';
+const SUBJ = [
+  {k:'fsa', n:'FSA', full:'Financial Statement Analysis', L:24, w:'11–14%'},
+  {k:'equity', n:'Equity', full:'Equity Investments', L:21, w:'11–14%'},
+  {k:'corp', n:'Corp', full:'Corporate Issuers', L:13, w:'6–9%'},
+  {k:'fi', n:'FI', full:'Fixed Income', L:26, w:'11–14%'},
+  {k:'deriv', n:'Deriv', full:'Derivatives', L:15, w:'5–8%'},
+  {k:'econ', n:'Econ', full:'Economics', L:15, w:'6–9%'},
+  {k:'pm', n:'PM', full:'Portfolio Management', L:11, w:'8–12%'},
+  {k:'quant', n:'Quant', full:'Quantitative Methods', L:20, w:'6–9%'},
+  {k:'alt', n:'Alt', full:'Alternative Investments', L:15, w:'7–10%'},
+  {k:'ethics', n:'Ethics', full:'Ethics & Professional Standards', L:15, w:'15–20%'},
+];
+const SMAP = Object.fromEntries(SUBJ.map(s => [s.k, s]));
+const col = k => `var(--s-${k})`;
+const START = '2026-11-15', ORIG_END = '2027-04-30';
+let END, PHASES, PLAN, ALL_DAYS, MONTHS;
+const PH_TXT = {
+  1:['1회독','강의 + 슈바이저 노트 + 모듈 퀴즈'], 2:['2회독','슈바이저 노트 재독 + Ecosystem 연습문제'],
+  3:['3회독','요약 노트·오답 정리 + Schweser QBank'], 4:['Mock Exams','주말 모의고사 · 평일 오답 분석'],
+  5:['Final Review','과목별 최종 정리 · 공식 · Ethics'],
+};
+// [평일, 토, 일] lectures per day for each round
+const DEF_CFG = {r1:[1,3,3], r2:[1,5,5], r3:[1,8,8]};
+const MOCKS = ['Schweser Mock 1','Schweser Mock 2','CFAI Mock A','CFAI Mock B','Schweser Mock 3','Schweser Mock 4'];
+const FINAL = ['Final: Ethics 전체 (Standards I–VII · GIPS)','Final: FSA + Corporate Issuers','Final: Fixed Income 공식·개념',
+  'Final: Derivatives + Alt','Final: Equity + PM','Final: Quant 공식','Final: Economics 핵심',
+  'Final: 공식집 + 오답노트 전체','Final: Ethics 재정리 · 컨디션 관리'];
+const WHAT = {1:'강의 수강 → 슈바이저 노트 해당 범위 읽기 → 모듈 퀴즈', 2:'슈바이저 노트 재독 → Ecosystem 연습문제(Practice Questions)', 3:'요약 노트·오답 위주 빠른 회독 → Schweser QBank'};
+
+// ---------- dates ----------
+const pad = n => String(n).padStart(2,'0');
+const ds = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const pd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const addD = (s, n) => { const d = pd(s); d.setDate(d.getDate()+n); return ds(d); };
+const range = (a, b) => { const out = []; for (let s = a; s <= b; s = addD(s,1)) out.push(s); return out; };
+const diffD = (a, b) => Math.round((pd(b) - pd(a)) / 86400000);
+const DOW = ['일','월','화','수','목','금','토'];
+const fmtLong = s => { const d = pd(s); return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`; };
+const TODAY = ds(new Date());
+
+// ---------- plan ----------
+const UNITS = []; SUBJ.forEach(s => { for (let i = 1; i <= s.L; i++) UNITS.push({s:s.k, i}); });
+function itemLabel(it){ return `${SMAP[it.s].n} ${it.a === it.b ? it.a : it.a+'–'+it.b}`; }
+function cleanCfg(c){
+  const o = {};
+  for (const r of ['r1','r2','r3']) {
+    const src = (c && Array.isArray(c[r])) ? c[r] : DEF_CFG[r];
+    o[r] = [0,1,2].map(i => { const v = Math.floor(+src[i]); return isFinite(v) ? Math.max(0, Math.min(v, 30)) : DEF_CFG[r][i]; });
+    if (o[r][0] + o[r][1] + o[r][2] === 0) o[r] = DEF_CFG[r].slice();
+  }
+  return o;
+}
+const DEF_ORDER = ['fsa','equity','corp','fi','deriv','econ','pm','quant','alt','ethics'];
+const validOrder = o => Array.isArray(o) && o.length === SUBJ.length && new Set(o).size === SUBJ.length && o.every(k => SMAP[k]);
+function cleanOrders(orders, legacy){
+  const base = validOrder(legacy) ? legacy : DEF_ORDER;
+  const o = {};
+  for (const r of [1,2,3]) o[r] = (orders && validOrder(orders[r])) ? orders[r].slice() : base.slice();
+  return o;
+}
+const basePlan = cfg => ({from:START, orders:cleanOrders(null), cfg:cleanCfg(cfg), rem:null, mocksDone:[], at:START});
+const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+// A plan version: from this date on, lay out the lectures still remaining (rem) in this order at this pace.
+function cleanPlans(arr){
+  if (!Array.isArray(arr) || !arr.length) return null;
+  const out = arr.filter(p => p && isDate(p.from)).map(p => ({
+    from: p.from < START ? START : p.from,
+    orders: cleanOrders(p.orders, p.order),
+    cfg: cleanCfg(p.cfg),
+    rem: p.rem && typeof p.rem === 'object' ? p.rem : null,
+    mocksDone: Array.isArray(p.mocksDone) ? p.mocksDone.filter(i => Number.isInteger(i)) : [],
+    at: isDate(p.at) ? p.at : p.from,
+  })).sort((a, b) => a.from < b.from ? -1 : a.from > b.from ? 1 : 0);
+  if (!out.length) return null;
+  out[0].from = START;
+  const ded = [];
+  out.forEach(p => { if (ded.length && ded[ded.length-1].from === p.from) ded[ded.length-1] = p; else ded.push(p); });
+  return ded;
+}
+const isRem = (rem, r, s, i) => { if (!rem) return true; const str = rem[r] && rem[r][s]; return typeof str === 'string' ? str[i-1] !== '0' : true; };
+const remCount = (rem, r, s) => { let n = 0; for (const x of (s ? [SMAP[s]] : SUBJ)) for (let i = 1; i <= x.L; i++) if (isRem(rem, r, x.k, i)) n++; return n; };
+function snapshotRem(){ const o = {}; for (const r of [1,2,3]) { o[r] = {}; for (const s of SUBJ) { let t = ''; for (let i = 1; i <= s.L; i++) t += S.c[key(s.k, r, i)] ? '0' : '1'; o[r][s.k] = t; } } return o; }
+const STOP = {};
+function genSegment(pl, until, P){
+  let d = pl.from;
+  const set = o => { if (until && d >= until) throw STOP; P[d] = o; d = addD(d,1); };
+  const cap = (r, day) => { const w = pd(day).getDay(); const c = pl.cfg['r'+r]; return w === 6 ? c[1] : w === 0 ? c[2] : c[0]; };
+  for (const r of [1,2,3]) {
+    const units = []; pl.orders[r].forEach(s => { for (let i = 1; i <= SMAP[s].L; i++) if (isRem(pl.rem, r, s, i)) units.push({s, i}); });
+    let k = 0;
+    while (k < units.length) {
+      const n = cap(r, d);
+      if (n > 0) {
+        const items = [];
+        units.slice(k, k+n).forEach(u => { const last = items[items.length-1]; if (last && last.s === u.s && last.b === u.i - 1) last.b = u.i; else items.push({s:u.s, r, a:u.i, b:u.i}); });
+        k += n;
+        set({phase:r, kind:'lec', items, label: items.map(itemLabel).join(' · ')});
+      } else set({phase:r, kind:'review', label:'휴식 · 밀린 분량 따라잡기', items:[]});
+    }
+  }
+  // mocks on weekends, weekday review of the mocks just taken
+  const left = MOCKS.map((_, i) => i).filter(i => !pl.mocksDone.includes(i));
+  let mi = 0, alt = 0; const pending = [];
+  while (true) {
+    const w = pd(d).getDay();
+    if (w === 6 || w === 0) {
+      if (mi >= left.length) { if (w === 6) break; set({phase:4, kind:'task', label:'약점 과목 보강', items:[]}); }
+      else { const i = left[mi++]; set({phase:4, kind:'mock', label:MOCKS[i], mk:'mock|'+i, items:[]}); pending.push(MOCKS[i]); }
+    } else {
+      if (mi >= left.length && !pending.length && !left.length) break;
+      set({phase:4, kind:'task', label: pending.length ? pending.shift() + ' 오답 분석' : (alt++ % 2 ? '오답노트·공식 정리' : '약점 과목 보강'), items:[]});
+    }
+  }
+  FINAL.forEach((l, i) => set({phase:5, kind:'task', label:l, mk:'fr|'+i, items:[]}));
+}
+function compute(plans){
+  const P = {};
+  plans.forEach((pl, idx) => { try { genSegment(pl, plans[idx+1] ? plans[idx+1].from : null, P); } catch (e) { if (e !== STOP) throw e; } });
+  const days = Object.keys(P).sort();
+  const end = days[days.length-1];
+  const phases = [];
+  for (const id of [1,2,3,4,5]) { const ds2 = days.filter(d => P[d].phase === id); if (ds2.length) phases.push({id, a:ds2[0], b:ds2[ds2.length-1], t:PH_TXT[id][0], d:PH_TXT[id][1]}); }
+  const months = []; for (let m = START.slice(0,7); m <= end.slice(0,7); ) { months.push(m); const [y, mm] = m.split('-').map(Number); m = mm === 12 ? `${y+1}-01` : `${y}-${pad(mm+1)}`; }
+  return {plan:P, end, phases, all:range(START, end), months};
+}
+function rebuild(){ const o = compute(S.plans); PLAN = o.plan; END = o.end; PHASES = o.phases; ALL_DAYS = o.all; MONTHS = o.months; }
+const curPlan = () => S.plans[S.plans.length-1];
+// planned-by-date: what was already done when the active plan version started, plus what that version scheduled up to the date
+const roundPlanTotalBy = (r, date) => {
+  if (date < START) return 0;
+  const ref = addD(date, 1); // the version in force today, even if it starts today
+  const pl = [...S.plans].reverse().find(p => p.from <= ref) || S.plans[0];
+  let n = UNITS.length - remCount(pl.rem, r);
+  for (const d of ALL_DAYS) { if (d < pl.from) continue; if (d > date) break; const p = PLAN[d]; if (p && p.kind === 'lec') p.items.forEach(it => { if (it.r === r) n += it.b - it.a + 1; }); }
+  return n;
+};
+
+// ---------- state ----------
+const LS_KEY = 'cfa-l1-pacer-v1', GKEY = 'cfa-l1-pacer-gist', GFILE = 'cfa-l1-pacer.json';
+let gist = null; try { gist = JSON.parse(localStorage.getItem(GKEY) || 'null'); } catch(e) {}
+let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0};
+try { const raw = localStorage.getItem(LS_KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
+S.plans = cleanPlans(S.plans) || [basePlan(S.cfg)];
+delete S.cfg;
+rebuild();
+let db = null, uid = null, mode = 'local';
+const writeLS = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e) {} };
+const saveLocal = () => { S.updatedAt = Date.now(); writeLS(); schedulePush(); };
+const timers = {}, inflight = {};
+function persist(docId, getData){
+  saveLocal();
+  if (mode !== 'db') return;
+  clearTimeout(timers[docId]);
+  timers[docId] = setTimeout(async function run(){
+    if (inflight[docId]) { timers[docId] = setTimeout(run, 300); return; }
+    inflight[docId] = true; setSave('저장 중…');
+    try { await db.collection(`data/users/${uid}`).doc(docId).set(getData()); setSave('저장됨'); }
+    catch(e){ if (e && e.code === 'unavailable') { setTimeout(run, 800 + Math.random()*800); } else setSave('저장 실패 · 이 브라우저에는 보관됨'); }
+    finally { inflight[docId] = false; }
+  }, 700);
+}
+const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans}));
+const saveLog = d => persist('d'+d, () => ({date:d, h:(S.logs[d]||{}).h||{}, memo:(S.logs[d]||{}).memo||'', at:Date.now()}));
+const $ = id => document.getElementById(id);
+function setSave(t){ $('saveState').textContent = t; }
+function setSync(){
+  const c = $('sync');
+  const g = mode !== 'db' && gist && gist.id;
+  c.className = 'chip ' + (mode === 'db' || g ? 'ok' : 'local');
+  $('syncText').textContent = mode === 'db' ? '계정에 저장 · 기기 간 동기화' : g ? 'GitHub 동기화 켜짐' : '이 기기에만 저장 · 동기화 설정';
+  c.disabled = mode === 'db';
+  if (mode === 'db') $('syncPanel').hidden = true;
+}
+
+// ---------- helpers ----------
+const key = (s, r, i) => `${s}|${r}|${i}`;
+const doneRound = r => { let n = 0; for (const u of UNITS) if (S.c[key(u.s, r, u.i)]) n++; return n; };
+const doneSubj = (s, r) => { let n = 0; for (let i = 1; i <= SMAP[s].L; i++) if (S.c[key(s, r, i)]) n++; return n; };
+const dayHours = d => { const h = (S.logs[d]||{}).h || {}; return Object.values(h).reduce((a,b) => a + (+b||0), 0); };
+const mkey = d => PLAN[d].mk || 'day|'+d;
+const planDone = d => { const p = PLAN[d]; if (!p) return false; if (p.kind === 'lec') return p.items.every(it => { for (let i = it.a; i <= it.b; i++) if (!S.c[key(it.s, it.r, i)]) return false; return true; }); return !!S.m[mkey(d)]; };
+function togglePlan(d){
+  const p = PLAN[d]; if (!p) return;
+  if (p.kind === 'lec') { const v = !planDone(d); p.items.forEach(it => { for (let i = it.a; i <= it.b; i++) { if (v) S.c[key(it.s,it.r,i)] = 1; else delete S.c[key(it.s,it.r,i)]; } }); }
+  else { const k = mkey(d); if (S.m[k]) delete S.m[k]; else S.m[k] = 1; }
+  saveProgress(); renderAll();
+}
+const fmtH = h => (Math.round(h*10)/10).toFixed(1);
+function badges(p){
+  if (!p) return '<span class="sbadge">학습 기간 밖</span>';
+  if (p.kind === 'lec') return p.items.map(it => `<span class="sbadge" style="--c:${col(it.s)}"><i></i>${itemLabel(it)}</span>`).join('');
+  return `<span class="sbadge">${p.label}</span>`;
+}
+const whatText = p => !p ? '' : p.kind === 'lec' ? `R${p.phase} · ${WHAT[p.phase]}${p.items.reduce((a,it) => a + it.b - it.a + 1, 0) > 1 ? ' · 주말 집중' : ''}` : p.kind === 'review' ? '이번 주 복습, 밀린 분량 따라잡기' : p.kind === 'mock' ? '실전처럼 2세션(각 2시간 15분, 총 180문항) 시간 재고 풀기' : PH_TXT[p.phase][1];
+
+// ---------- render: header + summary ----------
+const clampDay = d => d < START ? START : d > END ? END : d;
+function renderHeader(){
+  const dot = s => s.replace(/-/g,'.');
+  $('periodLabel').textContent = `CFA Level I · ${dot(START)} – ${dot(END)}`;
+  const ext = diffD(ORIG_END, END);
+  $('endNote').innerHTML = `총 ${ALL_DAYS.length}일 · 종료 <b class="num">${dot(END)}</b> · 기존 2027.04.30 대비 <b>${ext >= 0 ? '+' : ''}${ext}일</b>`;
+  const left = diffD(TODAY, END);
+  $('dday').textContent = left > 0 ? `D-${left}` : left === 0 ? 'D-DAY' : '종료';
+  $('todayLine').textContent = TODAY < START ? `${fmtLong(TODAY)} · 시작까지 ${diffD(TODAY, START)}일` : fmtLong(TODAY);
+}
+function renderSummary(){
+  const ref = clampDay(TODAY), p = PLAN[ref];
+  $('todayLabel').textContent = TODAY < START ? `첫날 계획 · ${ref.slice(5).replace('-','/')}` : TODAY > END ? '마지막 날 계획' : '오늘의 계획';
+  $('todayPhase').textContent = p ? PH_TXT[p.phase][0] : '';
+  $('todayItems').innerHTML = badges(p);
+  $('todayWhat').textContent = whatText(p);
+  const dn = planDone(ref);
+  $('todayDone').textContent = dn ? '완료됨 ✓ (취소하려면 누르기)' : '오늘 계획 완료';
+  $('todayDone').className = 'btn ' + (dn ? 'done' : 'primary');
+
+  // lecture pace
+  const asOf = addD(TODAY, -1); // planned through yesterday; today's work counts as ahead
+  let planned = 0, done = 0, rows = '';
+  for (const r of [1,2,3]) {
+    const pl = roundPlanTotalBy(r, asOf), dn2 = doneRound(r), N = UNITS.length;
+    planned += pl; done += dn2;
+    rows += `<div class="pace-row"><span class="num">R${r}</span><div class="bar"><span style="width:${dn2/N*100}%"></span>${pl ? `<em style="left:${Math.min(pl/N*100,99.5)}%" title="계획선"></em>` : ''}</div><span class="num muted">${dn2}/${pl}</span></div>`;
+  }
+  $('paceRows').innerHTML = rows;
+  const delta = done - planned;
+  $('paceBig').innerHTML = `${delta > 0 ? '+' : ''}${delta}<small> 강</small>`;
+  $('pacePill').innerHTML = planned === 0 && done === 0 ? '<span class="pill neutral">11/15부터 시작</span>'
+    : delta === 0 ? '<span class="pill good">계획대로 진행 중</span>'
+    : delta > 0 ? `<span class="pill good">계획보다 ${delta}강 앞섬</span>`
+    : delta >= -5 ? `<span class="pill warn">${-delta}강 뒤처짐 · 주말에 만회 가능</span>`
+    : `<span class="pill bad">${-delta}강 뒤처짐 · 아래 계획 조정에서 다시 배치해 보세요</span>`;
+
+  // hours
+  const total = Object.keys(S.logs).reduce((a,d) => a + dayHours(d), 0);
+  $('hTotal').innerHTML = `${fmtH(total)}<small> h</small>`;
+  const elapsed = TODAY < START ? 0 : Math.min(diffD(START, TODAY) + 1, ALL_DAYS.length);
+  const target = elapsed * (S.goal||0);
+  const mon = (() => { const d = pd(TODAY); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return ds(d); })();
+  let week = 0; for (let i = 0; i < 7; i++) week += dayHours(addD(mon, i));
+  const logged = Object.keys(S.logs).filter(d => dayHours(d) > 0).length;
+  $('hPill').innerHTML = elapsed === 0 ? `<span class="pill neutral">목표 총 ${Math.round(ALL_DAYS.length*(S.goal||0))}h</span>`
+    : total >= target ? `<span class="pill good">목표 ${fmtH(target)}h 달성</span>` : `<span class="pill ${total >= target*0.8 ? 'warn' : 'bad'}">목표 대비 ${fmtH(target-total)}h 부족</span>`;
+  $('hNote').textContent = `이번 주 ${fmtH(week)}h · 기록한 날 ${logged}일 · 하루 평균 ${logged ? fmtH(total/logged) : '0.0'}h`;
+
+  const all = UNITS.length * 3, d3 = doneRound(1) + doneRound(2) + doneRound(3);
+  $('allPct').innerHTML = `${Math.round(d3/all*100)}<small>%</small>`;
+  $('allBar').style.width = (d3/all*100) + '%';
+  const mdone = MOCKS.filter((_, i) => S.m['mock|'+i]).length;
+  $('allNote').textContent = `${d3} / ${all}강 (175강 × 3회독) · 모의고사 ${mdone}/${MOCKS.length}`;
+}
+
+// ---------- timeline ----------
+function renderTimeline(){
+  const tot = ALL_DAYS.length;
+  let h = PHASES.map(p => { const n = diffD(p.a, p.b) + 1; return `<div class="tl-seg p${p.id}" style="flex:${n}"><b>${p.t}</b><span>${p.a.slice(5).replace('-','/')}–${p.b.slice(5).replace('-','/')}</span></div>`; }).join('');
+  if (TODAY >= START && TODAY <= END) h += `<div class="tl-now" style="left:${(diffD(START, TODAY)+0.5)/tot*100}%"></div>`;
+  $('timeline').innerHTML = h;
+  $('tlLegend').innerHTML = PHASES.map(p => `<div><b>${p.t} · ${diffD(p.a,p.b)+1}일</b><span class="muted">${p.d}</span></div>`).join('');
+}
+
+// ---------- calendar ----------
+let curM = clampDay(TODAY).slice(0,7), sel = clampDay(TODAY);
+function renderCal(){
+  const [y, m] = curM.split('-').map(Number);
+  $('monthTitle').textContent = `${y}. ${pad(m)}`;
+  $('prevM').disabled = curM === MONTHS[0]; $('nextM').disabled = curM === MONTHS[MONTHS.length-1];
+  const first = new Date(y, m-1, 1), last = new Date(y, m, 0).getDate();
+  let h = DOW.map((d,i) => `<div class="cal-dow${i===0?' sun':''}">${d}</div>`).join('');
+  for (let i = 0; i < first.getDay(); i++) h += '<div class="day out" aria-hidden="true"></div>';
+  for (let dd = 1; dd <= last; dd++) {
+    const d = `${y}-${pad(m)}-${pad(dd)}`, p = PLAN[d];
+    if (!p) { h += `<div class="day off"><div class="top"><span class="dn">${dd}</span></div></div>`; continue; }
+    const hrs = dayHours(d), memo = ((S.logs[d]||{}).memo||'').trim();
+    const a = hrs >= 5 ? .46 : hrs >= 3 ? .28 : hrs > 0 ? .12 : 0;
+    const lines = p.kind === 'lec' ? p.items.map(it => `<span style="--c:${col(it.s)}"><i></i>${itemLabel(it)}</span>`).join('') : `<span>${p.label}</span>`;
+    const we = [0,6].includes(pd(d).getDay());
+    h += `<button type="button" class="day${we?' wkend':''}${d===sel?' sel':''}${d===TODAY?' is-today':''}" data-d="${d}" aria-label="${fmtLong(d)} ${p.label}${hrs ? ', '+fmtH(hrs)+'시간' : ''}">
+      ${a ? `<span class="heat" style="background:rgba(var(--heat),${a})"></span>` : ''}
+      <div class="top"><span class="dn">${dd}</span>${hrs ? `<span class="dh">${fmtH(hrs)}h</span>` : ''}</div>
+      <div class="dplan">${lines}</div>
+      <div class="dmini">${p.kind === 'lec' ? p.items.map(it => `<i style="--c:${col(it.s)}"></i>`).join('') + `<span>${p.items.reduce((a,it) => a + it.b - it.a + 1, 0)}</span>` : p.kind === 'mock' ? '<span>M</span>' : ''}</div>
+      ${planDone(d) ? '<span class="dcheck">✓</span>' : ''}${memo ? '<span class="dmemo"></span>' : ''}
+    </button>`;
+  }
+  $('calGrid').innerHTML = h;
+}
+$('calGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-d]'); if (!b) return; sel = b.dataset.d; renderCal(); renderDay();
+  if (window.matchMedia('(max-width:980px)').matches) { const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches; $('dayPanel').scrollIntoView({behavior: rm ? 'auto' : 'smooth', block:'start'}); }
+});
+document.querySelector('.mnav').addEventListener('click', e => {
+  const b = e.target.closest('[data-go]'); if (!b) return;
+  if (b.dataset.go === 'dayPanel') { sel = clampDay(TODAY); curM = sel.slice(0,7); renderCal(); renderDay(); }
+  const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $(b.dataset.go).scrollIntoView({behavior: rm ? 'auto' : 'smooth', block:'start'});
+});
+$('prevM').onclick = () => { const i = MONTHS.indexOf(curM); if (i > 0) { curM = MONTHS[i-1]; renderCal(); } };
+$('nextM').onclick = () => { const i = MONTHS.indexOf(curM); if (i < MONTHS.length-1) { curM = MONTHS[i+1]; renderCal(); } };
+$('goToday').onclick = () => { sel = clampDay(TODAY); curM = sel.slice(0,7); renderCal(); renderDay(); };
+
+// ---------- day panel ----------
+let hoursSig = '';
+function renderHoursInputs(){
+  const sig = ordered().map(s => s.k).join(); if (sig === hoursSig) return; hoursSig = sig;
+  $('hours').innerHTML = ordered().map(s => `<div class="hrow" style="--c:${col(s.k)}"><i></i><label for="h-${s.k}" title="${s.full}">${s.full.replace(' & Professional Standards','').replace('Financial Statement Analysis','FSA').replace('Quantitative Methods','Quant')}</label><input id="h-${s.k}" data-s="${s.k}" type="number" inputmode="decimal" min="0" max="16" step="0.5" placeholder="0"></div>`).join('');
+}
+function renderDay(){
+  const p = PLAN[sel], log = S.logs[sel] || {};
+  $('dpDate').textContent = fmtLong(sel) + (sel === TODAY ? ' · 오늘' : '');
+  $('dpPhase').textContent = p ? `${PH_TXT[p.phase][0]} · ${PH_TXT[p.phase][1]}` : '';
+  $('dpItems').innerHTML = badges(p);
+  $('dpWhat').textContent = whatText(p);
+  const dn = planDone(sel);
+  $('dpDone').textContent = dn ? '완료됨 ✓' : '계획 완료 체크';
+  $('dpDone').className = 'btn ' + (dn ? 'done' : '');
+  SUBJ.forEach(s => { const inp = $('h-'+s.k); if (document.activeElement !== inp) { const v = (log.h||{})[s.k]; inp.value = v ? v : ''; } inp.classList.toggle('has', !!(log.h||{})[s.k]); });
+  if (document.activeElement !== $('memo')) $('memo').value = log.memo || '';
+  $('dpTotal').textContent = fmtH(dayHours(sel));
+}
+$('hours').addEventListener('input', e => {
+  const inp = e.target.closest('input[data-s]'); if (!inp) return;
+  let v = parseFloat(inp.value); v = isFinite(v) && v > 0 ? Math.min(v, 16) : 0;
+  const log = S.logs[sel] = S.logs[sel] || {h:{}, memo:''}; log.h = log.h || {};
+  if (v) log.h[inp.dataset.s] = v; else delete log.h[inp.dataset.s];
+  inp.classList.toggle('has', !!v);
+  $('dpTotal').textContent = fmtH(dayHours(sel));
+  saveLog(sel); renderCal(); renderSummary(); renderStats();
+});
+$('memo').addEventListener('input', () => {
+  const log = S.logs[sel] = S.logs[sel] || {h:{}, memo:''}; log.memo = $('memo').value;
+  saveLog(sel); renderCal();
+});
+$('dpDone').onclick = () => togglePlan(sel);
+$('todayDone').onclick = () => togglePlan(clampDay(TODAY));
+$('goal').addEventListener('input', () => { const v = parseFloat($('goal').value); S.goal = isFinite(v) && v >= 0 ? v : 0; saveProgress(); renderSummary(); renderStats(); });
+
+// ---------- subjects ----------
+function renderSubjects(){
+  const hrs = subjHours();
+  $('subjects').innerHTML = ordered().map(s => {
+    const rounds = [1,2,3].map(r => {
+      let cells = ''; for (let i = 1; i <= s.L; i++) cells += `<button type="button" class="cell${S.c[key(s.k,r,i)] ? ' on' : ''}" data-k="${key(s.k,r,i)}" aria-label="${s.n} R${r} 강의 ${i}" aria-pressed="${!!S.c[key(s.k,r,i)]}">${i}</button>`;
+      return `<div class="round"><span class="rl">R${r}</span><div class="cells">${cells}</div><span class="rc">${doneSubj(s.k,r)}/${s.L}</span></div>`;
+    }).join('');
+    const tog = (k, t) => `<button type="button" class="tog${S.m[k] ? ' on' : ''}" data-m="${k}" aria-pressed="${!!S.m[k]}">${S.m[k] ? '✓ ' : ''}${t}</button>`;
+    return `<div class="subj" style="--c:${col(s.k)}">
+      <div class="subj-h"><h3>${s.full}</h3><div class="subj-meta"><span>${s.L}강</span><span>비중 ${s.w}</span><span class="num">${fmtH(hrs[s.k])}h</span></div></div>
+      ${rounds}
+      <div class="subj-tasks">${tog('sch|'+s.k,'슈바이저 노트')}${tog('eco|'+s.k,'Ecosystem 문제')}${tog('qb|'+s.k,'QBank')}</div>
+    </div>`;
+  }).join('');
+}
+$('subjects').addEventListener('click', e => {
+  const c = e.target.closest('[data-k]'), t = e.target.closest('[data-m]');
+  if (c) { const k = c.dataset.k; if (S.c[k]) delete S.c[k]; else S.c[k] = 1; }
+  else if (t) { const k = t.dataset.m; if (S.m[k]) delete S.m[k]; else S.m[k] = 1; }
+  else return;
+  saveProgress(); renderAll();
+});
+
+// ---------- milestones ----------
+function renderMilestones(){
+  $('milestones').innerHTML = ALL_DAYS.filter(d => PLAN[d] && PLAN[d].mk).map(d => {
+    const k = PLAN[d].mk, on = !!S.m[k];
+    return `<button type="button" class="ms${on ? ' on' : ''}" data-mk="${k}" aria-pressed="${on}"><span class="box">${on ? '✓' : ''}</span><span>${PLAN[d].label.replace('Final: ','')}</span><span class="d">${d.slice(2).replace(/-/g,'/')}</span></button>`;
+  }).join('');
+}
+$('milestones').addEventListener('click', e => { const b = e.target.closest('[data-mk]'); if (!b) return; const k = b.dataset.mk; if (S.m[k]) delete S.m[k]; else S.m[k] = 1; saveProgress(); renderAll(); });
+
+// ---------- stats ----------
+function subjHours(){ const o = Object.fromEntries(SUBJ.map(s => [s.k, 0])); for (const d in S.logs) { const h = S.logs[d].h || {}; for (const k in h) if (k in o) o[k] += +h[k] || 0; } return o; }
+function renderStats(){
+  const hrs = subjHours(), mx = Math.max(1, ...Object.values(hrs));
+  $('subjHours').innerHTML = SUBJ.map(s => `<div class="hbar" style="--c:${col(s.k)}"><span class="n" title="${s.full}">${s.n} <span class="muted">(${s.w})</span></span><div class="t"><span style="width:${hrs[s.k]/mx*100}%"></span></div><span class="v">${fmtH(hrs[s.k])}h</span></div>`).join('');
+
+  // weekly bars, Monday-based
+  const weeks = []; let w = (() => { const d = pd(START); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return ds(d); })();
+  while (w <= END) { let t = 0; for (let i = 0; i < 7; i++) t += dayHours(addD(w, i)); weeks.push({w, t}); w = addD(w, 7); }
+  const svg = $('weekly'), W = Math.max(svg.clientWidth || 600, 520), H = 200, L = 34, R = 8, T = 12, B = 26;
+  const goalW = (S.goal||0) * 7, ymax = Math.max(10, goalW * 1.15, ...weeks.map(x => x.t)) ;
+  const step = ymax > 60 ? 20 : ymax > 30 ? 10 : 5, top = Math.ceil(ymax/step)*step;
+  const y = v => T + (H - T - B) * (1 - v/top), bw = (W - L - R) / weeks.length;
+  let g = '';
+  for (let v = 0; v <= top; v += step) g += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="IBM Plex Mono,monospace">${v}</text>`;
+  const curWk = weeks.findIndex(x => TODAY >= x.w && TODAY < addD(x.w,7));
+  weeks.forEach((x, i) => {
+    const bx = L + i*bw + bw*0.18, bwid = bw*0.64, cur = i === curWk;
+    if (x.t > 0) g += `<rect x="${bx}" y="${y(x.t)}" width="${bwid}" height="${y(0)-y(x.t)}" rx="2" fill="var(--accent)" opacity="${cur ? 1 : .7}"><title>${x.w} 주: ${fmtH(x.t)}h</title></rect>`;
+    else g += `<rect x="${bx}" y="${y(0)-2}" width="${bwid}" height="2" fill="var(--line)"/>`;
+    if (cur) g += `<text x="${bx+bwid/2}" y="${y(x.t)-4}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--fg)" font-family="IBM Plex Mono,monospace">${fmtH(x.t)}</text>`;
+    const d = pd(x.w); if (i % 2 === 0 || cur) g += `<text x="${bx+bwid/2}" y="${H-8}" text-anchor="middle" font-size="9.5" fill="${cur ? 'var(--fg)' : 'var(--muted)'}" font-family="IBM Plex Mono,monospace">${d.getMonth()+1}/${d.getDate()}</text>`;
+  });
+  if (goalW > 0 && goalW <= top) g += `<line x1="${L}" x2="${W-R}" y1="${y(goalW)}" y2="${y(goalW)}" stroke="var(--s-pm)" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${W-R}" y="${y(goalW)-4}" text-anchor="end" font-size="10" font-weight="600" fill="var(--s-pm)">주간 목표 ${fmtH(goalW)}h</text>`;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.style.minWidth = '520px';
+  svg.innerHTML = g;
+  $('wkNote').textContent = '월요일 시작 주 · 점선은 하루 목표 × 7';
+}
+
+// ---------- plan adjustment ----------
+let draft = null;
+let oTab = 1;
+function resetDraft(){ const c = curPlan(); draft = {orders:JSON.parse(JSON.stringify(c.orders)), cfg:JSON.parse(JSON.stringify(c.cfg))}; }
+const draftDirty = () => !!draft && (JSON.stringify(draft.orders) !== JSON.stringify(curPlan().orders) || JSON.stringify(draft.cfg) !== JSON.stringify(curPlan().cfg));
+const whenVal = () => $('whenTom').checked ? 'tomorrow' : 'today';
+function applyFrom(){ if (TODAY < START) return START; const d = whenVal() === 'tomorrow' ? addD(TODAY, 1) : TODAY; return d < START ? START : d; }
+function draftPlans(){
+  const from = applyFrom();
+  const rec = {from, orders:JSON.parse(JSON.stringify(draft.orders)), cfg:JSON.parse(JSON.stringify(draft.cfg)),
+    rem: TODAY < START ? null : snapshotRem(), mocksDone: MOCKS.map((_, i) => i).filter(i => S.m['mock|'+i]), at: TODAY < START ? START : TODAY};
+  const keep = S.plans.filter(p => p.from < from);
+  if (!keep.length) rec.from = START;
+  return keep.concat([rec]);
+}
+// the round being studied today decides the display order of subject cards and hour inputs
+const curRound = () => { const p = PLAN[clampDay(TODAY)]; return p && p.phase <= 3 ? p.phase : 1; };
+const ordered = () => { const pl = [...S.plans].reverse().find(p => p.from <= clampDay(TODAY)) || S.plans[0]; return pl.orders[curRound()].map(k => SMAP[k]); };
+function renderOrder(){
+  const cur = curPlan().orders[oTab], ord = draft.orders[oTab];
+  const same = [1,2,3].every(r => draft.orders[r].join() === ord.join());
+  $('otabs').innerHTML = [1,2,3].map(r => `<button type="button" role="tab" class="otab${r === oTab ? ' on' : ''}" data-tab="${r}" aria-selected="${r === oTab}">R${r} ${PH_TXT[r][0]}${draft.orders[r].join() !== curPlan().orders[r].join() ? ' •' : ''}</button>`).join('')
+    + `<button type="button" class="linkbtn" id="copyOrder" ${same ? 'disabled' : ''}>${same ? '세 회독 순서 같음' : `R${oTab} 순서를 모든 회독에 적용`}</button>`;
+  $('olist').innerHTML = ord.map((k, i) => {
+    const s = SMAP[k], left = s.L - doneSubj(k, oTab), rr = [left];
+    const allDone = left === 0;
+    return `<div class="orow${cur[i] !== k ? ' moved' : ''}" style="--c:${col(k)}"><span class="ix">${i+1}</span><i></i><b title="${s.full}">${s.full.replace(' & Professional Standards','').replace('Financial Statement Analysis','FSA').replace('Quantitative Methods','Quant')}</b><span class="rm${allDone ? ' zero' : ''}">${allDone ? '완료' : `남은 ${left}/${s.L}강`}</span><button type="button" class="mv" data-mv="${i}" data-dir="-1" aria-label="${s.n} 위로" ${i === 0 ? 'disabled' : ''}>▲</button><button type="button" class="mv" data-mv="${i}" data-dir="1" aria-label="${s.n} 아래로" ${i === ord.length-1 ? 'disabled' : ''}>▼</button></div>`;
+  }).join('');
+}
+function renderSpeedInputs(){
+  const g = $('speedGrid'), f = document.activeElement;
+  if (f && g.contains(f)) return;
+  g.innerHTML = [1,2,3].map(r => {
+    const c = draft.cfg['r'+r];
+    return `<div class="spd"><b>R${r} ${PH_TXT[r][0]}</b>${['평일','토','일'].map((n,i) => `<label for="cfg-${r}-${i}">${n}<input id="cfg-${r}-${i}" data-r="${r}" data-i="${i}" type="number" inputmode="numeric" min="0" max="30" step="1" value="${c[i]}"></label>`).join('')}<span class="wk" id="wk-${r}"></span></div>`;
+  }).join('');
+}
+function renderPreview(){
+  [1,2,3].forEach(r => { const c = draft.cfg['r'+r], wk = c[0]*5 + c[1] + c[2], el = $('wk-'+r); if (el) el.textContent = `주 ${wk}강`; });
+  const dirty = draftDirty();
+  $('applyBtn').disabled = !dirty; $('resetDraft').disabled = !dirty;
+  const from = applyFrom();
+  if (!dirty) {
+    $('preview').innerHTML = `<div class="pv-top"><span>현재 계획 종료일</span><span class="pv-end">${END.replace(/-/g,'.')}</span></div><div class="note">순서를 옮기거나 분량 숫자를 바꾸면 새 종료일과 앞으로 7일 계획을 미리 보여줍니다.</div>`;
+    return;
+  }
+  const o = compute(draftPlans()), diff = diffD(END, o.end);
+  const rems = [1,2,3].map(r => UNITS.length - doneRound(r));
+  let days = ''; for (let i = 0; i < 7; i++) { const d = addD(from, i), p = o.plan[d]; if (!p) break; days += `<div><span>${d.slice(5).replace('-','/')} (${DOW[pd(d).getDay()]})</span><span>${p.label}</span></div>`; }
+  $('preview').innerHTML = `<div class="pv-top"><span>새 종료일</span><span class="pv-end">${o.end.replace(/-/g,'.')}</span></div>
+    <div>${diff === 0 ? '<span class="pill neutral">종료일 변화 없음</span>' : diff > 0 ? `<span class="pill warn">지금보다 ${diff}일 늦어짐</span>` : `<span class="pill good">지금보다 ${-diff}일 빨라짐</span>`} <span class="note">남은 강의 R1 ${rems[0]} · R2 ${rems[1]} · R3 ${rems[2]}</span></div>
+    <div class="label">${from.slice(5).replace('-','/')}부터 7일</div><div class="pv-days">${days}</div>`;
+}
+function renderHist(){
+  const ps = S.plans;
+  const rows = ps.slice().reverse().slice(0, 4).map((p, i) => {
+    const first = p === ps[0];
+    return `<div class="hrow2"><span>${first ? '처음 계획' : p.from.slice(5).replace('-','/') + '부터 조정'} · ${p.orders[1].slice(0,3).map(k => SMAP[k].n).join('→')}…${p.orders[2].join() !== p.orders[1].join() || p.orders[3].join() !== p.orders[1].join() ? ' (회독별 순서 다름)' : ''} · 주말 R1 ${p.cfg.r1[1]}/${p.cfg.r1[2]}강</span>${i === 0 && !first ? '<button type="button" class="linkbtn" id="undoPlan">이 조정 취소</button>' : ''}</div>`;
+  }).join('');
+  $('hist').innerHTML = `<span class="label">조정 기록</span>${rows}`;
+}
+function renderAdjust(){ if (!draft) resetDraft(); renderOrder(); renderSpeedInputs(); renderPreview(); renderHist(); }
+$('olist').addEventListener('click', e => {
+  const b = e.target.closest('[data-mv]'); if (!b) return;
+  const i = +b.dataset.mv, j = i + (+b.dataset.dir);
+  const ord = draft.orders[oTab];
+  if (j < 0 || j >= ord.length) return;
+  [ord[i], ord[j]] = [ord[j], ord[i]];
+  renderOrder(); renderPreview();
+  const nb = document.querySelector(`[data-mv="${j}"][data-dir="${b.dataset.dir}"]`) || document.querySelector(`[data-mv="${j}"]`); if (nb && !nb.disabled) nb.focus();
+});
+$('otabs').addEventListener('click', e => {
+  const t = e.target.closest('[data-tab]');
+  if (t) { oTab = +t.dataset.tab; renderOrder(); return; }
+  if (e.target.closest('#copyOrder')) { for (const r of [1,2,3]) draft.orders[r] = draft.orders[oTab].slice(); renderOrder(); renderPreview(); }
+});
+$('speedGrid').addEventListener('input', e => {
+  const inp = e.target.closest('input[data-r]'); if (!inp) return;
+  const v = Math.floor(+inp.value); if (!isFinite(v) || inp.value === '') return;
+  draft.cfg['r'+inp.dataset.r][+inp.dataset.i] = Math.max(0, Math.min(v, 30));
+  draft.cfg = cleanCfg(draft.cfg); renderPreview();
+});
+$('speedGrid').addEventListener('focusout', () => setTimeout(renderSpeedInputs, 0));
+document.querySelectorAll('input[name="when"]').forEach(r => r.addEventListener('change', renderPreview));
+$('resetDraft').onclick = () => { resetDraft(); renderAdjust(); };
+$('applyBtn').onclick = () => {
+  if (!draftDirty()) return;
+  S.plans = draftPlans(); rebuild(); resetDraft();
+  sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7);
+  saveProgress(); renderAll();
+  $('preview').insertAdjacentHTML('afterbegin', '<span class="pill good">적용했습니다. 달력과 진도표가 새 계획으로 바뀌었습니다</span>');
+};
+$('hist').addEventListener('click', e => {
+  if (!e.target.closest('#undoPlan') || S.plans.length < 2) return;
+  S.plans = S.plans.slice(0, -1); rebuild(); resetDraft();
+  sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7);
+  saveProgress(); renderAll();
+});
+
+function renderAll(){ renderHeader(); renderSummary(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderMilestones(); renderStats(); renderAdjust(); }
+renderAll(); setSync();
+let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(renderStats, 150); });
+$('goal').value = S.goal;
+
+// ---------- GitHub Gist sync (standalone site) ----------
+function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
+function payload(){ return JSON.stringify({v:2, updatedAt:S.updatedAt || 0, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs}); }
+async function gh(path, opt = {}){
+  const r = await fetch('https://api.github.com' + path, {...opt, cache:'no-store', headers:{Accept:'application/vnd.github+json', Authorization:'Bearer ' + gist.token, ...(opt.body ? {'Content-Type':'application/json'} : {})}});
+  if (!r.ok) { const e = new Error('GitHub ' + r.status); e.status = r.status; throw e; }
+  return r.json();
+}
+const ghErr = e => e && e.status === 401 ? '토큰이 잘못됐거나 만료됐습니다. 새 토큰으로 다시 연결하세요'
+  : e && (e.status === 403 || e.status === 404) ? '토큰에 gist 권한이 없습니다. gist 권한을 체크해서 새로 만드세요'
+  : '연결 실패 · 인터넷 연결을 확인하세요 (기록은 이 기기에 저장됨)';
+async function gistConnect(token){
+  gist = {token};
+  let id = null;
+  for (let page = 1; page <= 5 && !id; page++) {
+    const list = await gh(`/gists?per_page=100&page=${page}`);
+    const f = list.find(g => g.files && g.files[GFILE]); if (f) id = f.id;
+    if (list.length < 100) break;
+  }
+  if (!id) { const g = await gh('/gists', {method:'POST', body:JSON.stringify({description:'CFA L1 페이스메이커 기록', public:false, files:{[GFILE]:{content:payload()}}})}); id = g.id; }
+  gist.id = id;
+  try { localStorage.setItem(GKEY, JSON.stringify(gist)); } catch(e) {}
+  await gistPull();
+}
+function adopt(r){
+  S.c = r.c || {}; S.m = r.m || {}; if (typeof r.goal === 'number') S.goal = r.goal;
+  S.logs = r.logs || {}; S.plans = cleanPlans(r.plans) || S.plans; S.updatedAt = r.updatedAt || Date.now();
+  writeLS(); rebuild(); resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7);
+  $('goal').value = S.goal; hoursSig = ''; renderAll();
+}
+const hhmm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+async function gistPull(){
+  if (!gist || !gist.id) return;
+  const g = await gh('/gists/' + gist.id);
+  const f = g.files && g.files[GFILE];
+  let txt = f ? f.content : '';
+  if (f && f.truncated) txt = await (await fetch(f.raw_url, {cache:'no-store'})).text();
+  let remote = {}; try { remote = JSON.parse(txt || '{}'); } catch(e) {}
+  if ((remote.updatedAt || 0) > (S.updatedAt || 0)) adopt(remote);
+  else if ((S.updatedAt || 0) > (remote.updatedAt || 0)) await gistPush();
+  gist.last = hhmm(); syncMsg('동기화됨 · ' + gist.last); renderSyncPanel();
+}
+let pushT = null, pushing = false;
+function schedulePush(){ if (mode === 'db' || !gist || !gist.id) return; clearTimeout(pushT); syncMsg('저장 대기 중…'); pushT = setTimeout(() => { pushT = null; gistPush(); }, 1500); }
+async function gistPush(){
+  if (!gist || !gist.id) return;
+  if (pushing) { schedulePush(); return; }
+  pushing = true; syncMsg('GitHub에 저장 중…');
+  try { await gh('/gists/' + gist.id, {method:'PATCH', body:JSON.stringify({files:{[GFILE]:{content:payload()}}})}); gist.last = hhmm(); syncMsg('동기화됨 · ' + gist.last); }
+  catch (e) { syncMsg(ghErr(e)); }
+  finally { pushing = false; renderSyncPanel(); }
+}
+document.addEventListener('visibilitychange', () => {
+  if (mode === 'db' || !gist || !gist.id) return;
+  if (document.visibilityState === 'hidden') { if (pushT) { clearTimeout(pushT); pushT = null; gistPush(); } }
+  else if (!pushT && !pushing) gistPull().catch(e => syncMsg(ghErr(e)));
+});
+function renderSyncPanel(){
+  const b = $('syncBody'); if (!b) return;
+  if (gist && gist.id) {
+    b.innerHTML = `<div class="sync-on"><span class="pill good">연결됨</span><span class="note">비공개 Gist <span class="num">${gist.id.slice(0,7)}</span>에 저장 · 마지막 동기화 ${gist.last || '-'}</span></div>
+      <div class="adj-btns"><button class="btn primary" id="syncNow" type="button">지금 동기화</button><button class="btn" id="syncOff" type="button">이 기기 연결 해제</button></div>
+      <p class="note">다른 기기(휴대폰·PC)에서도 이 주소를 열고 같은 토큰으로 연결하면 같은 기록이 보입니다. 페이지를 다시 열 때마다 최신 기록을 받아옵니다.</p>`;
+  } else {
+    b.innerHTML = `<ol class="steps">
+        <li>GitHub에 로그인한 뒤 <a href="https://github.com/settings/tokens/new?scopes=gist&description=CFA%20L1%20pacer" target="_blank" rel="noopener">토큰 만들기 페이지</a>를 엽니다.</li>
+        <li><b>gist</b>만 체크된 상태로 Expiration을 시험 이후 날짜(예: No expiration 또는 1년)로 정하고 Generate token을 누릅니다.</li>
+        <li>생성된 <span class="num">ghp_…</span> 토큰을 복사해 아래에 붙여 넣습니다. 휴대폰에서도 같은 토큰을 쓰면 됩니다.</li>
+      </ol>
+      <div class="tok-row"><label for="tokIn" class="label">GitHub 토큰</label><input id="tokIn" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_..."><button class="btn primary" id="tokGo" type="button">연결</button></div>
+      <p class="note">토큰은 이 기기 브라우저에만 저장되고 GitHub 외에는 어디에도 보내지 않습니다. 기록은 내 GitHub 계정의 비공개 Gist 하나에 저장됩니다.</p>`;
+  }
+}
+$('sync').addEventListener('click', () => { if (mode === 'db') return; const p = $('syncPanel'); p.hidden = !p.hidden; if (!p.hidden) { renderSyncPanel(); p.scrollIntoView({block:'nearest'}); } });
+$('syncPanel').addEventListener('click', async e => {
+  const t = e.target;
+  if (t.closest('#tokGo')) {
+    const tok = $('tokIn').value.trim(); if (!tok) { syncMsg('토큰을 붙여 넣으세요'); return; }
+    syncMsg('연결 중…'); t.disabled = true;
+    try { await gistConnect(tok); setSync(); renderSyncPanel(); }
+    catch (err) { gist = null; try { localStorage.removeItem(GKEY); } catch(_) {} syncMsg(ghErr(err)); t.disabled = false; }
+  } else if (t.closest('#syncNow')) { syncMsg('동기화 중…'); try { await gistPull(); } catch (err) { syncMsg(ghErr(err)); } }
+  else if (t.closest('#syncOff')) { gist = null; try { localStorage.removeItem(GKEY); } catch(_) {} setSync(); renderSyncPanel(); syncMsg('연결을 해제했습니다. 기록은 이 기기와 Gist에 그대로 남아 있습니다'); }
+  else if (t.closest('#bkSave')) {
+    const blob = new Blob([payload()], {type:'application/json'}), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `cfa-l1-pacer-${TODAY}.json`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000); syncMsg('백업 파일을 저장했습니다');
+  }
+});
+$('bkFile').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  try { const r = JSON.parse(await f.text()); if (!r || typeof r !== 'object' || !r.c) throw 0; r.updatedAt = Date.now(); adopt(r); if (gist && gist.id) gistPush(); syncMsg('백업을 불러왔습니다'); }
+  catch (_) { syncMsg('백업 파일을 읽을 수 없습니다. 이 페이지에서 저장한 .json 파일인지 확인하세요'); }
+  e.target.value = '';
+});
+renderSyncPanel(); setSync();
+if (gist && gist.id && !(window.claude && window.claude.use)) gistPull().catch(e => syncMsg(ghErr(e)));
+
+// ---------- account storage via db ----------
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  try {
+    const [d, u] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!d || !u) return;
+    const id = await u.id(); if (!id) return;
+    db = d; uid = id;
+    const localCopy = JSON.parse(JSON.stringify(S));
+    let first = true;
+    const timer = setTimeout(() => { if (first) { setSave('계정 저장소 응답이 늦어 이 브라우저에 먼저 보관합니다'); } }, 10000);
+    db.collection(`data/users/${uid}`).onSnapshot(snap => {
+      clearTimeout(timer);
+      const logs = {}; let prog = null;
+      snap.docs.forEach(doc => { const v = doc.data() || {}; if (doc.id === 'progress') prog = v; else if (doc.id.startsWith('d')) logs[doc.id.slice(1)] = {h: v.h || {}, memo: v.memo || ''}; });
+      if (first) {
+        first = false; mode = 'db'; setSync();
+        if (snap.empty && (Object.keys(localCopy.c).length || Object.keys(localCopy.logs).length || Object.keys(localCopy.m).length)) {
+          // move what this browser already has into the account
+          saveProgress(); Object.keys(localCopy.logs).forEach(saveLog); renderAll(); return;
+        }
+      }
+      if (snap.metadata && snap.metadata.hasPendingWrites) return;
+      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {};
+        const np = cleanPlans(prog.plans) || (prog.cfg ? [basePlan(prog.cfg)] : null);
+        if (np && JSON.stringify(np) !== JSON.stringify(S.plans)) { const wasDirty = draftDirty(); S.plans = np; rebuild(); if (!wasDirty) resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7); } if (typeof prog.goal === 'number') { S.goal = prog.goal; if (document.activeElement !== $('goal')) $('goal').value = S.goal; } }
+      for (const d2 in logs) if (!inflight['d'+d2] && !timers_pending('d'+d2)) S.logs[d2] = logs[d2];
+      writeLS(); renderAll();
+    }, err => { mode = 'local'; setSync(); });
+  } catch (e) { mode = 'local'; setSync(); }
+})();
+const pendingSet = new Set();
+function timers_pending(id){ return pendingSet.has(id); }
+const _persist = persist;
+persist = function(docId, getData){ pendingSet.add(docId); _persist(docId, getData); setTimeout(() => pendingSet.delete(docId), 2500); };
+})();
+</script>
+</body>
+</html>
