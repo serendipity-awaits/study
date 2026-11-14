@@ -44,6 +44,7 @@
   --s-fi:#6E95F5; --s-deriv:#9B84F0; --s-alt:#D873BE; --s-pm:#F07A8D; --s-ethics:#A0ABBA;
   color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
 .wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
@@ -164,6 +165,93 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .field{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;align-items:center}
 .field input{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);min-width:0}
 .ltabs{display:flex;gap:6px;flex-wrap:wrap}
+.views{display:flex;gap:4px;background:var(--sunk);padding:4px;border-radius:12px;align-self:flex-start}
+.views button{border:0;background:transparent;border-radius:9px;padding:8px 18px;font-size:14px;font-weight:600;color:var(--muted)}
+.views button.on{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.vhint{color:var(--accent)}
+.view{display:flex;flex-direction:column;gap:20px;min-width:0}
+@media (prefers-reduced-motion:no-preference){.view.slide-l{animation:slL .22s ease}.view.slide-r{animation:slR .22s ease}}
+@keyframes slL{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes slR{from{transform:translateX(-24px);opacity:.4}to{transform:none;opacity:1}}
+/* today board */
+.tb{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+.tb-main{display:flex;flex-direction:column;gap:14px;min-width:0}
+.tb-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.tb-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tb-head h2{font-size:22px}
+.unit{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:inset 4px 0 0 var(--c)}
+.unit.cur{border-color:var(--c)}
+.unit.done{opacity:.6}
+.unit-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.unit-h b{font-size:16px}
+.steps2{display:flex;flex-direction:column;gap:6px}
+.st{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 8px;border-radius:9px;border:1px solid transparent;background:var(--sunk);text-align:left;font-size:14px;width:100%}
+.st:hover{border-color:var(--line)}
+.st .bx{width:22px;height:22px;border-radius:6px;border:2px solid var(--faint);display:grid;place-items:center;font-size:13px;color:var(--on-accent);background:var(--surface)}
+.st.on .bx{background:var(--good);border-color:var(--good)}
+.st.on .nm{color:var(--muted);text-decoration:line-through}
+.st.now{border-color:var(--accent);background:var(--accent-soft)}
+.st .meta{font-family:var(--font-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.lbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:4px}
+.lbar span{display:block;height:100%;background:var(--c)}
+.go{display:flex;flex-direction:column;gap:10px}
+.gobtn{border:0;border-radius:16px;background:var(--good);color:#fff;padding:18px 16px;font-size:20px;font-weight:700;line-height:1.25;text-align:center;width:100%}
+.gobtn small{display:block;font-size:13px;font-weight:500;opacity:.9;margin-top:2px}
+.gobtn:hover{filter:brightness(1.06)}
+.gobtn:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
+.chipsel{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
+.chipsel button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--muted)}
+.chipsel button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.okday{display:flex;align-items:center;gap:12px}
+.okday .ring2{width:64px;height:64px;flex:none}
+.okday b{font-size:15px}
+.wk7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:11px;color:var(--muted)}
+.wk7 i{display:block;height:26px;border-radius:6px;background:var(--sunk);margin-bottom:3px}
+.wk7 .y i{background:var(--good)}
+.wk7 .t i{outline:2px solid var(--accent);outline-offset:1px}
+.soft{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:13px}
+/* focus overlay */
+.focus{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:calc(20px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));overflow-y:auto;text-align:center}
+.focus .fsub{font-size:14px;color:var(--muted)}
+.focus h2{font-size:24px}
+.fring{width:min(62vw,280px);height:min(62vw,280px);position:relative}
+.fring svg{width:100%;height:100%}
+.fring .c{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-mono);font-size:clamp(40px,11vw,60px);font-weight:600}
+.fring .c small{display:block;font-family:var(--font-body);font-size:14px;color:var(--muted);font-weight:500}
+.fbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.fbtns .btn{padding:11px 18px;font-size:15px}
+.fnext{font-size:13px;color:var(--muted)}
+.fchips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.fchips button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:14px}
+.fchips button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+.fmemo{width:min(100%,420px);font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.fbig{font-family:var(--font-mono);font-size:44px;font-weight:600;color:var(--good)}
+.fcheck{display:inline-flex;gap:8px;align-items:center;font-size:15px}
+.fcheck input{width:20px;height:20px;accent-color:var(--good)}
+/* chapter check table */
+.qsum{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:10px 0}
+.qsum b{color:var(--fg);font-family:var(--font-mono)}
+.qwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.qt{border-collapse:collapse;width:100%;min-width:720px;font-size:13px}
+.qt th,.qt td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+.qt th{font-size:11.5px;color:var(--muted);font-weight:600;background:var(--sunk);position:sticky;top:0}
+.qt th.grp{border-left:1px solid var(--line)}
+.qt td.grp{border-left:1px solid var(--line)}
+.qt td:first-child,.qt th:first-child{text-align:left;font-family:var(--font-mono)}
+.qt tr:last-child td{border-bottom:0}
+.qc{width:28px;height:28px;border-radius:7px;border:1.5px solid var(--line);background:var(--surface);font-size:14px;color:var(--on-accent);padding:0}
+.qc.on{background:var(--c);border-color:var(--c)}
+.qs{width:62px;font-family:var(--font-mono);font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);text-align:center}
+.pct{font-family:var(--font-mono);font-size:11.5px;display:inline-block;min-width:34px}
+.pct.g{color:var(--good)} .pct.w{color:var(--warn)} .pct.b{color:var(--bad)}
+.cell.part{background:color-mix(in srgb,var(--c) 35%,var(--sunk));border-color:var(--c);color:var(--fg)}
+@media (max-width:980px){.tb{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.qs{font-size:16px;width:70px}.views{align-self:stretch}.views button{flex:1}}
+.gor{display:flex;align-items:center;gap:10px;color:var(--faint);font-size:12px}
+.gor::before,.gor::after{content:"";flex:1;height:1px;background:var(--line)}
+#gBtn,#gLink{min-height:44px}
+.glink{display:flex;flex-direction:column;gap:6px}
 .code-card{border:2px solid var(--warn);background:var(--warn-soft);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;max-width:560px}
 .code-val{font-family:var(--font-mono);font-size:clamp(17px,4.6vw,22px);font-weight:600;letter-spacing:.04em;user-select:all;word-break:break-all;color:var(--fg)}
 .warn-box{background:var(--warn-soft);border-radius:8px;padding:10px 12px;font-size:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -316,6 +404,13 @@ section,aside{scroll-margin-top:12px}
     </div>
   </section>
 
+  <div class="views" role="tablist" aria-label="화면 선택">
+    <button type="button" role="tab" id="tabDash" data-view="dash" aria-selected="true" class="on">대시보드</button>
+    <button type="button" role="tab" id="tabToday" data-view="today" aria-selected="false">오늘 공부 <span class="vhint">→</span></button>
+  </div>
+
+  <div id="todayView" class="view" hidden></div>
+  <div id="dashView" class="view">
   <section class="summary" aria-label="요약">
     <div class="card today">
       <div class="sec-head" style="margin:0"><span class="label" id="todayLabel">오늘의 계획</span><span class="pill neutral" id="todayPhase"></span></div>
@@ -428,6 +523,13 @@ section,aside{scroll-margin-top:12px}
     <div class="subjects" id="subjects"></div>
   </section>
 
+  <section class="panel" id="qSec" aria-label="챕터별 강의와 문제 체크">
+    <div class="sec-head"><h2>챕터별 강의·문제 체크</h2><span class="note">칸을 누르면 체크 · 점수는 "맞은 수/전체" (예: 7/10)</span></div>
+    <div class="otabs" id="qTabs" role="tablist" aria-label="과목 선택"></div>
+    <div class="qsum" id="qSum"></div>
+    <div class="qwrap" id="qTable"></div>
+  </section>
+
   <section class="panel" aria-label="모의고사와 파이널">
     <div class="sec-head"><h2>Mock Exams · Final Review</h2><span class="note">완료하면 체크하세요</span></div>
     <div class="milestones" id="milestones"></div>
@@ -443,12 +545,13 @@ section,aside{scroll-margin-top:12px}
       <div class="wk-wrap"><svg id="weekly" width="100%" height="200" role="img" aria-label="주별 공부 시간 막대그래프"></svg></div>
     </div>
   </section>
+  </div>
 </div>
+<div id="focus" class="focus" hidden role="dialog" aria-modal="true" aria-label="집중 타이머"></div>
 <nav class="mnav" aria-label="빠른 이동">
-  <button type="button" data-go="dayPanel">오늘 기록</button>
+  <button type="button" data-view="today">오늘 공부</button>
   <button type="button" data-go="calSec">달력</button>
-  <button type="button" data-go="subjSec">진도표</button>
-  <button type="button" data-go="statSec">통계</button>
+  <button type="button" data-go="qSec">문제 체크</button>
   <button type="button" data-go="adjSec">계획 조정</button>
 </nav>
 
@@ -595,7 +698,7 @@ const roundPlanTotalBy = (r, date) => {
 // ---------- state ----------
 const LS_KEY = 'cfa-l1-pacer-v1', AKEY = 'cfa-l1-pacer-auth';
 let auth = null; try { auth = JSON.parse(localStorage.getItem(AKEY) || 'null'); } catch(e) {}
-let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0};
+let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25};
 try { const raw = localStorage.getItem(LS_KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
 S.plans = cleanPlans(S.plans) || [basePlan(S.cfg)];
 delete S.cfg;
@@ -616,7 +719,7 @@ function persist(docId, getData){
     finally { inflight[docId] = false; }
   }, 700);
 }
-const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans}));
+const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm}));
 const saveLog = d => persist('d'+d, () => ({date:d, h:(S.logs[d]||{}).h||{}, memo:(S.logs[d]||{}).memo||'', at:Date.now()}));
 const $ = id => document.getElementById(id);
 function setSave(t){ $('saveState').textContent = t; }
@@ -632,6 +735,26 @@ function setSync(){
 
 // ---------- helpers ----------
 const key = (s, r, i) => `${s}|${r}|${i}`;
+// ---------- lecture steps ----------
+// R1: lecture(90 min) · notes · questions, R2: re-read · Ecosystem, R3: summary · QBank. A lecture is done when every step of its round is.
+const STEPS = {1:[['l','강의 듣기'],['n','노트 읽기'],['q','문제 풀이']], 2:[['n','노트 재독'],['q','Ecosystem 문제']], 3:[['n','요약·오답 정리'],['q','QBank 문제']]};
+const LEC_MIN = 90;
+const rOf = k => +k.split('|')[1];
+const stepDone = (k, st) => !!S.c[k] || !!(S.st[k] && S.st[k][st]);
+const stepsDoneN = k => STEPS[rOf(k)].filter(([st]) => stepDone(k, st)).length;
+function setStep(k, st, v){
+  if (S.c[k] && !(S.st[k] && STEPS[rOf(k)].every(([x]) => S.st[k][x]))) { S.st[k] = Object.assign(S.st[k] || {}, Object.fromEntries(STEPS[rOf(k)].map(([x]) => [x, 1]))); }
+  const o = S.st[k] = S.st[k] || {};
+  if (v) o[st] = 1; else delete o[st];
+  if (STEPS[rOf(k)].every(([x]) => o[x])) S.c[k] = 1; else delete S.c[k];
+  if (!Object.keys(o).length) delete S.st[k];
+}
+function setAll(k, v){
+  const o = S.st[k] = S.st[k] || {};
+  STEPS[rOf(k)].forEach(([x]) => { if (v) o[x] = 1; else delete o[x]; });
+  if (v) S.c[k] = 1; else delete S.c[k];
+  if (!Object.keys(o).length) delete S.st[k];
+}
 const doneRound = r => { let n = 0; for (const u of UNITS) if (S.c[key(u.s, r, u.i)]) n++; return n; };
 const doneSubj = (s, r) => { let n = 0; for (let i = 1; i <= SMAP[s].L; i++) if (S.c[key(s, r, i)]) n++; return n; };
 const dayHours = d => { const h = (S.logs[d]||{}).h || {}; return Object.values(h).reduce((a,b) => a + (+b||0), 0); };
@@ -639,7 +762,7 @@ const mkey = d => PLAN[d].mk || 'day|'+d;
 const planDone = d => { const p = PLAN[d]; if (!p) return false; if (p.kind === 'lec') return p.items.every(it => { for (let i = it.a; i <= it.b; i++) if (!S.c[key(it.s, it.r, i)]) return false; return true; }); return !!S.m[mkey(d)]; };
 function togglePlan(d){
   const p = PLAN[d]; if (!p) return;
-  if (p.kind === 'lec') { const v = !planDone(d); p.items.forEach(it => { for (let i = it.a; i <= it.b; i++) { if (v) S.c[key(it.s,it.r,i)] = 1; else delete S.c[key(it.s,it.r,i)]; } }); }
+  if (p.kind === 'lec') { const v = !planDone(d); p.items.forEach(it => { for (let i = it.a; i <= it.b; i++) setAll(key(it.s,it.r,i), v); }); }
   else { const k = mkey(d); if (S.m[k]) delete S.m[k]; else S.m[k] = 1; }
   saveProgress(); renderAll();
 }
@@ -748,7 +871,9 @@ $('calGrid').addEventListener('click', e => {
   if (window.matchMedia('(max-width:980px)').matches) { const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches; $('dayPanel').scrollIntoView({behavior: rm ? 'auto' : 'smooth', block:'start'}); }
 });
 document.querySelector('.mnav').addEventListener('click', e => {
+  const v = e.target.closest('[data-view]'); if (v) { setView(v.dataset.view); return; }
   const b = e.target.closest('[data-go]'); if (!b) return;
+  if (view !== 'dash') setView('dash');
   if (b.dataset.go === 'dayPanel') { sel = clampDay(TODAY); curM = sel.slice(0,7); renderCal(); renderDay(); }
   const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   $(b.dataset.go).scrollIntoView({behavior: rm ? 'auto' : 'smooth', block:'start'});
@@ -798,7 +923,7 @@ function renderSubjects(){
   const hrs = subjHours();
   $('subjects').innerHTML = ordered().map(s => {
     const rounds = [1,2,3].map(r => {
-      let cells = ''; for (let i = 1; i <= s.L; i++) cells += `<button type="button" class="cell${S.c[key(s.k,r,i)] ? ' on' : ''}" data-k="${key(s.k,r,i)}" aria-label="${s.n} R${r} 강의 ${i}" aria-pressed="${!!S.c[key(s.k,r,i)]}">${i}</button>`;
+      let cells = ''; for (let i = 1; i <= s.L; i++) cells += `<button type="button" class="cell${S.c[key(s.k,r,i)] ? ' on' : stepsDoneN(key(s.k,r,i)) ? ' part' : ''}" data-k="${key(s.k,r,i)}" aria-label="${s.n} R${r} 강의 ${i}" aria-pressed="${!!S.c[key(s.k,r,i)]}">${i}</button>`;
       return `<div class="round"><span class="rl">R${r}</span><div class="cells">${cells}</div><span class="rc">${doneSubj(s.k,r)}/${s.L}</span></div>`;
     }).join('');
     const tog = (k, t) => `<button type="button" class="tog${S.m[k] ? ' on' : ''}" data-m="${k}" aria-pressed="${!!S.m[k]}">${S.m[k] ? '✓ ' : ''}${t}</button>`;
@@ -811,7 +936,7 @@ function renderSubjects(){
 }
 $('subjects').addEventListener('click', e => {
   const c = e.target.closest('[data-k]'), t = e.target.closest('[data-m]');
-  if (c) { const k = c.dataset.k; if (S.c[k]) delete S.c[k]; else S.c[k] = 1; }
+  if (c) { const k = c.dataset.k; setAll(k, !S.c[k]); }
   else if (t) { const k = t.dataset.m; if (S.m[k]) delete S.m[k]; else S.m[k] = 1; }
   else return;
   saveProgress(); renderAll();
@@ -954,7 +1079,248 @@ $('hist').addEventListener('click', e => {
   saveProgress(); renderAll();
 });
 
-function renderAll(){ renderHeader(); renderSummary(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderMilestones(); renderStats(); renderAdjust(); }
+// ---------- views: dashboard ↔ today ----------
+let view = 'dash';
+function setView(v, dir){
+  if (v === view) return;
+  view = v;
+  $('dashView').hidden = v !== 'dash'; $('todayView').hidden = v !== 'today';
+  ['tabDash','tabToday'].forEach(id => { const on = $(id).dataset.view === v; $(id).classList.toggle('on', on); $(id).setAttribute('aria-selected', on); });
+  const el = v === 'dash' ? $('dashView') : $('todayView');
+  el.classList.remove('slide-l','slide-r'); void el.offsetWidth; el.classList.add(dir || (v === 'today' ? 'slide-l' : 'slide-r'));
+  if (v === 'today') renderToday();
+  document.querySelector('.views').scrollIntoView({block:'nearest'});
+}
+document.querySelector('.views').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) setView(b.dataset.view); });
+(() => {
+  let sx = 0, sy = 0, ok = false;
+  const skip = t => t.closest('input,textarea,select,.qwrap,.wk-wrap,.loop,.timeline,.cal-grid,.cells,.olist,.focus');
+  document.addEventListener('touchstart', e => { const t = e.touches[0]; ok = !skip(e.target); sx = t.clientX; sy = t.clientY; }, {passive:true});
+  document.addEventListener('touchend', e => {
+    if (!ok || !$('focus').hidden) return;
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) setView(dx < 0 ? 'today' : 'dash', dx < 0 ? 'slide-l' : 'slide-r');
+  }, {passive:true});
+})();
+
+// ---------- today board ----------
+const unitsOf = p => { const out = []; if (p && p.kind === 'lec') p.items.forEach(it => { for (let i = it.a; i <= it.b; i++) out.push({s:it.s, r:it.r, i, k:key(it.s, it.r, i)}); }); return out; };
+function nextUndone(afterDate, n){
+  const out = [];
+  for (const d of ALL_DAYS) { if (d <= afterDate) continue; for (const u of unitsOf(PLAN[d])) { if (!S.c[u.k] && !out.some(x => x.k === u.k)) out.push(u); if (out.length >= n) return out; } }
+  return out;
+}
+function behindUnits(date){
+  const pl = [...S.plans].reverse().find(p => p.from <= date) || S.plans[0], out = [];
+  for (const d of ALL_DAYS) { if (d < pl.from) continue; if (d >= date) break; for (const u of unitsOf(PLAN[d])) if (!S.c[u.k]) out.push(u); }
+  return out;
+}
+const curStep = k => STEPS[rOf(k)].find(([st]) => !stepDone(k, st));
+const unitName = u => `${SMAP[u.s].n} ${u.i}강`;
+const minsOn = d => Math.round(dayHours(d) * 60);
+function todayTargets(ref){
+  const p = PLAN[ref], en = S.en[ref] || 'mid';
+  let units = unitsOf(p);
+  if (!units.length && p && p.kind === 'review') units = behindUnits(ref).slice(0, 1);
+  if (en === 'low' && units.length) units = [units.find(u => !S.c[u.k]) || units[0]];
+  if (en === 'high') units = units.concat(nextUndone(ref, 1).filter(x => !units.some(u => u.k === x.k)));
+  return units;
+}
+function weekInfo(ref){
+  const d0 = pd(ref); d0.setDate(d0.getDate() - ((d0.getDay() + 6) % 7));
+  const mon = ds(d0), days = []; let planned = 0, done = 0;
+  for (let i = 0; i < 7; i++) { const d = addD(mon, i); days.push(d); for (const u of unitsOf(PLAN[d])) { planned++; if (S.c[u.k]) done++; } }
+  return {days, planned, done};
+}
+function renderToday(){
+  if (view !== 'today') return;
+  const ref = clampDay(TODAY), p = PLAN[ref], en = S.en[ref] || 'mid';
+  const units = todayTargets(ref), cur = units.find(u => !S.c[u.k]);
+  const wk = weekInfo(ref), mins = minsOn(TODAY), behind = behindUnits(ref).length;
+  const goalMin = 10;
+  let main = '';
+  if (units.length) {
+    main = units.map(u => {
+      const isCur = cur && u.k === cur.k, done = !!S.c[u.k], cs = curStep(u.k);
+      const steps = STEPS[u.r].map(([st, nm]) => {
+        const on = stepDone(u.k, st), now = isCur && cs && cs[0] === st;
+        const meta = st === 'l' ? `${Math.min(LEC_MIN, Math.round(S.lm[u.k] || 0))}/${LEC_MIN}분` : (st === 'q' && S.st[u.k] && S.st[u.k].sc ? S.st[u.k].sc : '');
+        const bar = st === 'l' && !on ? `<div class="lbar"><span style="width:${Math.min(100, (S.lm[u.k] || 0) / LEC_MIN * 100)}%"></span></div>` : '';
+        return `<button type="button" class="st${on ? ' on' : ''}${now ? ' now' : ''}" data-step="${u.k}|${st}" aria-pressed="${on}"><span class="bx">${on ? '✓' : ''}</span><span class="nm">${nm}${bar}</span><span class="meta">${meta}</span></button>`;
+      }).join('');
+      return `<div class="unit${isCur ? ' cur' : ''}${done ? ' done' : ''}" style="--c:${col(u.s)}"><div class="unit-h"><b>${SMAP[u.s].full} ${u.i}강</b><span class="pill neutral">R${u.r} ${PH_TXT[u.r][0]}${done ? ' · 완료' : ''}</span></div><div class="steps2">${steps}</div></div>`;
+    }).join('');
+  } else if (p) {
+    main = `<div class="unit" style="--c:var(--accent)"><div class="unit-h"><b>${p.label}</b><span class="pill neutral">${PH_TXT[p.phase][0]}</span></div><p class="note" style="margin:0">${whatText(p)}</p></div>`;
+  }
+  let go;
+  if (cur) {
+    const cs = curStep(cur.k), first = cs[0] === 'l' ? (S.lm[cur.k] ? '이어서 강의 듣기' : '강의 영상 열기') : cs[0] === 'n' ? '노트 해당 범위 펴기' : '문제 첫 번째 읽기';
+    go = `<button type="button" class="gobtn" id="goBtn" data-k="${cur.k}" data-st="${cs[0]}">5분만 시작<small>${unitName(cur)} · 첫 단계: ${first}</small></button>`;
+  } else if (units.length) {
+    const nx = nextUndone(ref, 1)[0];
+    go = `<div class="soft"><b>오늘 목표를 다 했어요.</b> 여기서 끝내도 충분합니다.</div>` + (nx ? `<button type="button" class="btn" id="goBtn" data-k="${nx.k}" data-st="${curStep(nx.k)[0]}">한 강 더 해볼까요? · ${unitName(nx)} 5분만</button>` : '');
+  } else {
+    go = `<button type="button" class="gobtn" id="goBtn" data-k="" data-st="">5분만 시작<small>${p ? p.label : '자유 공부'}</small></button>`;
+  }
+  const r2 = (v, max) => { const C = 2 * Math.PI * 26, f = Math.min(1, v / max); return `<svg class="ring2" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="none" stroke="var(--sunk)" stroke-width="7"/><circle cx="32" cy="32" r="26" fill="none" stroke="var(--good)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - f)}" transform="rotate(-90 32 32)"/><text x="32" y="37" text-anchor="middle" font-size="15" font-weight="600" fill="var(--fg)" font-family="IBM Plex Mono,monospace">${mins}</text></svg>`; };
+  const week = wk.days.map(d => `<div class="${minsOn(d) >= goalMin ? 'y' : ''}${d === TODAY ? ' t' : ''}"><i></i>${DOW[pd(d).getDay()]}</div>`).join('');
+  $('todayView').innerHTML = `
+    <div class="tb">
+      <div class="tb-main">
+        <div class="tb-head"><h2>${TODAY < START ? '내일부터 시작 · 미리 해도 돼요' : '오늘은 이것만'}</h2><span class="note">${fmtLong(ref)}</span></div>
+        <div class="go">${go}
+          <div class="chipsel" role="group" aria-label="오늘 컨디션"><span>오늘 컨디션</span>${[['low','낮음 · 1강만'],['mid','보통'],['high','좋음 · 1강 더']].map(([v, t]) => `<button type="button" data-en="${v}" class="${en === v ? 'on' : ''}" aria-pressed="${en === v}">${t}</button>`).join('')}</div>
+          <div class="chipsel" role="group" aria-label="집중 길이"><span>집중 한 번</span>${[15, 25, 45].map(m => `<button type="button" data-fm="${m}" class="${S.fm === m ? 'on' : ''}" aria-pressed="${S.fm === m}">${m}분</button>`).join('')}<span class="note">강의 1개 90분 ≈ ${Math.ceil(LEC_MIN / S.fm)}번</span></div>
+        </div>
+        ${main}
+        ${behind ? `<p class="note">지난 계획 중 아직 안 한 강의가 ${behind}개 있어요. 괜찮아요. 대시보드의 <b>계획 조정</b>에서 "이대로 적용"을 누르면 남은 날짜에 다시 나눠 줍니다.</p>` : ''}
+      </div>
+      <div class="tb-side">
+        <div class="panel okday">${r2(mins, goalMin)}<div><b>${mins >= goalMin ? '오늘 성공 ✓' : `오늘 ${mins}분`}</b><div class="note">${mins >= goalMin ? `${fmtH(dayHours(TODAY))}시간 공부했어요` : `${goalMin}분만 해도 오늘은 성공이에요`}</div></div></div>
+        <div class="panel"><div class="sec-head" style="margin-bottom:8px"><span class="label">이번 주</span><span class="note num">${wk.done}/${wk.planned}강</span></div><div class="bar" style="margin-bottom:10px"><span style="width:${wk.planned ? wk.done / wk.planned * 100 : 0}%"></span></div><div class="wk7">${week}</div><p class="note" style="margin-top:8px">초록 칸 = 10분 이상 공부한 날</p></div>
+        <div class="panel"><span class="label">오늘 기록</span><p class="note" style="white-space:pre-wrap;margin-top:6px">${esc(((S.logs[TODAY] || {}).memo || '').trim()) || '타이머를 쓰면 공부한 내용이 여기에 자동으로 쌓여요.'}</p></div>
+      </div>
+    </div>`;
+}
+$('todayView').addEventListener('click', e => {
+  const t = e.target;
+  const stb = t.closest('[data-step]');
+  if (stb) { const [s1, r1, i1, st] = stb.dataset.step.split('|'), k = `${s1}|${r1}|${i1}`; setStep(k, st, !stepDone(k, st)); saveProgress(); renderAll(); return; }
+  const enb = t.closest('[data-en]'); if (enb) { S.en[clampDay(TODAY)] = enb.dataset.en; saveProgress(); renderToday(); return; }
+  const fmb = t.closest('[data-fm]'); if (fmb) { S.fm = +fmb.dataset.fm; saveProgress(); renderToday(); return; }
+  const gb = t.closest('#goBtn'); if (gb) startFocus(gb.dataset.k, gb.dataset.st);
+});
+
+// ---------- focus timer ----------
+const FKEY = 'cfa-l1-pacer-focus';
+let F = null; try { F = JSON.parse(localStorage.getItem(FKEY) || 'null'); } catch(_) {}
+let ftick = null, audio = null, wake = null;
+const saveF = () => { try { if (F) localStorage.setItem(FKEY, JSON.stringify(F)); else localStorage.removeItem(FKEY); } catch(_) {} };
+const elapsed = () => F ? F.acc + (F.run ? Date.now() - F.t0 : 0) : 0;
+function beep(){
+  try { navigator.vibrate && navigator.vibrate([250, 120, 250]); } catch(_) {}
+  try { if (!audio) return; const o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.0001, audio.currentTime); g.gain.exponentialRampToValueAtTime(.25, audio.currentTime + .02); g.gain.exponentialRampToValueAtTime(.0001, audio.currentTime + .9); o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + 1); } catch(_) {}
+}
+function startFocus(k, st, warm = true){
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume && audio.resume(); } catch(_) {}
+  try { navigator.wakeLock && navigator.wakeLock.request('screen').then(w => wake = w).catch(() => {}); } catch(_) {}
+  const u = k ? {s:k.split('|')[0], r:+k.split('|')[1], i:+k.split('|')[2]} : null;
+  F = {k: k || '', st: st || '', subj: u ? u.s : 'etc', name: u ? `${SMAP[u.s].full} ${u.i}강` : (PLAN[clampDay(TODAY)] || {}).label || '자유 공부',
+       stepName: u ? (STEPS[u.r].find(x => x[0] === st) || ['', ''])[1] : '', t0: Date.now(), acc: 0, run: true, target: (warm ? 5 : S.fm) * 60000, warm, stage: 'run', date: TODAY};
+  saveF(); showFocus();
+}
+function showFocus(){
+  $('focus').hidden = false; document.body.style.overflow = 'hidden';
+  clearInterval(ftick); ftick = setInterval(tickFocus, 500); renderFocus();
+}
+function tickFocus(){
+  if (!F) return;
+  if (F.stage === 'run' && F.run && elapsed() >= F.target) { F.acc = elapsed(); F.run = false; F.stage = F.warm ? 'ask' : 'done'; saveF(); beep(); renderFocus(); return; }
+  if (F.stage === 'run') { const rem = Math.max(0, F.target - elapsed()); const el = $('fTime'); if (el) el.textContent = mmss(rem); const arc = $('fArc'); if (arc) arc.setAttribute('stroke-dashoffset', String(FC * (1 - rem / F.target))); document.title = mmss(rem) + ' · ' + F.name; }
+}
+const FC = 2 * Math.PI * 44;
+const mmss = ms => { const s2 = Math.ceil(ms / 1000); return `${pad(Math.floor(s2 / 60))}:${pad(s2 % 60)}`; };
+function renderFocus(){
+  const box = $('focus'); if (!F) { box.hidden = true; return; }
+  const k = F.k, u = k ? {r:+k.split('|')[1]} : null;
+  const nextStep = k ? STEPS[u.r].find(([x]) => x !== F.st && !stepDone(k, x)) : null;
+  const lecInfo = F.st === 'l' ? `강의 ${Math.min(LEC_MIN, Math.round((S.lm[k] || 0) + elapsed() / 60000))}/${LEC_MIN}분` : '';
+  if (F.stage === 'run') {
+    const rem = Math.max(0, F.target - elapsed());
+    box.innerHTML = `<span class="fsub">${esc(F.name)}${lecInfo ? ' · ' + lecInfo : ''}</span>
+      <h2>${esc(F.stepName || '집중')}</h2>
+      <div class="fring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="var(--sunk)" stroke-width="8"/><circle id="fArc" cx="50" cy="50" r="44" fill="none" stroke="var(--good)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${FC}" stroke-dashoffset="${FC * (1 - rem / F.target)}" transform="rotate(-90 50 50)"/></svg><div class="c"><span><span id="fTime">${mmss(rem)}</span><small>${F.warm ? '5분만 해봐요' : F.run ? '남음' : '멈춤'}</small></span></div></div>
+      ${nextStep ? `<span class="fnext">다음: ${nextStep[1]}</span>` : ''}
+      <div class="fbtns"><button class="btn" id="fPause" type="button">${F.run ? '잠깐 멈춤' : '다시 시작'}</button>${k ? '<button class="btn primary" id="fStepDone" type="button">이 단계 끝</button>' : ''}<button class="btn" id="fStop" type="button">그만하기</button></div>`;
+  } else if (F.stage === 'ask') {
+    box.innerHTML = `<span class="fbig">✓ 5분</span><h2>시작했어요! 잘했어요.</h2><span class="fsub">흐름이 붙었을 때 조금 더 가볼까요?</span>
+      <div class="fbtns"><button class="btn primary" id="fMore" type="button">${S.fm - 5}분 더 (총 ${S.fm}분)</button><button class="btn" id="fStop" type="button">여기까지</button></div>`;
+  } else {
+    const min = Math.max(1, Math.round(elapsed() / 60000)), lecTot = F.st === 'l' ? Math.round((S.lm[k] || 0) + elapsed() / 60000) : 0;
+    box.innerHTML = `<span class="fbig">✓ ${min}분</span><h2>${esc(F.stepName || '집중')} ${F.stage === 'done' ? '한 번 끝!' : ''}</h2>
+      <span class="fsub">${esc(F.name)}${F.st === 'l' ? ` · 강의 ${Math.min(LEC_MIN, lecTot)}/${LEC_MIN}분` : ''}</span>
+      ${k ? `<label class="fcheck"><input type="checkbox" id="fMark" ${F.mark || (F.st === 'l' ? lecTot >= LEC_MIN - 5 : false) ? 'checked' : ''}> "${esc(F.stepName)}" 끝으로 체크</label>` : ''}
+      ${F.st === 'q' ? '<label class="fcheck">점수 <input class="qs" id="fScore" placeholder="7/10" inputmode="numeric" style="width:90px;height:auto"></label>' : ''}
+      <span class="fsub">한 줄만 남길까요? (건너뛰어도 돼요)</span>
+      <div class="fchips">${['이해됨', '헷갈림', '다시 볼 것', '계산 연습 필요'].map(c => `<button type="button" data-chip="${c}">${c}</button>`).join('')}</div>
+      <input class="fmemo" id="fMemo" placeholder="예: 재고자산 FIFO/LIFO 헷갈림" maxlength="200">
+      <div class="fbtns"><button class="btn primary" id="fNext" type="button">기록하고 계속 ${S.fm}분</button><button class="btn" id="fEnd" type="button">오늘은 여기까지 (그래도 성공)</button></div>`;
+  }
+}
+function commitFocus(){
+  const min = elapsed() / 60000, d = F.date || TODAY;
+  if (min >= 0.5) {
+    const log = S.logs[d] = S.logs[d] || {h:{}, memo:''}; log.h = log.h || {};
+    log.h[F.subj] = Math.round(((+log.h[F.subj] || 0) + min / 60) * 100) / 100;
+    if (F.st === 'l' && F.k) S.lm[F.k] = Math.round(((S.lm[F.k] || 0) + min) * 10) / 10;
+    const chips = [...document.querySelectorAll('#focus [data-chip].on')].map(b => b.dataset.chip);
+    const memo = ($('fMemo') && $('fMemo').value.trim()) || '';
+    const sc = $('fScore') && $('fScore').value.trim();
+    const line = `· ${hhmm()} ${F.k ? unitName({s:F.subj, i:+F.k.split('|')[2]}) + ' ' : ''}${F.stepName || '공부'} ${Math.round(min)}분${sc ? ' · 점수 ' + sc : ''}${chips.length ? ' · ' + chips.join(', ') : ''}${memo ? ' — ' + memo : ''}`;
+    log.memo = ((log.memo || '').trim() ? log.memo.trim() + '\n' : '') + line;
+    if (sc && F.k) { S.st[F.k] = S.st[F.k] || {}; S.st[F.k].sc = sc; }
+    saveLog(d);
+  }
+  if (F.k && $('fMark') && $('fMark').checked) setStep(F.k, F.st, true);
+  saveProgress();
+}
+function closeFocus(){
+  clearInterval(ftick); F = null; saveF(); $('focus').hidden = true; document.body.style.overflow = ''; document.title = 'CFA L1 페이스메이커';
+  try { wake && wake.release(); } catch(_) {} wake = null;
+  renderAll();
+}
+$('focus').addEventListener('click', e => {
+  const t = e.target; if (!F) return;
+  if (t.closest('[data-chip]')) { t.closest('[data-chip]').classList.toggle('on'); return; }
+  if (t.closest('#fPause')) { if (F.run) { F.acc = elapsed(); F.run = false; } else { F.t0 = Date.now(); F.run = true; } saveF(); renderFocus(); return; }
+  if (t.closest('#fMore')) { F.warm = false; F.target = S.fm * 60000; F.t0 = Date.now(); F.run = true; F.stage = 'run'; saveF(); renderFocus(); return; }
+  if (t.closest('#fStepDone')) { F.acc = elapsed(); F.run = false; F.mark = true; F.stage = 'end'; saveF(); renderFocus(); return; }
+  if (t.closest('#fStop')) { F.acc = elapsed(); F.run = false; F.stage = 'end'; saveF(); renderFocus(); return; }
+  if (t.closest('#fEnd')) { commitFocus(); closeFocus(); setSave('오늘 공부를 기록했어요. 수고했어요!'); return; }
+  if (t.closest('#fNext')) {
+    commitFocus();
+    const k = F.k; let st = F.st;
+    if (k && stepDone(k, st)) { const nx = curStep(k); if (nx) st = nx[0]; else { const n2 = nextUndone(clampDay(TODAY), 1)[0] || null; clearInterval(ftick); F = null; saveF(); renderAll(); if (n2) startFocus(n2.k, curStep(n2.k)[0], false); else closeFocus(); return; } }
+    startFocus(k, st, false); return;
+  }
+});
+if (F && F.stage) { showFocus(); }
+
+// ---------- chapter check table ----------
+let qSub = null;
+const pctOf = sc => { const m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(sc || ''); return m && +m[2] > 0 ? Math.round(+m[1] / +m[2] * 100) : null; };
+const pctCls = p => p >= 70 ? 'g' : p >= 50 ? 'w' : 'b';
+function renderQ(){
+  const list = ordered(); if (!qSub || !SMAP[qSub]) qSub = list[0].k;
+  $('qTabs').innerHTML = list.map(s => `<button type="button" role="tab" class="otab${s.k === qSub ? ' on' : ''}" data-qs="${s.k}" aria-selected="${s.k === qSub}">${s.n}</button>`).join('');
+  const s = SMAP[qSub], c = col(s.k);
+  const cb = (k, st) => { const on = stepDone(k, st); return `<button type="button" class="qc${on ? ' on' : ''}" data-qk="${k}|${st}" aria-pressed="${on}" aria-label="${s.n} ${k.split('|')[2]}강 R${rOf(k)} ${STEPS[rOf(k)].find(x => x[0] === st)[1]}">${on ? '✓' : ''}</button>`; };
+  const scIn = k => { const v = (S.st[k] && S.st[k].sc) || '', p = pctOf(v); return `<input class="qs" data-qsc="${k}" value="${esc(v)}" placeholder="—" aria-label="${s.n} ${k.split('|')[2]}강 R${rOf(k)} 점수"> <span class="pct ${p == null ? '' : pctCls(p)}">${p == null ? '' : p + '%'}</span>`; };
+  let rows = '', sums = {1:[0,0],2:[0,0],3:[0,0]}, lecDone = 0, qDone = 0;
+  for (let i = 1; i <= s.L; i++) {
+    const k1 = key(s.k,1,i), k2 = key(s.k,2,i), k3 = key(s.k,3,i);
+    [k1,k2,k3].forEach((k, j) => { const m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec((S.st[k] && S.st[k].sc) || ''); if (m) { sums[j+1][0] += +m[1]; sums[j+1][1] += +m[2]; } });
+    if (stepDone(k1,'l')) lecDone++; if (stepDone(k1,'q')) qDone++;
+    rows += `<tr><td>${i}강</td><td class="grp">${cb(k1,'l')}${S.lm[k1] ? ` <span class="pct">${Math.round(S.lm[k1])}분</span>` : ''}</td><td>${cb(k1,'n')}</td><td>${cb(k1,'q')}</td><td>${scIn(k1)}</td>
+      <td class="grp">${cb(k2,'n')}</td><td>${cb(k2,'q')}</td><td>${scIn(k2)}</td><td class="grp">${cb(k3,'n')}</td><td>${cb(k3,'q')}</td><td>${scIn(k3)}</td></tr>`;
+  }
+  const avg = r => sums[r][1] ? Math.round(sums[r][0] / sums[r][1] * 100) + '%' : '—';
+  $('qSum').innerHTML = `<span>강의 들음 <b>${lecDone}/${s.L}</b></span><span>1회독 문제 <b>${qDone}/${s.L}</b></span><span>정답률 R1 <b>${avg(1)}</b> · R2 <b>${avg(2)}</b> · R3 <b>${avg(3)}</b></span>`;
+  $('qTable').innerHTML = `<table class="qt" style="--c:${c}"><thead><tr><th rowspan="2">강</th><th class="grp" colspan="4">1회독</th><th class="grp" colspan="3">2회독</th><th class="grp" colspan="3">3회독</th></tr>
+    <tr><th class="grp">강의 (90분)</th><th>노트</th><th>문제</th><th>점수</th><th class="grp">노트 재독</th><th>Ecosystem</th><th>점수</th><th class="grp">요약·오답</th><th>QBank</th><th>점수</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+$('qTabs').addEventListener('click', e => { const b = e.target.closest('[data-qs]'); if (b) { qSub = b.dataset.qs; renderQ(); } });
+$('qTable').addEventListener('click', e => { const b = e.target.closest('[data-qk]'); if (!b) return; const [a1, a2, a3, st] = b.dataset.qk.split('|'), k = `${a1}|${a2}|${a3}`; setStep(k, st, !stepDone(k, st)); saveProgress(); renderAll(); });
+$('qTable').addEventListener('change', e => {
+  const inp = e.target.closest('[data-qsc]'); if (!inp) return;
+  const k = inp.dataset.qsc, v = inp.value.trim().replace(/\s+/g, '');
+  if (v && !/^\d+\/\d+$/.test(v)) { inp.value = (S.st[k] && S.st[k].sc) || ''; setSave('점수는 "맞은 수/전체" 형식으로 적어주세요 (예: 7/10)'); return; }
+  S.st[k] = S.st[k] || {}; if (v) { S.st[k].sc = v; if (!stepDone(k, 'q')) setStep(k, 'q', true); } else { delete S.st[k].sc; if (!Object.keys(S.st[k]).length) delete S.st[k]; }
+  saveProgress(); renderAll();
+});
+
+function renderAll(){ renderHeader(); renderSummary(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); }
 renderAll(); setSync();
 let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(renderStats, 150); });
 $('goal').value = S.goal;
@@ -964,7 +1330,7 @@ const WORKER = 'https://app.cfa-study-pacer.workers.dev';
 const API = /\.workers\.dev$/.test(location.hostname) ? '' : WORKER;
 const loggedIn = () => !!auth;
 function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
-function payloadObj(){ return {v:3, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs}; }
+function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm}; }
 function payload(){ return JSON.stringify({...payloadObj(), updatedAt:S.updatedAt || 0}); }
 function saveAuth(){ try { if (auth) localStorage.setItem(AKEY, JSON.stringify(auth)); else localStorage.removeItem(AKEY); } catch(e) {} }
 async function api(path, opt = {}){
@@ -983,6 +1349,7 @@ const srvErr = e => !e ? '' : e.status === 0 ? '서버에 연결할 수 없습�
 function onAuthLost(e){ if (e && e.status === 401 && auth) { auth = null; saveAuth(); setSync(); renderSyncPanel(); } }
 function adopt(r){
   S.c = r.c || {}; S.m = r.m || {}; if (typeof r.goal === 'number') S.goal = r.goal;
+  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; if (typeof r.fm === 'number') S.fm = r.fm;
   S.logs = r.logs || {}; S.plans = cleanPlans(r.plans) || S.plans; S.updatedAt = r.updatedAt || Date.now();
   writeLS(); rebuild(); resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7);
   $('goal').value = S.goal; hoursSig = ''; renderAll();
@@ -1017,15 +1384,17 @@ document.addEventListener('visibilitychange', () => {
   else if (!pushT && !pushing) srvPull().catch(e => { onAuthLost(e); syncMsg(srvErr(e)); });
 });
 let loginView = 'login';
-function renderSyncPanel(){
+function renderSyncPanel(){ renderSyncPanel0(); renderGButtons(); }
+function renderSyncPanel0(){
   const b = $('syncBody'); if (!b) return;
   $('loginBtn').textContent = loggedIn() ? '내 계정' : '로그인';
   $('loginBtn').className = 'btn' + (loggedIn() ? '' : ' primary');
   if (loggedIn()) {
     b.innerHTML = `${codeCard()}<div class="sync-on"><span class="pill good">로그인됨</span><b>${esc(auth.username)}</b><span class="note">기록이 서버에 저장됩니다 · 마지막 동기화 ${lastSync || '-'}</span></div>
-      ${auth.hasRecovery === false && !shownCode ? '<div class="warn-box"><b>복구 코드가 아직 없습니다.</b> 비밀번호를 잊으면 계정을 되찾을 수 없으니 지금 만들어 두세요. <button class="btn primary" id="mkCode" type="button">복구 코드 만들기</button></div>' : ''}
-      <div class="adj-btns"><button class="btn primary" id="syncNow" type="button">지금 동기화</button><button class="btn" id="toPw" type="button">비밀번호 변경</button>${auth.hasRecovery !== false ? '<button class="btn" id="mkCode" type="button">복구 코드 새로 만들기</button>' : ''}<button class="btn" id="logout" type="button">로그아웃</button></div>
-      ${loginView === 'pw' ? `<form class="login-box" id="pwForm"><div class="field"><label for="opw">현재 비밀번호</label><input id="opw" type="password" autocomplete="current-password" required></div><div class="field"><label for="npw1">새 비밀번호</label><input id="npw1" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="npw2">한 번 더</label><input id="npw2" type="password" autocomplete="new-password" minlength="8" required></div><div><button class="btn primary" type="submit">비밀번호 바꾸기</button></div></form>` : ''}
+      ${auth.google ? '<div class="note">구글 계정이 연결돼 있어요. 어느 기기에서든 "Google로 계속하기"로 로그인할 수 있습니다.</div>' : (gClientId ? '<div class="glink"><span class="note">구글 계정을 연결하면 비밀번호 없이 로그인할 수 있어요.</span><div id="gLink"></div></div>' : '')}
+      ${auth.hasRecovery === false && !auth.google && !shownCode ? '<div class="warn-box"><b>복구 코드가 아직 없습니다.</b> 비밀번호를 잊으면 계정을 되찾을 수 없으니 지금 만들어 두세요. <button class="btn primary" id="mkCode" type="button">복구 코드 만들기</button></div>' : ''}
+      <div class="adj-btns"><button class="btn primary" id="syncNow" type="button">지금 동기화</button><button class="btn" id="toPw" type="button">${auth.hasPassword === false ? '비밀번호 만들기' : '비밀번호 변경'}</button>${auth.hasRecovery !== false && auth.hasPassword !== false ? '<button class="btn" id="mkCode" type="button">복구 코드 새로 만들기</button>' : ''}<button class="btn" id="logout" type="button">로그아웃</button></div>
+      ${loginView === 'pw' ? `<form class="login-box" id="pwForm">${auth.hasPassword === false ? '<p class="note" style="margin:0">구글 없이도 로그인하고 싶을 때만 만드세요.</p>' : '<div class="field"><label for="opw">현재 비밀번호</label><input id="opw" type="password" autocomplete="current-password" required></div>'}<div class="field"><label for="npw1">새 비밀번호</label><input id="npw1" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="npw2">한 번 더</label><input id="npw2" type="password" autocomplete="new-password" minlength="8" required></div><div><button class="btn primary" type="submit">비밀번호 바꾸기</button></div></form>` : ''}
       <label class="chk"><input type="checkbox" id="wipe"> 로그아웃할 때 이 기기에 남은 기록도 지우기 (공용 PC라면 체크)</label>`;
     return;
   }
@@ -1049,10 +1418,35 @@ function renderSyncPanel(){
       <div class="field"><label for="upw">비밀번호</label><input id="upw" type="password" autocomplete="${su ? 'new-password' : 'current-password'}" minlength="8" required placeholder="8자 이상"></div>
       ${su ? '<div class="field"><label for="upw2">한 번 더</label><input id="upw2" type="password" autocomplete="new-password" minlength="8" required></div>' : ''}
       <div class="adj-btns" style="align-items:center"><button class="btn primary" id="authGo" type="submit">${su ? '가입하고 로그인' : '로그인'}</button>${su ? '' : '<button type="button" class="linkbtn" data-lv="reset">비밀번호를 잊었나요?</button>'}</div>
+      ${gClientId ? '<div class="gor"><span>또는</span></div><div id="gBtn"></div>' : ''}
       <p class="note">${su ? '아이디와 비밀번호만 있으면 됩니다. 이메일은 받지 않습니다. 가입하면 비밀번호를 잊었을 때 쓰는 복구 코드를 한 번 보여드리니 꼭 적어두세요. 지금 이 기기에 있는 기록은 가입하면 그대로 서버로 옮겨집니다.' : '휴대폰과 PC에서 같은 아이디로 로그인하면 같은 기록이 보입니다.'}</p>
     </form>`;
 }
-let shownCode = '';
+let shownCode = '', gClientId = null, gReady = false;
+function renderGButtons(){
+  if (!gReady || !window.google || !google.accounts) return;
+  for (const id of ['gBtn', 'gLink']) { const el = $(id); if (el && !el.childElementCount) google.accounts.id.renderButton(el, {theme:'outline', size:'large', text: id === 'gLink' ? 'signin_with' : 'continue_with', shape:'pill', locale:'ko', width: Math.min(300, el.parentElement.clientWidth || 300)}); }
+}
+async function onGoogle(resp){
+  syncMsg('구글 계정 확인 중…');
+  try {
+    const linking = !!auth;
+    const r = await api('/api/google', {method:'POST', body:{credential: resp.credential}, noAuth: !linking});
+    auth = {token:r.token, username:r.username, google:true, hasPassword:r.hasPassword, hasRecovery: auth ? auth.hasRecovery : true}; saveAuth(); setSync(); loginView = 'main';
+    await srvPull();
+    syncMsg(r.linked ? '구글 계정을 연결했어요. 이제 구글로도 로그인할 수 있습니다' : r.created ? '구글 계정으로 가입했어요. 지금 이 기기의 기록이 서버로 옮겨졌습니다' : '구글 계정으로 로그인했어요');
+  } catch (err) { onAuthLost(err); syncMsg(srvErr(err)); }
+}
+function initGoogle(){
+  if (mode === 'db') return;
+  api('/api/config', {noAuth:true}).then(c => {
+    if (!c.googleClientId) return;
+    gClientId = c.googleClientId;
+    const sc = document.createElement('script'); sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true;
+    sc.onload = () => { try { google.accounts.id.initialize({client_id: gClientId, callback: onGoogle, ux_mode: 'popup', auto_select: false}); gReady = true; renderSyncPanel(); } catch(_) {} };
+    document.head.appendChild(sc); renderSyncPanel();
+  }).catch(() => {});
+}
 function codeCard(){
   if (!shownCode) return '';
   return `<div class="code-card" role="alert">
@@ -1062,7 +1456,7 @@ function codeCard(){
     <div class="adj-btns"><button class="btn" id="copyCode" type="button">코드 복사</button><button class="btn primary" id="codeDone" type="button">적어뒀어요</button></div>
   </div>`;
 }
-const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function esc(t){ return String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function openPanel(){ if (mode === 'db') return; const p = $('syncPanel'); p.hidden = false; renderSyncPanel(); p.scrollIntoView({block:'nearest'}); const f = $('uid'); if (f) setTimeout(() => f.focus(), 50); }
 $('sync').addEventListener('click', () => { if (mode === 'db') return; const p = $('syncPanel'); if (p.hidden) openPanel(); else p.hidden = true; });
 $('loginBtn').addEventListener('click', () => { const p = $('syncPanel'); if (!p.hidden && loginView !== 'pw') { p.hidden = true; return; } loginView = 'login'; openPanel(); });
@@ -1075,7 +1469,7 @@ $('syncPanel').addEventListener('submit', async e => {
     $('authGo').disabled = true; syncMsg(su ? '가입 중…' : '로그인 중…');
     try {
       const r = await api(su ? '/api/signup' : '/api/login', {method:'POST', body:{username, password}, noAuth:true});
-      auth = {token:r.token, username:r.username, hasRecovery: su ? true : r.hasRecovery !== false}; saveAuth(); setSync(); loginView = 'main';
+      auth = {token:r.token, username:r.username, hasRecovery: su ? true : r.hasRecovery !== false, google: !!r.google, hasPassword: true}; saveAuth(); setSync(); loginView = 'main';
       if (r.recoveryCode) shownCode = r.recoveryCode;
       await srvPull();
       syncMsg(su ? '가입했습니다. 아래 복구 코드를 꼭 적어두세요' : '로그인했습니다 · 기록을 불러왔습니다');
@@ -1092,9 +1486,9 @@ $('syncPanel').addEventListener('submit', async e => {
       syncMsg('새 비밀번호로 바꾸고 로그인했습니다. 쓴 복구 코드는 버려지고 아래 새 코드가 발급됐습니다');
     } catch (err) { syncMsg(srvErr(err)); const b = $('authGo'); if (b) b.disabled = false; }
   } else if (f.id === 'pwForm') {
-    const o = $('opw').value, n1 = $('npw1').value, n2 = $('npw2').value;
+    const o = $('opw') ? $('opw').value : '', n1 = $('npw1').value, n2 = $('npw2').value;
     if (n1 !== n2) { syncMsg('두 새 비밀번호가 다릅니다'); return; }
-    try { await api('/api/password', {method:'POST', body:{old:o, password:n1}}); loginView = 'main'; renderSyncPanel(); syncMsg('비밀번호를 바꿨습니다. 다른 기기는 다시 로그인해야 합니다'); }
+    try { await api('/api/password', {method:'POST', body:{old:o, password:n1}}); auth.hasPassword = true; saveAuth(); loginView = 'main'; renderSyncPanel(); syncMsg('비밀번호를 바꿨습니다. 다른 기기는 다시 로그인해야 합니다'); }
     catch (err) { onAuthLost(err); syncMsg(srvErr(err)); }
   }
 });
@@ -1150,8 +1544,9 @@ $('bkFile').addEventListener('change', async e => {
 renderSyncPanel(); setSync();
 if (auth && !(window.claude && window.claude.use)) {
   srvPull().catch(e => { onAuthLost(e); syncMsg(srvErr(e)); });
-  api('/api/me').then(r => { if (auth) { auth.hasRecovery = !!r.hasRecovery; saveAuth(); renderSyncPanel(); if (!r.hasRecovery) syncMsg('복구 코드가 없습니다 · 내 계정에서 만들어 두세요'); } }).catch(() => {});
+  api('/api/me').then(r => { if (auth) { auth.hasRecovery = !!r.hasRecovery; auth.google = !!r.google; auth.hasPassword = r.hasPassword !== false; saveAuth(); renderSyncPanel(); if (!r.hasRecovery && !r.google) syncMsg('복구 코드가 없습니다 · 내 계정에서 만들어 두세요'); } }).catch(() => {});
 }
+if (!(window.claude && window.claude.use)) initGoogle();
 
 // ---------- account storage via db ----------
 (async () => {
@@ -1176,7 +1571,7 @@ if (auth && !(window.claude && window.claude.use)) {
         }
       }
       if (snap.metadata && snap.metadata.hasPendingWrites) return;
-      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {};
+      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {}; S.st = prog.st || {}; S.lm = prog.lm || {}; S.en = prog.en || {}; if (typeof prog.fm === 'number') S.fm = prog.fm;
         const np = cleanPlans(prog.plans) || (prog.cfg ? [basePlan(prog.cfg)] : null);
         if (np && JSON.stringify(np) !== JSON.stringify(S.plans)) { const wasDirty = draftDirty(); S.plans = np; rebuild(); if (!wasDirty) resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7); } if (typeof prog.goal === 'number') { S.goal = prog.goal; if (document.activeElement !== $('goal')) $('goal').value = S.goal; } }
       for (const d2 in logs) if (!inflight['d'+d2] && !timers_pending('d'+d2)) S.logs[d2] = logs[d2];

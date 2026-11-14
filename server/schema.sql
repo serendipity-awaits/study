@@ -5,3 +5,8 @@ CREATE TABLE IF NOT EXISTS data (user_id INTEGER PRIMARY KEY, body TEXT NOT NULL
 CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
 -- 비밀번호 찾기용 복구 코드 (해시만 저장)
 ALTER TABLE users ADD COLUMN recovery_hash TEXT;
+-- 구글 로그인
+ALTER TABLE users ADD COLUMN google_sub TEXT;
+ALTER TABLE users ADD COLUMN email TEXT;
+ALTER TABLE users ADD COLUMN has_pw INTEGER NOT NULL DEFAULT 1;
+CREATE UNIQUE INDEX IF NOT EXISTS users_google ON users(google_sub);
