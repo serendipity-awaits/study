@@ -157,14 +157,18 @@ async function login(req, env) {
   return json({ token: await newSession(env, u.id), username: u.username, hasRecovery: !!u.recovery_hash, google: !!u.google_sub, hasPassword: true });
 }
 
-// 비밀번호 찾기: 아이디 + 복구 코드로 새 비밀번호를 정합니다. 쓴 복구 코드는 버리고 새 코드를 줍니다.
+// 아이디·비밀번호 찾기: 복구 코드(아이디는 선택)로 계정을 찾아 새 비밀번호를 정합니다. 쓴 복구 코드는 버리고 새 코드를 줍니다.
 async function resetPassword(req, env) {
   const { username, code, password } = await readJson(req);
-  const bad = () => fail(401, '아이디 또는 복구 코드가 맞지 않습니다');
-  if (!validName(username) || normCode(code).length !== 20) return bad();
+  const bad = () => fail(401, '복구 코드가 맞지 않습니다. 대시(-) 없이 넣어도 됩니다');
+  if (normCode(code).length !== 20) return bad();
+  if (username && !validName(username)) return bad();
   if (!validPw(password)) return fail(400, '새 비밀번호는 8자 이상으로 정해주세요');
   const now = Date.now();
-  const u = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username.toLowerCase()).first();
+  // 아이디를 몰라도 복구 코드만으로 계정을 찾습니다 (코드는 계정마다 다르고 100비트라 추측할 수 없습니다)
+  const u = username
+    ? await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username.toLowerCase()).first()
+    : await env.DB.prepare('SELECT * FROM users WHERE recovery_hash = ?').bind(await codeHash(code)).first();
   if (!u) return bad();
   if (u.locked_until > now) return fail(429, '여러 번 틀려서 잠겼습니다. ' + Math.ceil((u.locked_until - now) / 60000) + '분 뒤에 다시 해보세요');
   if (!u.recovery_hash || !same(await codeHash(code), u.recovery_hash)) {
@@ -175,7 +179,7 @@ async function resetPassword(req, env) {
   }
   const salt = rand(16), hash = await pbkdf2(password, salt);
   await env.DB.batch([
-    env.DB.prepare('UPDATE users SET salt = ?, hash = ?, fails = 0, locked_until = 0 WHERE id = ?').bind(salt, hash, u.id),
+    env.DB.prepare('UPDATE users SET salt = ?, hash = ?, fails = 0, locked_until = 0, has_pw = 1 WHERE id = ?').bind(salt, hash, u.id),
     env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(u.id),
   ]);
   return json({ token: await newSession(env, u.id), username: u.username, recoveryCode: await issueCode(env, u.id) });

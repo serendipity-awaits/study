@@ -1401,8 +1401,8 @@ function renderSyncPanel0(){
   if (loginView === 'reset') {
     b.innerHTML = `<div class="ltabs"><button type="button" class="otab" data-lv="login">← 로그인으로</button></div>
       <form class="login-box" id="resetForm">
-        <p class="note" style="margin:0">가입할 때 받은 <b>복구 코드</b>로 새 비밀번호를 정합니다. 복구 코드는 한 번 쓰면 새 코드로 바뀝니다.</p>
-        <div class="field"><label for="uid">아이디</label><input id="uid" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+        <h3 style="margin:0">아이디·비밀번호 찾기</h3>
+        <p class="note" style="margin:0"><b>복구 코드</b>만 넣으면 아이디를 알려드리고 새 비밀번호를 정할 수 있어요. 아이디는 몰라도 됩니다. 복구 코드는 한 번 쓰면 새 코드로 바뀝니다.</p>
         <div class="field"><label for="rcode">복구 코드</label><input id="rcode" class="num" autocapitalize="characters" autocomplete="off" spellcheck="false" required placeholder="XXXXX-XXXXX-XXXXX-XXXXX"></div>
         <div class="field"><label for="upw">새 비밀번호</label><input id="upw" type="password" autocomplete="new-password" minlength="8" required placeholder="8자 이상"></div>
         <div class="field"><label for="upw2">한 번 더</label><input id="upw2" type="password" autocomplete="new-password" minlength="8" required></div>
@@ -1417,7 +1417,7 @@ function renderSyncPanel0(){
       <div class="field"><label for="uid">아이디</label><input id="uid" autocomplete="username" autocapitalize="none" spellcheck="false" required pattern="[A-Za-z0-9_.\\-]{3,30}" placeholder="영문·숫자 3~30자"></div>
       <div class="field"><label for="upw">비밀번호</label><input id="upw" type="password" autocomplete="${su ? 'new-password' : 'current-password'}" minlength="8" required placeholder="8자 이상"></div>
       ${su ? '<div class="field"><label for="upw2">한 번 더</label><input id="upw2" type="password" autocomplete="new-password" minlength="8" required></div>' : ''}
-      <div class="adj-btns" style="align-items:center"><button class="btn primary" id="authGo" type="submit">${su ? '가입하고 로그인' : '로그인'}</button>${su ? '' : '<button type="button" class="linkbtn" data-lv="reset">비밀번호를 잊었나요?</button>'}</div>
+      <div class="adj-btns" style="align-items:center"><button class="btn primary" id="authGo" type="submit">${su ? '가입하고 로그인' : '로그인'}</button>${su ? '' : '<button type="button" class="linkbtn" data-lv="reset">아이디·비밀번호를 잊었나요?</button>'}</div>
       ${gClientId ? '<div class="gor"><span>또는</span></div><div id="gBtn"></div>' : ''}
       <p class="note">${su ? '아이디와 비밀번호만 있으면 됩니다. 이메일은 받지 않습니다. 가입하면 비밀번호를 잊었을 때 쓰는 복구 코드를 한 번 보여드리니 꼭 적어두세요. 지금 이 기기에 있는 기록은 가입하면 그대로 서버로 옮겨집니다.' : '휴대폰과 PC에서 같은 아이디로 로그인하면 같은 기록이 보입니다.'}</p>
     </form>`;
@@ -1475,15 +1475,15 @@ $('syncPanel').addEventListener('submit', async e => {
       syncMsg(su ? '가입했습니다. 아래 복구 코드를 꼭 적어두세요' : '로그인했습니다 · 기록을 불러왔습니다');
     } catch (err) { syncMsg(srvErr(err)); const b = $('authGo'); if (b) b.disabled = false; }
   } else if (f.id === 'resetForm') {
-    const username = $('uid').value.trim(), code = $('rcode').value, password = $('upw').value;
+    const code = $('rcode').value, password = $('upw').value;
     if (password !== $('upw2').value) { syncMsg('두 비밀번호가 다릅니다'); return; }
     $('authGo').disabled = true; syncMsg('확인 중…');
     try {
-      const r = await api('/api/reset', {method:'POST', body:{username, code, password}, noAuth:true});
+      const r = await api('/api/reset', {method:'POST', body:{code, password}, noAuth:true});
       auth = {token:r.token, username:r.username, hasRecovery:true}; saveAuth(); setSync(); loginView = 'main';
       shownCode = r.recoveryCode || '';
       await srvPull();
-      syncMsg('새 비밀번호로 바꾸고 로그인했습니다. 쓴 복구 코드는 버려지고 아래 새 코드가 발급됐습니다');
+      syncMsg(`찾았어요! 아이디는 "${r.username}" 입니다. 새 비밀번호로 로그인했고, 아래 새 복구 코드를 다시 적어두세요`);
     } catch (err) { syncMsg(srvErr(err)); const b = $('authGo'); if (b) b.disabled = false; }
   } else if (f.id === 'pwForm') {
     const o = $('opw') ? $('opw').value : '', n1 = $('npw1').value, n2 = $('npw2').value;
