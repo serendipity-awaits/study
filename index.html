@@ -265,6 +265,11 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .dn2.on{fill:#fff}
 .dp2{text-anchor:middle;font:500 6.5px var(--font-mono);fill:var(--muted)}
 @media (max-width:640px){.mstats{grid-template-columns:1fr 1fr}.mstats>div:last-child{grid-column:1/-1}.md-grid{grid-template-columns:minmax(0,1fr)}.journey{height:28px}.js-seg b{font-size:9.5px;padding-top:7px}.views button{padding:8px 10px}}
+.dates{display:flex;gap:12px 18px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.field2{display:flex;flex-direction:column;gap:4px}
+.field2 input{font:inherit;font-family:var(--font-mono);font-size:15px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+#resetWarn{margin-bottom:10px}
+.lec-h{font-size:14px;margin:14px 0 8px}
 .lec-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px}
 .lec-row{display:grid;grid-template-columns:10px minmax(0,1fr) 64px auto 78px;gap:8px;align-items:center;font-size:13.5px}
 .lec-row i{width:10px;height:10px;border-radius:3px;background:var(--c)}
@@ -446,7 +451,7 @@ section,aside{scroll-margin-top:12px}
     <div class="head-r">
       <button type="button" class="chip" id="sync" aria-controls="syncPanel"><span class="dot"></span><span id="syncText">불러오는 중</span></button>
       <button type="button" class="btn primary" id="loginBtn" aria-controls="syncPanel">로그인</button>
-      <div class="dday"><span>학습 마감</span><b id="dday">D-0</b></div>
+      <div class="dday"><span id="ddayLbl">학습 마감</span><b id="dday">D-0</b></div>
     </div>
   </header>
 
@@ -532,7 +537,14 @@ section,aside{scroll-margin-top:12px}
   </section>
 
   <section class="panel" id="lecSec" aria-label="과목별 강의 수">
-    <div class="sec-head"><h2>과목별 강의 수 · 시험 비중</h2><span class="note">커리큘럼이 바뀌면 여기서 고치세요</span></div>
+    <div class="sec-head"><h2>시험 설정</h2><span class="note">재시험이나 커리큘럼 변경 때 여기서 고치세요</span></div>
+    <div class="dates">
+      <label class="field2"><span class="label">공부 시작일</span><input type="date" id="sdIn"></label>
+      <label class="field2"><span class="label">시험일 (선택)</span><input type="date" id="edIn"></label>
+      <label class="chk" id="resetWrap"><input type="checkbox" id="resetProg"> 진도 체크를 처음부터 다시 시작 (재시험용)</label>
+    </div>
+    <div class="warn-box" id="resetWarn" hidden><span><b>강의·문제 체크, 강의 시간, 모의고사 체크가 모두 0으로 돌아가요.</b> 매일 공부 시간과 메모 기록은 그대로 남습니다. 혹시 모르니 먼저 백업 파일을 저장해 두세요.</span><button type="button" class="btn" id="resetBk">백업 파일 저장</button></div>
+    <h3 class="lec-h">과목별 강의 수 · 시험 비중</h3>
     <div class="lec-grid" id="lecGrid"></div>
     <div class="lec-foot">
       <span class="note" id="lecNote"></span>
@@ -644,12 +656,15 @@ const DEF_LC = Object.fromEntries(SUBJ.map(s => [s.k, s.L])), DEF_LW = Object.fr
 // lecture counts / exam weights can be edited (curriculum changes); applied before plans, units and the map are built
 const cleanLC = o => { if (!o || typeof o !== 'object') return null; const r = {}; let any = false; for (const s of SUBJ) { const v = Math.round(+o[s.k]); if (v >= 1 && v <= 60) { r[s.k] = v; if (v !== DEF_LC[s.k]) any = true; } else r[s.k] = DEF_LC[s.k]; } return any ? r : null; };
 const cleanLW = o => { if (!o || typeof o !== 'object') return null; const r = {}; let any = false; for (const s of SUBJ) { const v = typeof o[s.k] === 'string' ? o[s.k].trim().slice(0, 12) : ''; r[s.k] = v || DEF_LW[s.k]; if (r[s.k] !== DEF_LW[s.k]) any = true; } return any ? r : null; };
-let APPLIED = {lc:null, lw:null};
-try { const raw = JSON.parse(localStorage.getItem('cfa-l1-pacer-v1') || 'null'); if (raw) { APPLIED = {lc: cleanLC(raw.lc), lw: cleanLW(raw.lw)}; } } catch(_) {}
+const DEF_START = '2026-11-15';
+const okDate = d => typeof d === 'string' && /^20[2-3]\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(d) && !isNaN(new Date(d + 'T00:00:00'));
+let APPLIED = {lc:null, lw:null, sd:null, ed:null};
+try { const raw = JSON.parse(localStorage.getItem('cfa-l1-pacer-v1') || 'null'); if (raw) { APPLIED = {lc: cleanLC(raw.lc), lw: cleanLW(raw.lw), sd: okDate(raw.sd) ? raw.sd : null, ed: okDate(raw.ed) ? raw.ed : null}; } } catch(_) {}
+const appliedSig = o => JSON.stringify([o.lc || null, o.lw || null, o.sd || null, o.ed || null]);
 SUBJ.forEach(s => { if (APPLIED.lc) s.L = APPLIED.lc[s.k]; if (APPLIED.lw) s.w = APPLIED.lw[s.k]; });
 const SMAP = Object.fromEntries(SUBJ.map(s => [s.k, s]));
 const col = k => `var(--s-${k})`;
-const START = '2026-11-15', ORIG_END = '2027-04-30';
+const START = APPLIED.sd || DEF_START, EXAM = APPLIED.ed;
 let END, PHASES, PLAN, ALL_DAYS, MONTHS;
 const PH_TXT = {
   1:['1회독','강의 + 슈바이저 노트 + 모듈 퀴즈'], 2:['2회독','슈바이저 노트 재독 + Ecosystem 연습문제'],
@@ -778,7 +793,7 @@ let auth = null; try { auth = JSON.parse(localStorage.getItem(AKEY) || 'null'); 
 let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}, lc:null, lw:null};
 try { const raw = localStorage.getItem(LS_KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
 S.plans = cleanPlans(S.plans) || [basePlan(S.cfg)];
-S.lc = APPLIED.lc; S.lw = APPLIED.lw;
+S.lc = APPLIED.lc; S.lw = APPLIED.lw; S.sd = APPLIED.sd; S.ed = APPLIED.ed;
 delete S.cfg;
 rebuild();
 let db = null, uid = null, mode = 'local';
@@ -797,7 +812,7 @@ function persist(docId, getData){
     finally { inflight[docId] = false; }
   }, 700);
 }
-const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw}));
+const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed}));
 const saveLog = d => persist('d'+d, () => ({date:d, h:(S.logs[d]||{}).h||{}, memo:(S.logs[d]||{}).memo||'', at:Date.now()}));
 const $ = id => document.getElementById(id);
 function setSave(t){ $('saveState').textContent = t; }
@@ -857,9 +872,10 @@ const clampDay = d => d < START ? START : d > END ? END : d;
 function renderHeader(){
   const dot = s => s.replace(/-/g,'.');
   $('periodLabel').textContent = `CFA Level I · ${dot(START)} – ${dot(END)}`;
-  const ext = diffD(ORIG_END, END);
-  $('endNote').innerHTML = `총 ${ALL_DAYS.length}일 · 종료 <b class="num">${dot(END)}</b> · 기존 2027.04.30 대비 <b>${ext >= 0 ? '+' : ''}${ext}일</b>`;
-  const left = diffD(TODAY, END);
+  const gap = EXAM ? diffD(END, EXAM) : null;
+  $('endNote').innerHTML = `총 ${ALL_DAYS.length}일 · 종료 <b class="num">${dot(END)}</b>` + (EXAM ? ` · 시험일 ${dot(EXAM)} 기준 <b style="color:${gap >= 0 ? 'var(--good)' : 'var(--bad)'}">${gap >= 0 ? gap + '일 여유' : -gap + '일 부족'}</b>` : ' · 시험일을 넣으면 여유가 며칠인지 알려줘요');
+  const tgt = EXAM || END, left = diffD(TODAY, tgt);
+  $('ddayLbl').textContent = EXAM ? '시험' : '학습 마감';
   $('dday').textContent = left > 0 ? `D-${left}` : left === 0 ? 'D-DAY' : '종료';
   $('todayLine').textContent = TODAY < START ? `${fmtLong(TODAY)} · 시작까지 ${diffD(TODAY, START)}일` : fmtLong(TODAY);
 }
@@ -1616,7 +1632,7 @@ let lecDraft = null;
 function lecCur(){ return Object.fromEntries(SUBJ.map(s => [s.k, {L:s.L, w:s.w}])); }
 function renderLec(force){
   const g = $('lecGrid'); if (!g) return;
-  if (!lecDraft) lecDraft = lecCur();
+  if (!lecDraft) { lecDraft = lecCur(); $('sdIn').value = START; $('edIn').value = EXAM || ''; }
   if (!force && g.contains(document.activeElement)) return lecFoot();
   g.innerHTML = ordered().map(s => `<div class="lec-row" style="--c:${col(s.k)}"><i></i><label for="lc-${s.k}" title="${s.full}">${s.full.replace(' & Professional Standards','').replace('Financial Statement Analysis','FSA').replace('Quantitative Methods','Quant')}</label>
     <input id="lc-${s.k}" data-lc="${s.k}" type="number" inputmode="numeric" min="1" max="60" step="1" value="${lecDraft[s.k].L}" aria-label="${s.n} 강의 수"><span class="note">강</span>
@@ -1626,8 +1642,10 @@ function renderLec(force){
 function lecFoot(){
   const cur = lecCur(), tot = SUBJ.reduce((a, s) => a + lecDraft[s.k].L, 0), was = SUBJ.reduce((a, s) => a + s.L, 0);
   const changed = SUBJ.filter(s => lecDraft[s.k].L !== cur[s.k].L || lecDraft[s.k].w !== cur[s.k].w);
-  $('lecNote').innerHTML = `총 <b class="num">${tot}</b>강${tot !== was ? ` (지금 ${was}강 → ${tot > was ? '+' : ''}${tot - was})` : ''} · 3회독 ${tot * 3}강${changed.length ? ` · 바뀐 과목 ${changed.map(s => s.n).join(', ')}` : ''}`;
-  $('lecSave').disabled = !changed.length;
+  const dch = $('sdIn').value !== START || ($('edIn').value || '') !== (EXAM || '') || $('resetProg').checked;
+  $('lecNote').innerHTML = `총 <b class="num">${tot}</b>강${tot !== was ? ` (지금 ${was}강 → ${tot > was ? '+' : ''}${tot - was})` : ''} · 3회독 ${tot * 3}강${changed.length ? ` · 바뀐 과목 ${changed.map(s => s.n).join(', ')}` : ''}${$('sdIn').value !== START ? ` · 시작일 ${$('sdIn').value.replace(/-/g, '.')}로 변경` : ''}`;
+  $('lecSave').disabled = !changed.length && !dch;
+  $('resetWarn').hidden = !$('resetProg').checked;
   $('lecReset').disabled = SUBJ.every(s => lecDraft[s.k].L === DEF_LC[s.k] && lecDraft[s.k].w === DEF_LW[s.k]);
 }
 $('lecGrid').addEventListener('input', e => {
@@ -1636,10 +1654,27 @@ $('lecGrid').addEventListener('input', e => {
   if (b) lecDraft[b.dataset.lw].w = b.value.trim() || DEF_LW[b.dataset.lw];
   lecFoot();
 });
+['sdIn', 'edIn', 'resetProg'].forEach(id => $(id).addEventListener(id === 'resetProg' ? 'change' : 'input', lecFoot));
+$('resetBk').addEventListener('click', () => {
+  const blob = new Blob([payload()], {type:'application/json'}), a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `cfa-l1-pacer-backup-${TODAY}.json`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000); setSave('백업 파일을 저장했어요');
+});
 $('lecReset').addEventListener('click', () => { lecDraft = Object.fromEntries(SUBJ.map(s => [s.k, {L:DEF_LC[s.k], w:DEF_LW[s.k]}])); renderLec(true); });
 $('lecSave').addEventListener('click', async () => {
   const lc = cleanLC(Object.fromEntries(SUBJ.map(s => [s.k, lecDraft[s.k].L]))), lw = cleanLW(Object.fromEntries(SUBJ.map(s => [s.k, lecDraft[s.k].w])));
-  S.lc = lc; S.lw = lw;
+  const sd = $('sdIn').value, ed = $('edIn').value, reset = $('resetProg').checked;
+  if (!okDate(sd)) { setSave('공부 시작일을 확인해 주세요'); return; }
+  if (ed && !okDate(ed)) { setSave('시험일을 확인해 주세요'); return; }
+  if (ed && ed <= sd) { setSave('시험일은 시작일보다 뒤여야 해요'); return; }
+  S.lc = lc; S.lw = lw; S.ed = ed || null;
+  if (reset) { S.c = {}; S.st = {}; S.lm = {}; S.td = {}; S.en = {}; MOCKS.forEach((_, i) => delete S.m['mock|' + i]); Object.keys(S.m).filter(k => /^(fr\||day\||sch\||eco\||qb\|)/.test(k)).forEach(k => delete S.m[k]); }
+  if (sd !== START || reset) {
+    // restart the plan from the new start date with the current order and pace; finished lectures are not scheduled again
+    const cp = curPlan();
+    S.plans = [{from: sd, orders: JSON.parse(JSON.stringify(cp.orders)), cfg: JSON.parse(JSON.stringify(cp.cfg)), rem: reset ? null : snapshotRem(), mocksDone: reset ? [] : MOCKS.map((_, i) => i).filter(i => S.m['mock|' + i]), at: sd}];
+  }
+  S.sd = sd === DEF_START ? null : sd;
   $('lecSave').disabled = true; $('lecSave').textContent = '저장 중…';
   saveProgress();
   if (mode !== 'db' && auth) { clearTimeout(pushT); pushT = null; try { await srvPush(); } catch(_) {} }
@@ -1656,7 +1691,7 @@ const WORKER = 'https://app.cfa-study-pacer.workers.dev';
 const API = /\.workers\.dev$/.test(location.hostname) ? '' : WORKER;
 const loggedIn = () => !!auth;
 function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
-function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw}; }
+function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed}; }
 function payload(){ return JSON.stringify({...payloadObj(), updatedAt:S.updatedAt || 0}); }
 function saveAuth(){ try { if (auth) localStorage.setItem(AKEY, JSON.stringify(auth)); else localStorage.removeItem(AKEY); } catch(e) {} }
 async function api(path, opt = {}){
@@ -1676,11 +1711,12 @@ function onAuthLost(e){ if (e && e.status === 401 && auth) { auth = null; saveAu
 function adopt(r){
   S.c = r.c || {}; S.m = r.m || {}; if (typeof r.goal === 'number') S.goal = r.goal;
   S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {};
-  S.lc = cleanLC(r.lc); S.lw = cleanLW(r.lw); if (typeof r.fm === 'number') S.fm = r.fm;
+  S.lc = cleanLC(r.lc); S.lw = cleanLW(r.lw); S.sd = okDate(r.sd) ? r.sd : null; S.ed = okDate(r.ed) ? r.ed : null; if (typeof r.fm === 'number') S.fm = r.fm;
+  if (appliedSig(S) !== appliedSig(APPLIED)) { S.plans = Array.isArray(r.plans) ? r.plans : S.plans; S.logs = r.logs || {}; S.updatedAt = r.updatedAt || Date.now(); writeLS(); location.reload(); return; }
   S.logs = r.logs || {}; S.plans = cleanPlans(r.plans) || S.plans; S.updatedAt = r.updatedAt || Date.now();
   writeLS();
   // lecture counts changed on another device: everything derived from them is rebuilt on a fresh load
-  if (JSON.stringify(S.lc) !== JSON.stringify(APPLIED.lc) || JSON.stringify(S.lw) !== JSON.stringify(APPLIED.lw)) { location.reload(); return; } rebuild(); resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7);
+  rebuild(); resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7);
   $('goal').value = S.goal; hoursSig = ''; renderAll();
 }
 const hhmm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
