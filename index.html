@@ -18,7 +18,7 @@
   --fg:#16202E; --muted:#5B6678; --faint:#8A94A5;
   --accent:#1E4FD8; --accent-soft:#E3EAFC; --on-accent:#FFFFFF;
   --good:#1D8A55; --good-soft:#DDF3E7; --warn:#B7791F; --warn-soft:#FBEFD8; --bad:#C2363F; --bad-soft:#FBE2E3;
-  --heat:30,79,216;
+  --heat:30,79,216; --sea:#DCE6F2; --land:#F6F4EE;
   --s-quant:#D9622F; --s-econ:#B98A0E; --s-corp:#6F8526; --s-fsa:#23855A; --s-equity:#14889A;
   --s-fi:#2C5ED0; --s-deriv:#6A4CCB; --s-alt:#A83E8E; --s-pm:#C83F55; --s-ethics:#55606E;
   --font-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
@@ -30,7 +30,7 @@
   --fg:#E6EBF2; --muted:#9AA6B8; --faint:#6D798B;
   --accent:#7C9BFF; --accent-soft:#1F2C4D; --on-accent:#0F141C;
   --good:#4CC98A; --good-soft:#163527; --warn:#E5B04E; --warn-soft:#3A2E16; --bad:#F2737B; --bad-soft:#3D1D21;
-  --heat:124,155,255;
+  --heat:124,155,255; --sea:#0B1E33; --land:#2A3340;
   --s-quant:#F08B5E; --s-econ:#E0B53C; --s-corp:#A3BC52; --s-fsa:#4DBF8A; --s-equity:#3FC0D0;
   --s-fi:#6E95F5; --s-deriv:#9B84F0; --s-alt:#D873BE; --s-pm:#F07A8D; --s-ethics:#A0ABBA;
   color-scheme:dark}}
@@ -39,7 +39,7 @@
   --fg:#E6EBF2; --muted:#9AA6B8; --faint:#6D798B;
   --accent:#7C9BFF; --accent-soft:#1F2C4D; --on-accent:#0F141C;
   --good:#4CC98A; --good-soft:#163527; --warn:#E5B04E; --warn-soft:#3A2E16; --bad:#F2737B; --bad-soft:#3D1D21;
-  --heat:124,155,255;
+  --heat:124,155,255; --sea:#0B1E33; --land:#2A3340;
   --s-quant:#F08B5E; --s-econ:#E0B53C; --s-corp:#A3BC52; --s-fsa:#4DBF8A; --s-equity:#3FC0D0;
   --s-fi:#6E95F5; --s-deriv:#9B84F0; --s-alt:#D873BE; --s-pm:#F07A8D; --s-ethics:#A0ABBA;
   color-scheme:dark}
@@ -227,6 +227,36 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .fchips button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
 .fmemo{width:min(100%,420px);font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
 .fbig{font-family:var(--font-mono);font-size:44px;font-weight:600;color:var(--good)}
+/* progress map */
+.mstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.mstats>div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.mstats .here-t{font-size:17px;line-height:1.3}
+.journey{display:flex;gap:3px;height:34px}
+.js-seg{position:relative;border-radius:6px;background:color-mix(in srgb,var(--c) 14%,var(--sunk));overflow:hidden;min-width:0}
+.js-seg span{position:absolute;inset:0 auto 0 0;background:var(--c)}
+.js-seg b{position:relative;display:block;font-size:11px;padding:9px 4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg);text-align:center}
+.js-seg.cur{outline:2px solid var(--fg);outline-offset:1px}
+.mapbox{padding:10px}
+.wmap{width:100%;height:auto;display:block}
+.hx{stroke:var(--sea);stroke-width:1;cursor:pointer}
+.hx:hover{filter:brightness(1.08)}
+.hx.sel{stroke:var(--fg);stroke-width:1.4}
+.hx.here{stroke:var(--fg);stroke-width:2.2}
+.ml{cursor:pointer}
+.ml text{text-anchor:middle;paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round;fill:var(--fg)}
+.ml .mn{font:600 9.5px var(--font-mono);fill:var(--bg);stroke:none}
+.ml .mt{font:700 12.5px var(--font-body)}
+.ml .mp{font:600 10.5px var(--font-mono)}
+.md-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+.md-map{width:100%;max-width:460px;max-height:420px;height:auto;justify-self:center}
+.md-side{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.dn2{text-anchor:middle;font:600 10px var(--font-mono);fill:var(--fg)}
+.dn2.on{fill:#fff}
+.dp2{text-anchor:middle;font:500 6.5px var(--font-mono);fill:var(--muted)}
+@media (max-width:640px){.mstats{grid-template-columns:1fr 1fr}.mstats>div:last-child{grid-column:1/-1}.md-grid{grid-template-columns:minmax(0,1fr)}.journey{height:28px}.js-seg b{font-size:9.5px;padding-top:7px}.views button{padding:8px 10px}}
+.fpaused{display:flex;flex-direction:column;gap:8px;align-items:center}
+.fconfirm{background:var(--bad-soft);color:var(--fg);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:center;max-width:420px}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
 .fcheck{display:inline-flex;gap:8px;align-items:center;font-size:15px}
 .fcheck input{width:20px;height:20px;accent-color:var(--good)}
 /* chapter check table */
@@ -406,10 +436,12 @@ section,aside{scroll-margin-top:12px}
 
   <div class="views" role="tablist" aria-label="화면 선택">
     <button type="button" role="tab" id="tabDash" data-view="dash" aria-selected="true" class="on">대시보드</button>
-    <button type="button" role="tab" id="tabToday" data-view="today" aria-selected="false">오늘 공부 <span class="vhint">→</span></button>
+    <button type="button" role="tab" id="tabToday" data-view="today" aria-selected="false">오늘 공부</button>
+    <button type="button" role="tab" id="tabMap" data-view="map" aria-selected="false">진도 지도</button>
   </div>
 
   <div id="todayView" class="view" hidden></div>
+  <div id="mapView" class="view" hidden></div>
   <div id="dashView" class="view">
   <section class="summary" aria-label="요약">
     <div class="card today">
@@ -550,9 +582,9 @@ section,aside{scroll-margin-top:12px}
 <div id="focus" class="focus" hidden role="dialog" aria-modal="true" aria-label="집중 타이머"></div>
 <nav class="mnav" aria-label="빠른 이동">
   <button type="button" data-view="today">오늘 공부</button>
+  <button type="button" data-view="map">진도 지도</button>
   <button type="button" data-go="calSec">달력</button>
   <button type="button" data-go="qSec">문제 체크</button>
-  <button type="button" data-go="adjSec">계획 조정</button>
 </nav>
 
 <script>
@@ -1081,25 +1113,27 @@ $('hist').addEventListener('click', e => {
 
 // ---------- views: dashboard ↔ today ----------
 let view = 'dash';
+const VIEWS = ['dash', 'today', 'map'];
 function setView(v, dir){
   if (v === view) return;
-  view = v;
-  $('dashView').hidden = v !== 'dash'; $('todayView').hidden = v !== 'today';
-  ['tabDash','tabToday'].forEach(id => { const on = $(id).dataset.view === v; $(id).classList.toggle('on', on); $(id).setAttribute('aria-selected', on); });
-  const el = v === 'dash' ? $('dashView') : $('todayView');
-  el.classList.remove('slide-l','slide-r'); void el.offsetWidth; el.classList.add(dir || (v === 'today' ? 'slide-l' : 'slide-r'));
+  const from = VIEWS.indexOf(view); view = v;
+  VIEWS.forEach(x => { $(x + 'View').hidden = x !== v; });
+  ['tabDash','tabToday','tabMap'].forEach(id => { const on = $(id).dataset.view === v; $(id).classList.toggle('on', on); $(id).setAttribute('aria-selected', on); });
+  const el = $(v + 'View');
+  el.classList.remove('slide-l','slide-r'); void el.offsetWidth; el.classList.add(dir || (VIEWS.indexOf(v) > from ? 'slide-l' : 'slide-r'));
   if (v === 'today') renderToday();
+  if (v === 'map') renderMap();
   document.querySelector('.views').scrollIntoView({block:'nearest'});
 }
 document.querySelector('.views').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) setView(b.dataset.view); });
 (() => {
   let sx = 0, sy = 0, ok = false;
-  const skip = t => t.closest('input,textarea,select,.qwrap,.wk-wrap,.loop,.timeline,.cal-grid,.cells,.olist,.focus');
+  const skip = t => t.closest('input,textarea,select,.qwrap,.wk-wrap,.loop,.timeline,.cal-grid,.cells,.olist,.focus,.journey');
   document.addEventListener('touchstart', e => { const t = e.touches[0]; ok = !skip(e.target); sx = t.clientX; sy = t.clientY; }, {passive:true});
   document.addEventListener('touchend', e => {
     if (!ok || !$('focus').hidden) return;
     const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
-    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) setView(dx < 0 ? 'today' : 'dash', dx < 0 ? 'slide-l' : 'slide-r');
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) { const i = VIEWS.indexOf(view) + (dx < 0 ? 1 : -1); if (i >= 0 && i < VIEWS.length) setView(VIEWS[i], dx < 0 ? 'slide-l' : 'slide-r'); }
   }, {passive:true});
 })();
 
@@ -1220,6 +1254,7 @@ function tickFocus(){
   if (F.stage === 'run') { const rem = Math.max(0, F.target - elapsed()); const el = $('fTime'); if (el) el.textContent = mmss(rem); const arc = $('fArc'); if (arc) arc.setAttribute('stroke-dashoffset', String(FC * (1 - rem / F.target))); document.title = mmss(rem) + ' · ' + F.name; }
 }
 const FC = 2 * Math.PI * 44;
+const fmtMin = ms => { const m = Math.floor(ms / 60000), sec = Math.floor(ms / 1000) % 60; return m ? m + '분' + (m < 10 && sec ? ' ' + sec + '초' : '') : sec + '초'; };
 const mmss = ms => { const s2 = Math.ceil(ms / 1000); return `${pad(Math.floor(s2 / 60))}:${pad(s2 % 60)}`; };
 function renderFocus(){
   const box = $('focus'); if (!F) { box.hidden = true; return; }
@@ -1232,7 +1267,12 @@ function renderFocus(){
       <h2>${esc(F.stepName || '집중')}</h2>
       <div class="fring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="var(--sunk)" stroke-width="8"/><circle id="fArc" cx="50" cy="50" r="44" fill="none" stroke="var(--good)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${FC}" stroke-dashoffset="${FC * (1 - rem / F.target)}" transform="rotate(-90 50 50)"/></svg><div class="c"><span><span id="fTime">${mmss(rem)}</span><small>${F.warm ? '5분만 해봐요' : F.run ? '남음' : '멈춤'}</small></span></div></div>
       ${nextStep ? `<span class="fnext">다음: ${nextStep[1]}</span>` : ''}
-      <div class="fbtns"><button class="btn" id="fPause" type="button">${F.run ? '잠깐 멈춤' : '다시 시작'}</button>${k ? '<button class="btn primary" id="fStepDone" type="button">이 단계 끝</button>' : ''}<button class="btn" id="fStop" type="button">그만하기</button></div>`;
+      ${F.run
+        ? `<div class="fbtns"><button class="btn" id="fPause" type="button">⏸ 일시정지</button>${k ? '<button class="btn primary" id="fStepDone" type="button">이 단계 끝</button>' : ''}<button class="btn" id="fStop" type="button">그만하기</button></div>`
+        : `<div class="fpaused"><b>일시정지 중 · 지금까지 ${fmtMin(elapsed())}</b><span class="fsub">닫아도 이 상태는 그대로 남아 있어요.</span>
+            <div class="fbtns"><button class="btn primary" id="fPause" type="button">▶ 다시 시작</button><button class="btn" id="fSave" type="button">💾 지금까지 저장하고 닫기</button><button class="btn" id="fDiscard" type="button">🗑 이번 기록 지우기</button></div>
+            ${F.confirmDel ? '<div class="fconfirm" role="alert"><span>이번 타이머의 ' + fmtMin(elapsed()) + '은 기록되지 않아요. 지울까요?</span><div class="fbtns"><button class="btn danger" id="fDelYes" type="button">지우기</button><button class="btn" id="fDelNo" type="button">취소</button></div></div>' : ''}
+          </div>`}`;
   } else if (F.stage === 'ask') {
     box.innerHTML = `<span class="fbig">✓ 5분</span><h2>시작했어요! 잘했어요.</h2><span class="fsub">흐름이 붙었을 때 조금 더 가볼까요?</span>
       <div class="fbtns"><button class="btn primary" id="fMore" type="button">${S.fm - 5}분 더 (총 ${S.fm}분)</button><button class="btn" id="fStop" type="button">여기까지</button></div>`;
@@ -1245,7 +1285,8 @@ function renderFocus(){
       <span class="fsub">한 줄만 남길까요? (건너뛰어도 돼요)</span>
       <div class="fchips">${['이해됨', '헷갈림', '다시 볼 것', '계산 연습 필요'].map(c => `<button type="button" data-chip="${c}">${c}</button>`).join('')}</div>
       <input class="fmemo" id="fMemo" placeholder="예: 재고자산 FIFO/LIFO 헷갈림" maxlength="200">
-      <div class="fbtns"><button class="btn primary" id="fNext" type="button">기록하고 계속 ${S.fm}분</button><button class="btn" id="fEnd" type="button">오늘은 여기까지 (그래도 성공)</button></div>`;
+      <div class="fbtns"><button class="btn primary" id="fNext" type="button">기록하고 계속 ${S.fm}분</button><button class="btn" id="fEnd" type="button">오늘은 여기까지 (그래도 성공)</button></div>
+      <button type="button" class="linkbtn" id="fDrop">이번 타이머는 기록하지 않기</button>`;
   }
 }
 function commitFocus(){
@@ -1273,7 +1314,11 @@ function closeFocus(){
 $('focus').addEventListener('click', e => {
   const t = e.target; if (!F) return;
   if (t.closest('[data-chip]')) { t.closest('[data-chip]').classList.toggle('on'); return; }
-  if (t.closest('#fPause')) { if (F.run) { F.acc = elapsed(); F.run = false; } else { F.t0 = Date.now(); F.run = true; } saveF(); renderFocus(); return; }
+  if (t.closest('#fPause')) { if (F.run) { F.acc = elapsed(); F.run = false; } else { F.t0 = Date.now(); F.run = true; } F.confirmDel = false; saveF(); renderFocus(); document.title = 'CFA L1 페이스메이커'; return; }
+  if (t.closest('#fSave')) { const m = fmtMin(elapsed()); commitFocus(); closeFocus(); setSave(m + ' 저장했어요. 다음에 "5분만 시작"을 누르면 이어서 할 수 있어요'); return; }
+  if (t.closest('#fDiscard')) { F.confirmDel = true; saveF(); renderFocus(); return; }
+  if (t.closest('#fDelNo')) { F.confirmDel = false; saveF(); renderFocus(); return; }
+  if (t.closest('#fDelYes') || t.closest('#fDrop')) { closeFocus(); setSave('이번 타이머 기록을 지웠어요'); return; }
   if (t.closest('#fMore')) { F.warm = false; F.target = S.fm * 60000; F.t0 = Date.now(); F.run = true; F.stage = 'run'; saveF(); renderFocus(); return; }
   if (t.closest('#fStepDone')) { F.acc = elapsed(); F.run = false; F.mark = true; F.stage = 'end'; saveF(); renderFocus(); return; }
   if (t.closest('#fStop')) { F.acc = elapsed(); F.run = false; F.stage = 'end'; saveF(); renderFocus(); return; }
@@ -1320,7 +1365,110 @@ $('qTable').addEventListener('change', e => {
   saveProgress(); renderAll();
 });
 
-function renderAll(){ renderHeader(); renderSummary(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); }
+// ---------- progress map: every subject is a country, every lecture one hex of land ----------
+const MAP = (() => {
+  const COLS = 22, ROWS = 13, R = 15, W = Math.sqrt(3) * R;
+  const SEEDS = {fsa:[3,3], equity:[8,2], corp:[13,2], fi:[18,3], deriv:[19,9], econ:[15,9], pm:[11,6], quant:[7,9], alt:[3,9], ethics:[11,11]};
+  let seed = 20261115; const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const id = (c, r) => r * COLS + c;
+  const nb = (c, r) => { const o = r & 1; return [[1,0],[o ? 1 : 0, 1],[o ? 0 : -1, 1],[-1,0],[o ? 0 : -1, -1],[o ? 1 : 0, -1]].map(([dc, dr]) => [c + dc, r + dr]); }; // E, SE, SW, W, NW, NE
+  const inb = (c, r) => c >= 0 && r >= 0 && c < COLS && r < ROWS;
+  const cube = (c, r) => { const x = c - (r - (r & 1)) / 2; return [x, r, -x - r]; };
+  const hd = (a, b) => { const p = cube(...a), q = cube(...b); return Math.max(Math.abs(p[0]-q[0]), Math.abs(p[1]-q[1]), Math.abs(p[2]-q[2])); };
+  const owner = new Array(COLS * ROWS).fill(null), cells = {};
+  SUBJ.forEach(s => { const [c, r] = SEEDS[s.k]; owner[id(c, r)] = s.k; cells[s.k] = [[c, r]]; });
+  for (let guard = 0; guard < 2000; guard++) {
+    let grew = false;
+    for (const s of SUBJ) {
+      if (cells[s.k].length >= s.L) continue;
+      const cand = new Map();
+      for (const [c, r] of cells[s.k]) for (const [nc, nr] of nb(c, r)) if (inb(nc, nr) && !owner[id(nc, nr)]) cand.set(id(nc, nr), [nc, nr]);
+      let pick = null, best = 1e9;
+      const pool = cand.size ? [...cand.values()] : [];
+      if (!pool.length) for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!owner[id(c, r)]) pool.push([c, r]);
+      for (const p of pool) { const sc = hd(p, SEEDS[s.k]) + rnd() * 1.4; if (sc < best) { best = sc; pick = p; } }
+      if (pick) { owner[id(...pick)] = s.k; cells[s.k].push(pick); grew = true; }
+    }
+    if (!grew) break;
+  }
+  const px = (c, r) => [W * (c + 0.5 * (r & 1)) + W / 2 + 6, 1.5 * R * r + R + 6];
+  const corner = (x, y, i) => { const a = Math.PI / 180 * (60 * i - 30); return [x + R * Math.cos(a), y + R * Math.sin(a)]; };
+  const poly = (x, y, k = 1) => [0,1,2,3,4,5].map(i => { const a = Math.PI / 180 * (60 * i - 30); return (x + R * k * Math.cos(a)).toFixed(1) + ',' + (y + R * k * Math.sin(a)).toFixed(1); }).join(' ');
+  const lect = {}; // subject -> [[c,r], ...] ordered 1..L outward from the capital
+  for (const s of SUBJ) {
+    const sd = SEEDS[s.k];
+    lect[s.k] = cells[s.k].slice().sort((a, b) => hd(a, sd) - hd(b, sd) || Math.atan2(px(...a)[1] - px(...sd)[1], px(...a)[0] - px(...sd)[0]) - Math.atan2(px(...b)[1] - px(...sd)[1], px(...b)[0] - px(...sd)[0]));
+  }
+  const at = {}; for (const s of SUBJ) lect[s.k].forEach((p, i) => at[id(...p)] = {s:s.k, i:i + 1});
+  // country borders: hex edges whose neighbour belongs elsewhere
+  const border = {};
+  for (const s of SUBJ) { let d = ''; for (const [c, r] of cells[s.k]) { const [x, y] = px(c, r); nb(c, r).forEach(([nc, nr], dir) => { if (!inb(nc, nr) || owner[id(nc, nr)] !== s.k) { const p1 = corner(x, y, dir), p2 = corner(x, y, dir + 1); d += `M${p1[0].toFixed(1)},${p1[1].toFixed(1)}L${p2[0].toFixed(1)},${p2[1].toFixed(1)}`; } }); } border[s.k] = d; }
+  const centroid = {}; for (const s of SUBJ) { const pts = cells[s.k].map(p => px(...p)); centroid[s.k] = [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length]; }
+  const size = [W * COLS + W / 2 + 12, 1.5 * R * (ROWS - 1) + 2 * R + 12];
+  return {COLS, ROWS, R, lect, at, border, centroid, size, px, poly, cells};
+})();
+let mapRound = 1, mapSel = null;
+function mapOrder(r){ const pl = [...S.plans].reverse().find(p => p.from <= clampDay(TODAY)) || S.plans[0]; return pl.orders[r]; }
+function mapStatus(r){
+  const order = mapOrder(r); let here = null; const per = {}; let done = 0;
+  for (const k of order) { let d = 0; for (let i = 1; i <= SMAP[k].L; i++) { const kk = key(k, r, i); if (S.c[kk]) d++; else if (!here) here = {s:k, i}; } per[k] = d; done += d; }
+  return {order, per, done, here};
+}
+function renderMap(){
+  if (view !== 'map') return;
+  const r = mapRound, st = mapStatus(r), N = UNITS.length, pct = Math.round(st.done / N * 100);
+  const conquered = SUBJ.filter(s => st.per[s.k] === s.L).length;
+  const [Wd, Ht] = MAP.size;
+  let hexes = '';
+  for (const s of SUBJ) MAP.lect[s.k].forEach(([c, rr], idx) => {
+    const i = idx + 1, kk = key(s.k, r, i), [x, y] = MAP.px(c, rr), done = !!S.c[kk], part = !done && stepsDoneN(kk) > 0;
+    const isHere = st.here && st.here.s === s.k && st.here.i === i;
+    const fill = done ? `var(--s-${s.k})` : part ? `color-mix(in srgb,var(--s-${s.k}) 45%,var(--land))` : `color-mix(in srgb,var(--s-${s.k}) 12%,var(--land))`;
+    hexes += `<polygon class="hx${isHere ? ' here' : ''}${mapSel === s.k ? ' sel' : ''}" data-ms="${s.k}" points="${MAP.poly(x, y, .96)}" fill="${fill}"><title>${SMAP[s.k].full} ${i}강 · ${done ? '완료' : part ? '진행 중' : '아직'}</title></polygon>`;
+  });
+  const borders = SUBJ.map(s => `<path d="${MAP.border[s.k]}" fill="none" stroke="var(--s-${s.k})" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>`).join('');
+  // journey route between capitals in study order
+  let route = '';
+  for (let j = 0; j < st.order.length - 1; j++) {
+    const a = MAP.centroid[st.order[j]], b = MAP.centroid[st.order[j + 1]], fin = st.per[st.order[j]] === SMAP[st.order[j]].L;
+    const mx = (a[0] + b[0]) / 2 + (b[1] - a[1]) * .18, my = (a[1] + b[1]) / 2 - (b[0] - a[0]) * .18;
+    route += `<path d="M${a[0].toFixed(1)},${a[1].toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${b[0].toFixed(1)},${b[1].toFixed(1)}" fill="none" stroke="var(--fg)" stroke-width="${fin ? 2.6 : 1.6}" stroke-dasharray="${fin ? '0' : '5 5'}" opacity="${fin ? .75 : .4}"/>`;
+  }
+  const labels = SUBJ.map(s => { const [x, y] = MAP.centroid[s.k], p = Math.round(st.per[s.k] / s.L * 100), n = st.order.indexOf(s.k) + 1; return `<g class="ml" data-ms="${s.k}"><circle cx="${x.toFixed(1)}" cy="${(y - 15).toFixed(1)}" r="8" fill="var(--fg)"/><text x="${x.toFixed(1)}" y="${(y - 11.5).toFixed(1)}" class="mn">${n}</text><text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" class="mt">${SMAP[s.k].n}</text><text x="${x.toFixed(1)}" y="${(y + 17).toFixed(1)}" class="mp">${p === 100 ? '정복 ✓' : p + '%'}</text></g>`; }).join('');
+  let flag = '';
+  if (st.here) { const [c, rr] = MAP.lect[st.here.s][st.here.i - 1], [x, y] = MAP.px(c, rr); flag = `<g class="flag" pointer-events="none"><line x1="${x}" y1="${y}" x2="${x}" y2="${y - 30}" stroke="var(--fg)" stroke-width="2"/><path d="M${x},${y - 30} l17,5 l-17,6 z" fill="var(--bad)"/><circle cx="${x}" cy="${y}" r="3.5" fill="var(--fg)"/></g>`; }
+  const strip = st.order.map(k => `<div class="js-seg${st.here && st.here.s === k ? ' cur' : ''}" style="flex:${SMAP[k].L};--c:var(--s-${k})" title="${SMAP[k].full} ${st.per[k]}/${SMAP[k].L}"><span style="width:${st.per[k] / SMAP[k].L * 100}%"></span><b>${SMAP[k].n}</b></div>`).join('');
+  const sel = mapSel ? SMAP[mapSel] : null;
+  let detail = '';
+  if (sel) {
+    const pts = MAP.lect[sel.k].map(p => MAP.px(...p)), minx = Math.min(...pts.map(p => p[0])) - MAP.R - 4, miny = Math.min(...pts.map(p => p[1])) - MAP.R - 4, maxx = Math.max(...pts.map(p => p[0])) + MAP.R + 4, maxy = Math.max(...pts.map(p => p[1])) + MAP.R + 4;
+    const big = MAP.lect[sel.k].map(([c, rr], idx) => { const i = idx + 1, kk = key(sel.k, r, i), [x, y] = MAP.px(c, rr), done = !!S.c[kk], n = stepsDoneN(kk), all = STEPS[r].length; return `<g><polygon points="${MAP.poly(x, y, .95)}" fill="${done ? `var(--s-${sel.k})` : n ? `color-mix(in srgb,var(--s-${sel.k}) 45%,var(--land))` : `color-mix(in srgb,var(--s-${sel.k}) 12%,var(--land))`}" stroke="var(--surface)" stroke-width="1"><title>${i}강 · ${STEPS[r].map(([x2, nm]) => nm + (stepDone(kk, x2) ? ' ✓' : ' –')).join(' / ')}</title></polygon><text x="${x}" y="${y + 3.5}" class="dn2${done ? ' on' : ''}">${i}</text>${!done && n ? `<text x="${x}" y="${y + 11}" class="dp2">${n}/${all}</text>` : ''}</g>`; }).join('');
+    const p = Math.round(st.per[sel.k] / sel.L * 100);
+    detail = `<div class="panel md" style="--c:var(--s-${sel.k})"><div class="sec-head"><h2>${sel.full}</h2><span class="note">${st.per[sel.k]}/${sel.L}강 · ${p}% · 비중 ${sel.w}</span></div>
+      <div class="md-grid"><svg class="md-map" viewBox="${minx.toFixed(0)} ${miny.toFixed(0)} ${(maxx - minx).toFixed(0)} ${(maxy - miny).toFixed(0)}" role="img" aria-label="${sel.full} 강의 지도">${big}</svg>
+      <div class="md-side"><p class="note">수도(1강)에서 바깥쪽으로 강의 순서대로 땅이 놓여 있어요. 진하게 칠해진 칸은 R${r} 완료, 연한 칸은 일부 단계만 한 강의입니다.</p>
+      <div class="bar"><span style="width:${p}%;background:var(--c)"></span></div>
+      <button type="button" class="btn" id="mdQ">이 과목 문제 체크 표 보기</button><button type="button" class="linkbtn" id="mdClose">닫기</button></div></div></div>`;
+  }
+  $('mapView').innerHTML = `
+    <div class="tb-head"><h2>R${r} 진도 지도</h2><div class="otabs" role="tablist" aria-label="회독 선택">${[1,2,3].map(x => `<button type="button" role="tab" class="otab${x === r ? ' on' : ''}" data-mr="${x}" aria-selected="${x === r}">${x}회독</button>`).join('')}</div></div>
+    <div class="mstats"><div><span class="label">전체 진도</span><b class="big">${pct}<small>%</small></b><span class="note">${st.done}/${N}강</span></div>
+      <div><span class="label">정복한 나라</span><b class="big">${conquered}<small>/10</small></b><span class="note">과목 = 나라</span></div>
+      <div><span class="label">지금 위치</span><b class="here-t">${st.here ? `${SMAP[st.here.s].full} ${st.here.i}강` : '전부 정복! 🎉'}</b><span class="note">${st.here ? `${st.order.indexOf(st.here.s) + 1}번째 나라 · 남은 ${N - st.done}강` : ''}</span></div></div>
+    <div class="journey" aria-label="여행 경로 진행 막대">${strip}</div>
+    <div class="panel mapbox"><svg class="wmap" viewBox="0 0 ${Wd.toFixed(0)} ${Ht.toFixed(0)}" role="img" aria-label="과목별 진도 지도"><rect width="100%" height="100%" fill="var(--sea)" rx="10"/>${hexes}${borders}${route}${labels}${flag}</svg>
+      <div class="cal-foot"><span><span class="sw" style="background:var(--s-fi)"></span>완료한 강의</span><span><span class="sw" style="background:color-mix(in srgb,var(--s-fi) 45%,var(--land))"></span>일부 단계만</span><span><span class="sw" style="background:color-mix(in srgb,var(--s-fi) 12%,var(--land))"></span>아직</span><span>━ 지나온 길 · ┅ 갈 길</span><span>🚩 지금 여기</span><span>나라를 누르면 크게 볼 수 있어요</span></div></div>
+    ${detail}`;
+}
+$('mapView').addEventListener('click', e => {
+  const t = e.target;
+  const mr = t.closest('[data-mr]'); if (mr) { mapRound = +mr.dataset.mr; renderMap(); return; }
+  const ms = t.closest('[data-ms]'); if (ms) { mapSel = mapSel === ms.dataset.ms ? null : ms.dataset.ms; renderMap(); if (mapSel) setTimeout(() => { const d = document.querySelector('.md'); if (d) d.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'nearest'}); }, 30); return; }
+  if (t.closest('#mdClose')) { mapSel = null; renderMap(); return; }
+  if (t.closest('#mdQ')) { qSub = mapSel; setView('dash'); renderQ(); $('qSec').scrollIntoView({block:'start'}); }
+});
+
+function renderAll(){ renderHeader(); renderSummary(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); renderMap(); }
 renderAll(); setSync();
 let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(renderStats, 150); });
 $('goal').value = S.goal;
