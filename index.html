@@ -590,8 +590,8 @@ const roundPlanTotalBy = (r, date) => {
 };
 
 // ---------- state ----------
-const LS_KEY = 'cfa-l1-pacer-v1', GKEY = 'cfa-l1-pacer-gist', GFILE = 'cfa-l1-pacer.json';
-let gist = null; try { gist = JSON.parse(localStorage.getItem(GKEY) || 'null'); } catch(e) {}
+const LS_KEY = 'cfa-l1-pacer-v1', AKEY = 'cfa-l1-pacer-auth';
+let auth = null; try { auth = JSON.parse(localStorage.getItem(AKEY) || 'null'); } catch(e) {}
 let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0};
 try { const raw = localStorage.getItem(LS_KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
 S.plans = cleanPlans(S.plans) || [basePlan(S.cfg)];
@@ -619,9 +619,9 @@ const $ = id => document.getElementById(id);
 function setSave(t){ $('saveState').textContent = t; }
 function setSync(){
   const c = $('sync');
-  const g = mode !== 'db' && gist && gist.id;
+  const g = mode !== 'db' && !!auth;
   c.className = 'chip ' + (mode === 'db' || g ? 'ok' : 'local');
-  $('syncText').textContent = mode === 'db' ? '계정에 저장 · 기기 간 동기화' : g ? 'GitHub 동기화 켜짐' : '이 기기에만 저장 · 동기화 설정';
+  $('syncText').textContent = mode === 'db' ? '계정에 저장 · 기기 간 동기화' : g ? `${auth.username} · 서버에 저장` : '로그인 전 · 이 기기에만 저장';
   c.disabled = mode === 'db';
   $('loginBtn').hidden = mode === 'db';
   if (mode === 'db') $('syncPanel').hidden = true;
@@ -956,30 +956,28 @@ renderAll(); setSync();
 let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(renderStats, 150); });
 $('goal').value = S.goal;
 
-// ---------- GitHub Gist sync (standalone site) ----------
+// ---------- server sync (Cloudflare Worker + D1) ----------
+const WORKER = 'https://app.cfa-study-pacer.workers.dev';
+const API = /\.workers\.dev$/.test(location.hostname) ? '' : WORKER;
+const loggedIn = () => !!auth;
 function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
-function payload(){ return JSON.stringify({v:2, updatedAt:S.updatedAt || 0, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs}); }
-async function gh(path, opt = {}){
-  const r = await fetch('https://api.github.com' + path, {...opt, cache:'no-store', headers:{Accept:'application/vnd.github+json', Authorization:'Bearer ' + gist.token, ...(opt.body ? {'Content-Type':'application/json'} : {})}});
-  if (!r.ok) { const e = new Error('GitHub ' + r.status); e.status = r.status; throw e; }
-  return r.json();
+function payloadObj(){ return {v:3, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs}; }
+function payload(){ return JSON.stringify({...payloadObj(), updatedAt:S.updatedAt || 0}); }
+function saveAuth(){ try { if (auth) localStorage.setItem(AKEY, JSON.stringify(auth)); else localStorage.removeItem(AKEY); } catch(e) {} }
+async function api(path, opt = {}){
+  let r;
+  try {
+    r = await fetch(API + path, {method:opt.method || 'GET', cache:'no-store',
+      headers:{...(opt.body ? {'Content-Type':'application/json'} : {}), ...(auth && !opt.noAuth ? {Authorization:'Bearer ' + auth.token} : {})},
+      body: opt.body ? JSON.stringify(opt.body) : undefined});
+  } catch (_) { const e = new Error('network'); e.status = 0; throw e; }
+  let j = {}; try { j = await r.json(); } catch(_) {}
+  if (!r.ok) { const e = new Error(j.error || ('HTTP ' + r.status)); e.status = r.status; e.data = j; throw e; }
+  return j;
 }
-const ghErr = e => e && e.status === 401 ? '토큰이 잘못됐거나 만료됐습니다. 새 토큰으로 다시 연결하세요'
-  : e && (e.status === 403 || e.status === 404) ? '토큰에 gist 권한이 없습니다. gist 권한을 체크해서 새로 만드세요'
-  : '연결 실패 · 인터넷 연결을 확인하세요 (기록은 이 기기에 저장됨)';
-async function gistConnect(token){
-  gist = {token};
-  let id = null;
-  for (let page = 1; page <= 5 && !id; page++) {
-    const list = await gh(`/gists?per_page=100&page=${page}`);
-    const f = list.find(g => g.files && g.files[GFILE]); if (f) id = f.id;
-    if (list.length < 100) break;
-  }
-  if (!id) { const g = await gh('/gists', {method:'POST', body:JSON.stringify({description:'CFA L1 페이스메이커 기록', public:false, files:{[GFILE]:{content:payload()}}})}); id = g.id; }
-  gist.id = id;
-  try { localStorage.setItem(GKEY, JSON.stringify(gist)); } catch(e) {}
-  await gistPull();
-}
+const srvErr = e => !e ? '' : e.status === 0 ? '서버에 연결할 수 없습니다 · 인터넷 연결을 확인하세요 (기록은 이 기기에 저장됨)'
+  : e.status === 401 && auth ? '로그인이 만료됐습니다. 다시 로그인하세요' : (e.message || '오류가 발생했습니다');
+function onAuthLost(e){ if (e && e.status === 401 && auth) { auth = null; saveAuth(); setSync(); renderSyncPanel(); } }
 function adopt(r){
   S.c = r.c || {}; S.m = r.m || {}; if (typeof r.goal === 'number') S.goal = r.goal;
   S.logs = r.logs || {}; S.plans = cleanPlans(r.plans) || S.plans; S.updatedAt = r.updatedAt || Date.now();
@@ -987,144 +985,92 @@ function adopt(r){
   $('goal').value = S.goal; hoursSig = ''; renderAll();
 }
 const hhmm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-async function gistPull(){
-  if (!gist || !gist.id) return;
-  const g = await gh('/gists/' + gist.id);
-  const f = g.files && g.files[GFILE];
-  let txt = f ? f.content : '';
-  if (f && f.truncated) txt = await (await fetch(f.raw_url, {cache:'no-store'})).text();
-  let remote = {}; try { remote = JSON.parse(txt || '{}'); } catch(e) {}
-  if ((remote.updatedAt || 0) > (S.updatedAt || 0)) adopt(remote);
-  else if ((S.updatedAt || 0) > (remote.updatedAt || 0)) await gistPush();
-  gist.last = hhmm(); syncMsg('동기화됨 · ' + gist.last); renderSyncPanel();
+let lastSync = '';
+const hasData = () => Object.keys(S.c).length || Object.keys(S.logs).length || Object.keys(S.m).length;
+async function srvPull(){
+  if (!auth) return;
+  const r = await api('/api/data');
+  const remoteAt = r.updatedAt || 0;
+  if (r.body && remoteAt > (S.updatedAt || 0)) adopt({...r.body, updatedAt:remoteAt});
+  else if ((S.updatedAt || 0) > remoteAt || (!r.body && hasData())) await srvPush();
+  lastSync = hhmm(); syncMsg('동기화됨 · ' + lastSync); renderSyncPanel();
 }
 let pushT = null, pushing = false;
-function schedulePush(){ if (mode === 'db' || !gist || !gist.id) return; clearTimeout(pushT); syncMsg('저장 대기 중…'); pushT = setTimeout(() => { pushT = null; gistPush(); }, 1500); }
-async function gistPush(){
-  if (!gist || !gist.id) return;
+function schedulePush(){ if (mode === 'db' || !auth) return; clearTimeout(pushT); syncMsg('저장 대기 중…'); pushT = setTimeout(() => { pushT = null; srvPush(); }, 1200); }
+async function srvPush(){
+  if (!auth) return;
   if (pushing) { schedulePush(); return; }
-  pushing = true; syncMsg('GitHub에 저장 중…');
-  try { await gh('/gists/' + gist.id, {method:'PATCH', body:JSON.stringify({files:{[GFILE]:{content:payload()}}})}); gist.last = hhmm(); syncMsg('동기화됨 · ' + gist.last); }
-  catch (e) { syncMsg(ghErr(e)); }
+  pushing = true; syncMsg('서버에 저장 중…');
+  try { await api('/api/data', {method:'PUT', body:{body:payloadObj(), updatedAt:S.updatedAt || Date.now()}}); lastSync = hhmm(); syncMsg('서버에 저장됨 · ' + lastSync); }
+  catch (e) {
+    if (e.status === 409 && e.data && e.data.body) { adopt({...e.data.body, updatedAt:e.data.updatedAt}); syncMsg('다른 기기의 더 최신 기록을 불러왔습니다'); }
+    else { onAuthLost(e); syncMsg(srvErr(e)); }
+  }
   finally { pushing = false; renderSyncPanel(); }
 }
 document.addEventListener('visibilitychange', () => {
-  if (mode === 'db' || !gist || !gist.id) return;
-  if (document.visibilityState === 'hidden') { if (pushT) { clearTimeout(pushT); pushT = null; gistPush(); } }
-  else if (!pushT && !pushing) gistPull().catch(e => syncMsg(ghErr(e)));
+  if (mode === 'db' || !auth) return;
+  if (document.visibilityState === 'hidden') { if (pushT) { clearTimeout(pushT); pushT = null; srvPush(); } }
+  else if (!pushT && !pushing) srvPull().catch(e => { onAuthLost(e); syncMsg(srvErr(e)); });
 });
-// ---------- password login: the gist token is sealed with the password and kept in a public gist ----------
-const OWNER = /\.github\.io$/.test(location.hostname) ? location.hostname.split('.')[0] : 'serendipity-awates';
-const LOGIN_FILE = 'cfa-l1-pacer-login.json';
-const b64 = u8 => btoa(String.fromCharCode(...u8));
-const unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
-async function pwKey(pw, salt, iter){
-  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:iter, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
-}
-async function sealToken(token, pw){
-  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 400000;
-  const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, await pwKey(pw, salt, iter), new TextEncoder().encode(token)));
-  return {v:1, kdf:'PBKDF2-SHA256', iter, salt:b64(salt), iv:b64(iv), ct:b64(ct)};
-}
-async function openToken(blob, pw){
-  const key = await pwKey(pw, unb64(blob.salt), blob.iter || 400000);
-  return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(blob.iv)}, key, unb64(blob.ct)));
-}
-async function findLoginBlob(){
-  const r = await fetch(`https://api.github.com/users/${OWNER}/gists?per_page=100`, {cache:'no-store', headers:{Accept:'application/vnd.github+json'}});
-  if (!r.ok) { const e = new Error('GitHub ' + r.status); e.status = r.status; throw e; }
-  const g = (await r.json()).find(x => x.files && x.files[LOGIN_FILE]);
-  if (!g) return null;
-  const raw = await fetch(g.files[LOGIN_FILE].raw_url, {cache:'no-store'});
-  return {id:g.id, blob:await raw.json()};
-}
-async function saveLoginBlob(pw){
-  const content = JSON.stringify(await sealToken(gist.token, pw));
-  let id = null;
-  for (let page = 1; page <= 5 && !id; page++) {
-    const list = await gh(`/gists?per_page=100&page=${page}`);
-    const f = list.find(x => x.files && x.files[LOGIN_FILE]); if (f) id = f.id;
-    if (list.length < 100) break;
-  }
-  if (id) await gh('/gists/' + id, {method:'PATCH', body:JSON.stringify({files:{[LOGIN_FILE]:{content}}})});
-  else await gh('/gists', {method:'POST', body:JSON.stringify({description:'CFA L1 페이스메이커 로그인 (비밀번호로 암호화됨)', public:true, files:{[LOGIN_FILE]:{content}}})});
-}
-let loginView = 'login', loginKnown = null;
-const loggedIn = () => !!(gist && gist.id);
+let loginView = 'login';
 function renderSyncPanel(){
   const b = $('syncBody'); if (!b) return;
-  $('loginBtn').textContent = loggedIn() ? '로그아웃' : '로그인';
+  $('loginBtn').textContent = loggedIn() ? '내 계정' : '로그인';
   $('loginBtn').className = 'btn' + (loggedIn() ? '' : ' primary');
   if (loggedIn()) {
-    b.innerHTML = `<div class="sync-on"><span class="pill good">로그인됨</span><span class="note">기록이 비공개 Gist <span class="num">${gist.id.slice(0,7)}</span>에 저장됩니다 · 마지막 동기화 ${gist.last || '-'}</span></div>
-      <div class="adj-btns"><button class="btn primary" id="syncNow" type="button">지금 동기화</button><button class="btn" id="toPw" type="button">비밀번호 변경</button></div>
-      ${loginView === 'pw' ? `<div class="login-box"><div class="field"><label for="npw1">새 비밀번호</label><input id="npw1" type="password" autocomplete="new-password"></div><div class="field"><label for="npw2">한 번 더</label><input id="npw2" type="password" autocomplete="new-password"></div><div><button class="btn primary" id="pwSave" type="button">비밀번호 저장</button></div></div>` : ''}
-      <div class="login-box" style="border-top:1px solid var(--line);padding-top:10px"><label class="chk"><input type="checkbox" id="wipe"> 로그아웃할 때 이 기기에 남은 기록도 지우기 (공용 PC라면 체크)</label><div><button class="btn" id="logout" type="button">이 기기에서 로그아웃</button></div></div>`;
+    b.innerHTML = `<div class="sync-on"><span class="pill good">로그인됨</span><b>${esc(auth.username)}</b><span class="note">기록이 서버에 저장됩니다 · 마지막 동기화 ${lastSync || '-'}</span></div>
+      <div class="adj-btns"><button class="btn primary" id="syncNow" type="button">지금 동기화</button><button class="btn" id="toPw" type="button">비밀번호 변경</button><button class="btn" id="logout" type="button">로그아웃</button></div>
+      ${loginView === 'pw' ? `<form class="login-box" id="pwForm"><div class="field"><label for="opw">현재 비밀번호</label><input id="opw" type="password" autocomplete="current-password" required></div><div class="field"><label for="npw1">새 비밀번호</label><input id="npw1" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="npw2">한 번 더</label><input id="npw2" type="password" autocomplete="new-password" minlength="8" required></div><div><button class="btn primary" type="submit">비밀번호 바꾸기</button></div></form>` : ''}
+      <label class="chk"><input type="checkbox" id="wipe"> 로그아웃할 때 이 기기에 남은 기록도 지우기 (공용 PC라면 체크)</label>`;
     return;
   }
-  const setup = loginView === 'setup' || loginKnown === false;
-  b.innerHTML = `<div class="ltabs"><button type="button" class="otab${!setup ? ' on' : ''}" data-lv="login">비밀번호로 로그인</button><button type="button" class="otab${setup ? ' on' : ''}" data-lv="setup">처음 설정 · 비밀번호 재설정</button></div>
-    ${!setup ? `<form class="login-box" id="loginForm"><div class="field"><label for="pwIn">비밀번호</label><input id="pwIn" type="password" autocomplete="current-password" required></div><div><button class="btn primary" id="pwGo" type="submit">로그인</button></div>
-      <p class="note">처음 설정할 때 정한 비밀번호를 넣으면 이 기기에서도 같은 기록이 보입니다.</p></form>`
-    : `<ol class="steps">
-        <li>GitHub에 로그인한 뒤 <a href="https://github.com/settings/tokens/new?scopes=gist&description=CFA%20L1%20pacer" target="_blank" rel="noopener">토큰 만들기 페이지</a>를 엽니다.</li>
-        <li><b>gist</b>만 체크된 상태로 Expiration을 시험 이후(예: No expiration)로 정하고 Generate token을 누릅니다.</li>
-        <li>생성된 <span class="num">ghp_…</span> 토큰과 앞으로 쓸 비밀번호를 아래에 넣습니다. 이 과정은 한 번만 하면 되고, 다른 기기에서는 비밀번호만 넣으면 됩니다.</li>
-      </ol>
-      <form class="login-box" id="setupForm">
-        <div class="field"><label for="tokIn">GitHub 토큰</label><input id="tokIn" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_..." required></div>
-        <div class="field"><label for="spw1">비밀번호</label><input id="spw1" type="password" autocomplete="new-password" minlength="8" required></div>
-        <div class="field"><label for="spw2">한 번 더</label><input id="spw2" type="password" autocomplete="new-password" minlength="8" required></div>
-        <div><button class="btn primary" id="tokGo" type="submit">설정하고 로그인</button></div>
-        <p class="note">비밀번호는 8자 이상으로, 다른 곳에서 쓰지 않는 긴 문장형을 추천합니다. 토큰은 이 비밀번호로 암호화된 상태로만 GitHub에 보관되고, 비밀번호 자체는 어디에도 저장되지 않습니다.</p>
-      </form>`}`;
+  const su = loginView === 'signup';
+  b.innerHTML = `<div class="ltabs"><button type="button" class="otab${!su ? ' on' : ''}" data-lv="login">로그인</button><button type="button" class="otab${su ? ' on' : ''}" data-lv="signup">처음이면 회원가입</button></div>
+    <form class="login-box" id="${su ? 'signupForm' : 'loginForm'}">
+      <div class="field"><label for="uid">아이디</label><input id="uid" autocomplete="username" autocapitalize="none" spellcheck="false" required pattern="[A-Za-z0-9_.\\-]{3,30}" placeholder="영문·숫자 3~30자"></div>
+      <div class="field"><label for="upw">비밀번호</label><input id="upw" type="password" autocomplete="${su ? 'new-password' : 'current-password'}" minlength="8" required placeholder="8자 이상"></div>
+      ${su ? '<div class="field"><label for="upw2">한 번 더</label><input id="upw2" type="password" autocomplete="new-password" minlength="8" required></div>' : ''}
+      <div><button class="btn primary" id="authGo" type="submit">${su ? '가입하고 로그인' : '로그인'}</button></div>
+      <p class="note">${su ? '아이디와 비밀번호만 있으면 됩니다. 이메일은 받지 않습니다. 비밀번호를 잊으면 되찾을 방법이 없으니 꼭 기억해 두세요. 지금 이 기기에 있는 기록은 가입하면 그대로 서버로 옮겨집니다.' : '휴대폰과 PC에서 같은 아이디로 로그인하면 같은 기록이 보입니다.'}</p>
+    </form>`;
 }
-async function checkLoginKnown(){
-  if (loggedIn() || loginKnown !== null) return;
-  try { loginKnown = !!(await findLoginBlob()); } catch(_) { loginKnown = true; }
-  renderSyncPanel();
-}
-function openPanel(){ if (mode === 'db') return; const p = $('syncPanel'); p.hidden = false; renderSyncPanel(); checkLoginKnown(); p.scrollIntoView({block:'nearest'}); const f = $('pwIn') || $('tokIn'); if (f) setTimeout(() => f.focus(), 50); }
+const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function openPanel(){ if (mode === 'db') return; const p = $('syncPanel'); p.hidden = false; renderSyncPanel(); p.scrollIntoView({block:'nearest'}); const f = $('uid'); if (f) setTimeout(() => f.focus(), 50); }
 $('sync').addEventListener('click', () => { if (mode === 'db') return; const p = $('syncPanel'); if (p.hidden) openPanel(); else p.hidden = true; });
-$('loginBtn').addEventListener('click', () => { loginView = loggedIn() ? 'main' : 'login'; openPanel(); });
+$('loginBtn').addEventListener('click', () => { const p = $('syncPanel'); if (!p.hidden && loginView !== 'pw') { p.hidden = true; return; } loginView = 'login'; openPanel(); });
 $('syncPanel').addEventListener('submit', async e => {
   e.preventDefault();
-  if (e.target.id === 'loginForm') {
-    const pw = $('pwIn').value; if (!pw) return;
-    syncMsg('로그인 중…'); $('pwGo').disabled = true;
+  const f = e.target;
+  if (f.id === 'loginForm' || f.id === 'signupForm') {
+    const su = f.id === 'signupForm', username = $('uid').value.trim(), password = $('upw').value;
+    if (su && password !== $('upw2').value) { syncMsg('두 비밀번호가 다릅니다'); return; }
+    $('authGo').disabled = true; syncMsg(su ? '가입 중…' : '로그인 중…');
     try {
-      const found = await findLoginBlob();
-      if (!found) { loginKnown = false; syncMsg('아직 설정된 비밀번호가 없습니다. 처음 설정을 먼저 해주세요'); renderSyncPanel(); return; }
-      let token; try { token = await openToken(found.blob, pw); } catch(_) { syncMsg('비밀번호가 맞지 않습니다'); $('pwGo').disabled = false; return; }
-      await gistConnect(token); setSync(); loginView = 'main'; renderSyncPanel(); syncMsg('로그인했습니다 · 기록을 불러왔습니다');
-    } catch (err) { gist = null; try { localStorage.removeItem(GKEY); } catch(_) {} syncMsg(ghErr(err)); renderSyncPanel(); }
-  } else if (e.target.id === 'setupForm') {
-    const tok = $('tokIn').value.trim(), p1 = $('spw1').value, p2 = $('spw2').value;
-    if (p1.length < 8) { syncMsg('비밀번호는 8자 이상으로 정해주세요'); return; }
-    if (p1 !== p2) { syncMsg('두 비밀번호가 다릅니다'); return; }
-    syncMsg('설정 중…'); $('tokGo').disabled = true;
-    try { await gistConnect(tok); await saveLoginBlob(p1); loginKnown = true; setSync(); loginView = 'main'; renderSyncPanel(); syncMsg('설정을 마쳤습니다. 다른 기기에서는 비밀번호만 넣으면 됩니다'); }
-    catch (err) { gist = null; try { localStorage.removeItem(GKEY); } catch(_) {} syncMsg(ghErr(err)); renderSyncPanel(); }
+      const r = await api(su ? '/api/signup' : '/api/login', {method:'POST', body:{username, password}, noAuth:true});
+      auth = {token:r.token, username:r.username}; saveAuth(); setSync(); loginView = 'main';
+      await srvPull();
+      syncMsg(su ? '가입했습니다. 이제 이 아이디로 어느 기기에서든 로그인하세요' : '로그인했습니다 · 기록을 불러왔습니다');
+    } catch (err) { syncMsg(srvErr(err)); const b = $('authGo'); if (b) b.disabled = false; }
+  } else if (f.id === 'pwForm') {
+    const o = $('opw').value, n1 = $('npw1').value, n2 = $('npw2').value;
+    if (n1 !== n2) { syncMsg('두 새 비밀번호가 다릅니다'); return; }
+    try { await api('/api/password', {method:'POST', body:{old:o, password:n1}}); loginView = 'main'; renderSyncPanel(); syncMsg('비밀번호를 바꿨습니다. 다른 기기는 다시 로그인해야 합니다'); }
+    catch (err) { onAuthLost(err); syncMsg(srvErr(err)); }
   }
 });
 $('syncPanel').addEventListener('click', async e => {
   const t = e.target;
-  const lv = t.closest('[data-lv]'); if (lv) { loginView = lv.dataset.lv; if (loginView === 'setup') loginKnown = loginKnown === false ? false : loginKnown; else if (loginKnown === false) loginKnown = null; renderSyncPanel(); return; }
-  if (t.closest('#syncNow')) { syncMsg('동기화 중…'); try { await gistPull(); } catch (err) { syncMsg(ghErr(err)); } }
+  const lv = t.closest('[data-lv]'); if (lv) { loginView = lv.dataset.lv; renderSyncPanel(); const f = $('uid'); if (f) f.focus(); return; }
+  if (t.closest('#syncNow')) { syncMsg('동기화 중…'); try { await srvPull(); } catch (err) { onAuthLost(err); syncMsg(srvErr(err)); } }
   else if (t.closest('#toPw')) { loginView = loginView === 'pw' ? 'main' : 'pw'; renderSyncPanel(); }
-  else if (t.closest('#pwSave')) {
-    const p1 = $('npw1').value, p2 = $('npw2').value;
-    if (p1.length < 8) { syncMsg('비밀번호는 8자 이상으로 정해주세요'); return; }
-    if (p1 !== p2) { syncMsg('두 비밀번호가 다릅니다'); return; }
-    try { await saveLoginBlob(p1); loginView = 'main'; renderSyncPanel(); syncMsg('비밀번호를 바꿨습니다. 다른 기기에서도 새 비밀번호로 로그인하세요'); } catch (err) { syncMsg(ghErr(err)); }
-  }
   else if (t.closest('#logout')) {
     const wipe = $('wipe') && $('wipe').checked;
-    if (pushT) { clearTimeout(pushT); pushT = null; await gistPush(); }
-    gist = null; try { localStorage.removeItem(GKEY); } catch(_) {}
-    if (wipe) { try { localStorage.removeItem(LS_KEY); } catch(_) {} adopt({c:{}, m:{}, goal:4, logs:{}, plans:null, updatedAt:0}); S.plans = [basePlan(DEF_CFG)]; rebuild(); resetDraft(); writeLS(); renderAll(); }
-    loginView = 'login'; loginKnown = null; setSync(); renderSyncPanel(); syncMsg(wipe ? '로그아웃하고 이 기기의 기록을 지웠습니다' : '로그아웃했습니다. 이 기기의 기록은 남아 있습니다');
+    if (pushT) { clearTimeout(pushT); pushT = null; await srvPush(); }
+    try { await api('/api/logout', {method:'POST'}); } catch(_) {}
+    auth = null; saveAuth();
+    if (wipe) { try { localStorage.removeItem(LS_KEY); } catch(_) {} adopt({c:{}, m:{}, goal:4, logs:{}, plans:[basePlan(DEF_CFG)], updatedAt:0}); }
+    loginView = 'login'; setSync(); renderSyncPanel(); syncMsg(wipe ? '로그아웃하고 이 기기의 기록을 지웠습니다' : '로그아웃했습니다. 이 기기의 기록은 남아 있습니다');
   }
   else if (t.closest('#bkSave')) {
     const blob = new Blob([payload()], {type:'application/json'}), a = document.createElement('a');
@@ -1138,8 +1084,8 @@ $('daySave').addEventListener('click', async () => {
   const log = S.logs[sel] = S.logs[sel] || {h:{}, memo:''}; log.memo = $('memo').value;
   saveLog(sel);
   const label = sel.slice(5).replace('-','/');
-  if (mode === 'db') { setSave(`${label} 기록을 계정에 저장했습니다`); }
-  else if (loggedIn()) { if (pushT) { clearTimeout(pushT); pushT = null; } await gistPush(); setSave(`${label} 기록을 저장하고 동기화했습니다 · ${hhmm()}`); }
+  if (mode === 'db') setSave(`${label} 기록을 계정에 저장했습니다`);
+  else if (loggedIn()) { if (pushT) { clearTimeout(pushT); pushT = null; } await srvPush(); if (!/실패|없습니다|만료/.test($('saveState').textContent)) setSave(`${label} 기록을 서버에 저장했습니다 · ${hhmm()}`); }
   else setSave(`${label} 기록을 이 기기에 저장했습니다 · 다른 기기와 함께 쓰려면 로그인하세요`);
   b.textContent = '저장됨 ✓'; b.classList.add('saved');
   clearTimeout(b._t); b._t = setTimeout(() => { b.textContent = '이 날 기록 저장'; b.classList.remove('saved'); }, 1800);
@@ -1147,12 +1093,12 @@ $('daySave').addEventListener('click', async () => {
 });
 $('bkFile').addEventListener('change', async e => {
   const f = e.target.files && e.target.files[0]; if (!f) return;
-  try { const r = JSON.parse(await f.text()); if (!r || typeof r !== 'object' || !r.c) throw 0; r.updatedAt = Date.now(); adopt(r); if (gist && gist.id) gistPush(); syncMsg('백업을 불러왔습니다'); }
+  try { const r = JSON.parse(await f.text()); if (!r || typeof r !== 'object' || !r.c) throw 0; r.updatedAt = Date.now(); adopt(r); if (auth) srvPush(); syncMsg('백업을 불러왔습니다'); }
   catch (_) { syncMsg('백업 파일을 읽을 수 없습니다. 이 페이지에서 저장한 .json 파일인지 확인하세요'); }
   e.target.value = '';
 });
 renderSyncPanel(); setSync();
-if (gist && gist.id && !(window.claude && window.claude.use)) gistPull().catch(e => syncMsg(ghErr(e)));
+if (auth && !(window.claude && window.claude.use)) srvPull().catch(e => { onAuthLost(e); syncMsg(srvErr(e)); });
 
 // ---------- account storage via db ----------
 (async () => {
