@@ -263,6 +263,14 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .dn2.on{fill:#fff}
 .dp2{text-anchor:middle;font:500 6.5px var(--font-mono);fill:var(--muted)}
 @media (max-width:640px){.mstats{grid-template-columns:1fr 1fr}.mstats>div:last-child{grid-column:1/-1}.md-grid{grid-template-columns:minmax(0,1fr)}.journey{height:28px}.js-seg b{font-size:9.5px;padding-top:7px}.views button{padding:8px 10px}}
+.lec-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px}
+.lec-row{display:grid;grid-template-columns:10px minmax(0,1fr) 64px auto 78px;gap:8px;align-items:center;font-size:13.5px}
+.lec-row i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.lec-row label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lec-row input{font:inherit;font-family:var(--font-mono);font-size:14px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);text-align:right;width:100%}
+.lec-row input.lw{text-align:center;font-size:12.5px}
+.lec-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 6px}
+@media (max-width:640px){.lec-grid{grid-template-columns:minmax(0,1fr)}.lec-row input{font-size:16px}}
 .unit-tools{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
 .xbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;color:var(--muted)}
 .xbtn:hover{border-color:var(--bad);color:var(--bad)}
@@ -521,6 +529,16 @@ section,aside{scroll-margin-top:12px}
     </div>
   </section>
 
+  <section class="panel" id="lecSec" aria-label="과목별 강의 수">
+    <div class="sec-head"><h2>과목별 강의 수 · 시험 비중</h2><span class="note">커리큘럼이 바뀌면 여기서 고치세요</span></div>
+    <div class="lec-grid" id="lecGrid"></div>
+    <div class="lec-foot">
+      <span class="note" id="lecNote"></span>
+      <div class="adj-btns"><button class="btn primary" id="lecSave" type="button" disabled>저장하고 다시 계산</button><button class="btn" id="lecReset" type="button">처음 값으로</button></div>
+    </div>
+    <p class="note">체크해 둔 기록은 지워지지 않아요. 강의 수를 줄이면 뒤쪽 강의 기록은 숨겨지고, 다시 늘리면 돌아옵니다. 저장하면 날짜별 계획과 진도 지도가 새 강의 수로 다시 만들어지고, 로그인돼 있으면 다른 기기에도 적용됩니다.</p>
+  </section>
+
   <section class="cal-layout" id="calSec" aria-label="달력과 기록">
     <div class="panel">
       <div class="sec-head">
@@ -620,6 +638,13 @@ const SUBJ = [
   {k:'alt', n:'Alt', full:'Alternative Investments', L:15, w:'7–10%'},
   {k:'ethics', n:'Ethics', full:'Ethics & Professional Standards', L:15, w:'15–20%'},
 ];
+const DEF_LC = Object.fromEntries(SUBJ.map(s => [s.k, s.L])), DEF_LW = Object.fromEntries(SUBJ.map(s => [s.k, s.w]));
+// lecture counts / exam weights can be edited (curriculum changes); applied before plans, units and the map are built
+const cleanLC = o => { if (!o || typeof o !== 'object') return null; const r = {}; let any = false; for (const s of SUBJ) { const v = Math.round(+o[s.k]); if (v >= 1 && v <= 60) { r[s.k] = v; if (v !== DEF_LC[s.k]) any = true; } else r[s.k] = DEF_LC[s.k]; } return any ? r : null; };
+const cleanLW = o => { if (!o || typeof o !== 'object') return null; const r = {}; let any = false; for (const s of SUBJ) { const v = typeof o[s.k] === 'string' ? o[s.k].trim().slice(0, 12) : ''; r[s.k] = v || DEF_LW[s.k]; if (r[s.k] !== DEF_LW[s.k]) any = true; } return any ? r : null; };
+let APPLIED = {lc:null, lw:null};
+try { const raw = JSON.parse(localStorage.getItem('cfa-l1-pacer-v1') || 'null'); if (raw) { APPLIED = {lc: cleanLC(raw.lc), lw: cleanLW(raw.lw)}; } } catch(_) {}
+SUBJ.forEach(s => { if (APPLIED.lc) s.L = APPLIED.lc[s.k]; if (APPLIED.lw) s.w = APPLIED.lw[s.k]; });
 const SMAP = Object.fromEntries(SUBJ.map(s => [s.k, s]));
 const col = k => `var(--s-${k})`;
 const START = '2026-11-15', ORIG_END = '2027-04-30';
@@ -748,9 +773,10 @@ const roundPlanTotalBy = (r, date) => {
 // ---------- state ----------
 const LS_KEY = 'cfa-l1-pacer-v1', AKEY = 'cfa-l1-pacer-auth';
 let auth = null; try { auth = JSON.parse(localStorage.getItem(AKEY) || 'null'); } catch(e) {}
-let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}};
+let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}, lc:null, lw:null};
 try { const raw = localStorage.getItem(LS_KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
 S.plans = cleanPlans(S.plans) || [basePlan(S.cfg)];
+S.lc = APPLIED.lc; S.lw = APPLIED.lw;
 delete S.cfg;
 rebuild();
 let db = null, uid = null, mode = 'local';
@@ -769,7 +795,7 @@ function persist(docId, getData){
     finally { inflight[docId] = false; }
   }, 700);
 }
-const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td}));
+const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw}));
 const saveLog = d => persist('d'+d, () => ({date:d, h:(S.logs[d]||{}).h||{}, memo:(S.logs[d]||{}).memo||'', at:Date.now()}));
 const $ = id => document.getElementById(id);
 function setSave(t){ $('saveState').textContent = t; }
@@ -878,7 +904,7 @@ function renderSummary(){
   $('allPct').innerHTML = `${Math.round(d3/all*100)}<small>%</small>`;
   $('allBar').style.width = (d3/all*100) + '%';
   const mdone = MOCKS.filter((_, i) => S.m['mock|'+i]).length;
-  $('allNote').textContent = `${d3} / ${all}강 (175강 × 3회독) · 모의고사 ${mdone}/${MOCKS.length}`;
+  $('allNote').textContent = `${d3} / ${all}강 (${UNITS.length}강 × 3회독) · 모의고사 ${mdone}/${MOCKS.length}`;
 }
 
 // ---------- timeline ----------
@@ -1427,8 +1453,10 @@ $('qTable').addEventListener('change', e => {
 
 // ---------- progress map: every subject is a country, every lecture one hex of land ----------
 const MAP = (() => {
-  const COLS = 22, ROWS = 13, R = 15, W = Math.sqrt(3) * R;
-  const SEEDS = {fsa:[3,3], equity:[8,2], corp:[13,2], fi:[18,3], deriv:[19,9], econ:[15,9], pm:[11,6], quant:[7,9], alt:[3,9], ethics:[11,11]};
+  const TOTAL = SUBJ.reduce((a, s) => a + s.L, 0);
+  const COLS = 22, ROWS = Math.max(13, Math.ceil(TOTAL * 1.55 / 22)), R = 15, W = Math.sqrt(3) * R;
+  const SEEDS0 = {fsa:[3,3], equity:[8,2], corp:[13,2], fi:[18,3], deriv:[19,9], econ:[15,9], pm:[11,6], quant:[7,9], alt:[3,9], ethics:[11,11]};
+  const SEEDS = Object.fromEntries(Object.entries(SEEDS0).map(([k, [c, r]]) => [k, [c, Math.round(r * (ROWS - 1) / 12)]]));
   let seed = 20261115; const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const id = (c, r) => r * COLS + c;
   const nb = (c, r) => { const o = r & 1; return [[1,0],[o ? 1 : 0, 1],[o ? 0 : -1, 1],[-1,0],[o ? 0 : -1, -1],[o ? 1 : 0, -1]].map(([dc, dr]) => [c + dc, r + dr]); }; // E, SE, SW, W, NW, NE
@@ -1581,7 +1609,42 @@ $('mapView').addEventListener('click', e => {
   if (t.closest('#mdQ')) { qSub = mapSel; setView('dash'); renderQ(); $('qSec').scrollIntoView({block:'start'}); }
 });
 
-function renderAll(){ renderHeader(); renderSummary(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); renderMap(); }
+// ---------- lecture count editor ----------
+let lecDraft = null;
+function lecCur(){ return Object.fromEntries(SUBJ.map(s => [s.k, {L:s.L, w:s.w}])); }
+function renderLec(force){
+  const g = $('lecGrid'); if (!g) return;
+  if (!lecDraft) lecDraft = lecCur();
+  if (!force && g.contains(document.activeElement)) return lecFoot();
+  g.innerHTML = ordered().map(s => `<div class="lec-row" style="--c:${col(s.k)}"><i></i><label for="lc-${s.k}" title="${s.full}">${s.full.replace(' & Professional Standards','').replace('Financial Statement Analysis','FSA').replace('Quantitative Methods','Quant')}</label>
+    <input id="lc-${s.k}" data-lc="${s.k}" type="number" inputmode="numeric" min="1" max="60" step="1" value="${lecDraft[s.k].L}" aria-label="${s.n} 강의 수"><span class="note">강</span>
+    <input id="lw-${s.k}" data-lw="${s.k}" type="text" maxlength="12" value="${esc(lecDraft[s.k].w)}" aria-label="${s.n} 시험 비중" class="lw"></div>`).join('');
+  lecFoot();
+}
+function lecFoot(){
+  const cur = lecCur(), tot = SUBJ.reduce((a, s) => a + lecDraft[s.k].L, 0), was = SUBJ.reduce((a, s) => a + s.L, 0);
+  const changed = SUBJ.filter(s => lecDraft[s.k].L !== cur[s.k].L || lecDraft[s.k].w !== cur[s.k].w);
+  $('lecNote').innerHTML = `총 <b class="num">${tot}</b>강${tot !== was ? ` (지금 ${was}강 → ${tot > was ? '+' : ''}${tot - was})` : ''} · 3회독 ${tot * 3}강${changed.length ? ` · 바뀐 과목 ${changed.map(s => s.n).join(', ')}` : ''}`;
+  $('lecSave').disabled = !changed.length;
+  $('lecReset').disabled = SUBJ.every(s => lecDraft[s.k].L === DEF_LC[s.k] && lecDraft[s.k].w === DEF_LW[s.k]);
+}
+$('lecGrid').addEventListener('input', e => {
+  const a = e.target.closest('[data-lc]'), b = e.target.closest('[data-lw]');
+  if (a) { const v = Math.round(+a.value); if (v >= 1 && v <= 60) lecDraft[a.dataset.lc].L = v; }
+  if (b) lecDraft[b.dataset.lw].w = b.value.trim() || DEF_LW[b.dataset.lw];
+  lecFoot();
+});
+$('lecReset').addEventListener('click', () => { lecDraft = Object.fromEntries(SUBJ.map(s => [s.k, {L:DEF_LC[s.k], w:DEF_LW[s.k]}])); renderLec(true); });
+$('lecSave').addEventListener('click', async () => {
+  const lc = cleanLC(Object.fromEntries(SUBJ.map(s => [s.k, lecDraft[s.k].L]))), lw = cleanLW(Object.fromEntries(SUBJ.map(s => [s.k, lecDraft[s.k].w])));
+  S.lc = lc; S.lw = lw;
+  $('lecSave').disabled = true; $('lecSave').textContent = '저장 중…';
+  saveProgress();
+  if (mode !== 'db' && auth) { clearTimeout(pushT); pushT = null; try { await srvPush(); } catch(_) {} }
+  setTimeout(() => location.reload(), mode === 'db' ? 1500 : 50);
+});
+
+function renderAll(){ renderHeader(); renderSummary(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); renderMap(); renderLec(); }
 renderAll(); setSync();
 let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(renderStats, 150); });
 $('goal').value = S.goal;
@@ -1591,7 +1654,7 @@ const WORKER = 'https://app.cfa-study-pacer.workers.dev';
 const API = /\.workers\.dev$/.test(location.hostname) ? '' : WORKER;
 const loggedIn = () => !!auth;
 function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
-function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td}; }
+function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw}; }
 function payload(){ return JSON.stringify({...payloadObj(), updatedAt:S.updatedAt || 0}); }
 function saveAuth(){ try { if (auth) localStorage.setItem(AKEY, JSON.stringify(auth)); else localStorage.removeItem(AKEY); } catch(e) {} }
 async function api(path, opt = {}){
@@ -1610,9 +1673,12 @@ const srvErr = e => !e ? '' : e.status === 0 ? '서버에 연결할 수 없습�
 function onAuthLost(e){ if (e && e.status === 401 && auth) { auth = null; saveAuth(); setSync(); renderSyncPanel(); } }
 function adopt(r){
   S.c = r.c || {}; S.m = r.m || {}; if (typeof r.goal === 'number') S.goal = r.goal;
-  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {}; if (typeof r.fm === 'number') S.fm = r.fm;
+  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {};
+  S.lc = cleanLC(r.lc); S.lw = cleanLW(r.lw); if (typeof r.fm === 'number') S.fm = r.fm;
   S.logs = r.logs || {}; S.plans = cleanPlans(r.plans) || S.plans; S.updatedAt = r.updatedAt || Date.now();
-  writeLS(); rebuild(); resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7);
+  writeLS();
+  // lecture counts changed on another device: everything derived from them is rebuilt on a fresh load
+  if (JSON.stringify(S.lc) !== JSON.stringify(APPLIED.lc) || JSON.stringify(S.lw) !== JSON.stringify(APPLIED.lw)) { location.reload(); return; } rebuild(); resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7);
   $('goal').value = S.goal; hoursSig = ''; renderAll();
 }
 const hhmm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
