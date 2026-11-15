@@ -980,18 +980,29 @@ const LEC_MIN = 90;
 const rOf = k => +k.split('|')[1];
 const stepDone = (k, st) => !!S.c[k] || !!(S.st[k] && S.st[k][st]);
 const stepsDoneN = k => STEPS[rOf(k)].filter(([st]) => stepDone(k, st)).length;
+// a lecture finished ahead of (or behind) schedule still shows up on today's board
+function noteDone(k, was){
+  if (was || !S.c[k] || TODAY < START) return;
+  try {
+    const ref = clampDay(TODAY); if (todayTargets(ref).some(u => u.k === k)) return;
+    const td = S.td[ref] = S.td[ref] || {}; td.add = (td.add || []).filter(x => x !== k).concat(k); td.rm = (td.rm || []).filter(x => x !== k);
+  } catch(_) {}
+}
 function setStep(k, st, v){
+  const was = !!S.c[k];
   if (S.c[k] && !(S.st[k] && STEPS[rOf(k)].every(([x]) => S.st[k][x]))) { S.st[k] = Object.assign(S.st[k] || {}, Object.fromEntries(STEPS[rOf(k)].map(([x]) => [x, 1]))); }
   const o = S.st[k] = S.st[k] || {};
   if (v) o[st] = 1; else delete o[st];
   if (STEPS[rOf(k)].every(([x]) => o[x])) S.c[k] = 1; else delete S.c[k];
   if (!Object.keys(o).length) delete S.st[k];
+  noteDone(k, was);
 }
 function setAll(k, v){
-  const o = S.st[k] = S.st[k] || {};
+  const was = !!S.c[k], o = S.st[k] = S.st[k] || {};
   STEPS[rOf(k)].forEach(([x]) => { if (v) o[x] = 1; else delete o[x]; });
   if (v) S.c[k] = 1; else delete S.c[k];
   if (!Object.keys(o).length) delete S.st[k];
+  noteDone(k, was);
 }
 const doneRound = r => { let n = 0; for (const u of UNITS) if (S.c[key(u.s, r, u.i)]) n++; return n; };
 const doneSubj = (s, r) => { let n = 0; for (let i = 1; i <= SMAP[s].L; i++) if (S.c[key(s, r, i)]) n++; return n; };
@@ -1417,7 +1428,16 @@ function replanNow(from){
   rebuild(); resetDraft();
 }
 // after two or more days away with lectures left behind, spread them over the remaining days automatically and greet instead of scolding
+// one-time: lectures finished ahead during the first two days (before done-today tracking existed) go on today's board
+function backfillAhead(){
+  try { if (localStorage.getItem('cfa-bf1') || TODAY < START || diffD(START, TODAY) > 1) return; localStorage.setItem('cfa-bf1', '1'); } catch(_) { return; }
+  const ref = clampDay(TODAY), tgt = todayTargets(ref).map(u => u.k), seen = new Set(Object.values(S.td).flatMap(t => t.add || []));
+  const ks = ALL_DAYS.filter(d => d > ref).flatMap(d => unitsOf(PLAN[d]).map(u => u.k)).filter(k => S.c[k] && !tgt.includes(k) && !seen.has(k));
+  if (!ks.length) return;
+  const td = S.td[ref] = S.td[ref] || {}; td.add = (td.add || []).concat(ks); saveProgress();
+}
 function maybeWelcome(){
+  backfillAhead();
   if (TODAY <= START || TODAY > END) { if (S.lastSeen !== TODAY && TODAY >= START) { S.lastSeen = TODAY; saveProgress(); } return; }
   const gap = S.lastSeen ? diffD(S.lastSeen, TODAY) : 0, behind = behindUnits(TODAY).length;
   if (behind > 0 && gap >= 2 && curPlan().from !== TODAY && !(S.welcome && S.welcome.date === TODAY)) {
@@ -2222,9 +2242,11 @@ function wkCard(){
   const done = (S.wk || {})[R.mon];
   if (done) return `<div class="panel wkc wkdone"><span class="label">일요일 5분 점검 ✓</span><p>이번 주 정리 끝! 다음 주 하나만: <b>${esc(done.one || '—')}</b></p>${done.pace ? `<p class="note">${done.pace > 0 ? '다음 주부터 주말 강의를 1개씩 늘렸어요' : '다음 주부터 주말 강의를 1개씩 줄였어요'} · 끝나는 날 ${done.end ? done.end.slice(2).replace(/-/g, '.') : ''}</p>` : ''}${done.undo ? '<button type="button" class="linkbtn" id="wkUndo">분량 조절 되돌리기</button>' : ''}</div>`;
   const wk = weekInfo(R.ref); let hrs = 0; wk.days.forEach(d => hrs += dayHours(d));
+  const inWk = new Set(wk.days.flatMap(d => unitsOf(PLAN[d]).map(u => u.k)));
+  const ahead = new Set(wk.days.flatMap(d => ((S.td[d] || {}).add || []).filter(k => S.c[k] && !inWk.has(k)))).size;
   const rate = wk.planned ? wk.done / wk.planned : 1, pi = paceInfo(R.from);
   const rec = !pi ? 0 : rate < 0.6 && (pi.sat > 1 || pi.sun > 1) ? -1 : 0;
-  const head = `<span class="label">${R.ref === TODAY ? '일요일 5분 점검' : '어제 못 한 주간 점검'}</span><p class="wk-stat">이번 주 <b>${wk.done}/${wk.planned}강</b> · <b>${fmtH(hrs)}시간</b> · 공부한 날 <b>${wk.days.filter(d => minsOn(d) >= 10).length}일</b></p>`;
+  const head = `<span class="label">${R.ref === TODAY ? '일요일 5분 점검' : '어제 못 한 주간 점검'}</span><p class="wk-stat">이번 주 <b>${wk.done}/${wk.planned}강</b>${ahead ? ` + 앞당겨 <b>${ahead}강</b>` : ''} · <b>${fmtH(hrs)}시간</b> · 공부한 날 <b>${wk.days.filter(d => minsOn(d) >= 10).length}일</b></p>`;
   if (!wkOpen) return `<div class="panel wkc">${head}<button type="button" class="btn primary" id="wkOpen">질문 3개 답하기 · 5분</button></div>`;
   const opts = pi ? [[-1, `줄이기 · 주말 ${Math.max(1, pi.sat - 1)}+${Math.max(1, pi.sun - 1)}강`], [0, `그대로 · 주말 ${pi.sat}+${pi.sun}강`], [1, `늘리기 · 주말 ${pi.sat + 1}+${pi.sun + 1}강`]] : [];
   return `<form class="panel wkc" id="wkForm">${head}
