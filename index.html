@@ -326,10 +326,13 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .qt th{font-size:12.5px;color:var(--fg);font-weight:800;background:var(--head);position:sticky;top:0;border-bottom:1.5px solid var(--head2)}
 .qt thead tr:first-child th{background:var(--head2)}
 .qt tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--sunk) 55%,var(--surface))}
-.qt td:first-child{font-weight:800;background:var(--sunk)!important}
+.qt td.stk{font-weight:800;background:var(--sunk)!important}
 .qt th.grp{border-left:1px solid var(--line)}
 .qt td.grp{border-left:1px solid var(--line)}
-.qt td:first-child,.qt th:first-child{text-align:left;font-family:var(--font-mono)}
+.qt td:first-child,.qt th.stk{text-align:left;font-family:var(--font-mono)}
+.qt .stk{position:sticky;left:0;z-index:2;min-width:58px;box-shadow:1px 0 0 var(--line)}
+.qt thead th.stk{z-index:3;vertical-align:middle}
+.qt.hide-lt .ltc{display:none}
 .qt tr:last-child td{border-bottom:0}
 .qc{width:28px;height:28px;border-radius:7px;border:1.5px solid var(--line);background:var(--surface);font-size:14px;color:var(--on-accent);padding:0}
 .qc.on{background:var(--accent);border-color:var(--accent)}
@@ -677,7 +680,7 @@ section,aside{scroll-margin-top:12px}
   </section>
 
   <section id="subjSec" aria-label="과목별 진도">
-    <div class="sec-head"><h2>과목별 진도표</h2><span class="note">칸을 누르면 해당 강의를 완료로 표시합니다 · R1 강의+슈바이저 노트 · R2 슈바이저 재독+Ecosystem · R3 요약·오답+QBank</span></div>
+    <div class="sec-head"><h2>과목별 진도표</h2><span class="note">칸을 누르면 해당 강의를 완료로 표시합니다 · R1 강의+슈웨이저 노트 · R2 슈웨이저 재독+Ecosystem · R3 요약·오답+QBank</span></div>
     <div class="subjects" id="subjects"></div>
   </section>
 
@@ -685,7 +688,7 @@ section,aside{scroll-margin-top:12px}
     <div class="sec-head"><h2>챕터별 강의·문제 체크</h2><span class="note">칸을 누르면 체크 · 점수는 "맞은 수/전체" (예: 7/10)</span></div>
     <div class="otabs" id="qTabs" role="tablist" aria-label="과목 선택"></div>
     <div class="qsum" id="qSum"></div>
-    <div class="adj-btns" style="margin-bottom:8px"><button type="button" class="btn" id="ltBulkBtn">제목 한꺼번에 넣기</button></div>
+    <div class="adj-btns" style="margin-bottom:8px"><button type="button" class="btn" id="ltShow" aria-pressed="false">강의 제목 열기</button><button type="button" class="btn" id="ltBulkBtn">제목 한꺼번에 넣기</button></div>
     <div class="lt-bulk" id="ltBulk" hidden><label for="ltText" class="note">선택한 과목의 강의 제목을 <b>한 줄에 하나씩</b> 붙여 넣으세요. 첫 줄이 1강입니다.</label><textarea id="ltText" rows="6" placeholder="Introduction to Financial Statement Analysis&#10;Analyzing Income Statements&#10;..."></textarea><div class="adj-btns"><button type="button" class="btn primary" id="ltSave">제목 저장</button></div></div>
     <div class="qwrap" id="qTable"></div>
   </section>
@@ -746,7 +749,7 @@ const col = k => `var(--s-${k})`;
 const START = APPLIED.sd || DEF_START, EXAM = APPLIED.ed;
 let END, PHASES, PLAN, ALL_DAYS, MONTHS;
 const PH_TXT = {
-  1:['1회독','강의 + 슈바이저 노트 + 모듈 퀴즈'], 2:['2회독','슈바이저 노트 재독 + Ecosystem 연습문제'],
+  1:['1회독','강의 + 슈웨이저 노트 + 모듈 퀴즈'], 2:['2회독','슈웨이저 노트 재독 + Ecosystem 연습문제'],
   3:['3회독','요약 노트·오답 정리 + Schweser QBank'], 4:['Mock Exams','주말 모의고사 · 평일 오답 분석'],
   5:['Final Review','과목별 최종 정리 · 공식 · Ethics'],
 };
@@ -756,7 +759,7 @@ const MOCKS = ['Schweser Mock 1','Schweser Mock 2','CFAI Mock A','CFAI Mock B','
 const FINAL = ['Final: Ethics 전체 (Standards I–VII · GIPS)','Final: FSA + Corporate Issuers','Final: Fixed Income 공식·개념',
   'Final: Derivatives + Alt','Final: Equity + PM','Final: Quant 공식','Final: Economics 핵심',
   'Final: 공식집 + 오답노트 전체','Final: Ethics 재정리 · 컨디션 관리'];
-const WHAT = {1:'강의 수강 → 슈바이저 노트 해당 범위 읽기 → 모듈 퀴즈', 2:'슈바이저 노트 재독 → Ecosystem 연습문제(Practice Questions)', 3:'요약 노트·오답 위주 빠른 회독 → Schweser QBank'};
+const WHAT = {1:'강의 수강 → 슈웨이저 노트 해당 범위 읽기 → 모듈 퀴즈', 2:'슈웨이저 노트 재독 → Ecosystem 연습문제(Practice Questions)', 3:'요약 노트·오답 위주 빠른 회독 → Schweser QBank'};
 
 // ---------- dates ----------
 const pad = n => String(n).padStart(2,'0');
@@ -1104,7 +1107,7 @@ function renderSubjects(){
     return `<div class="subj" style="--c:${col(s.k)}">
       <div class="subj-h"><h3>${s.full}</h3><div class="subj-meta"><span>${s.L}강</span><span>비중 ${s.w}</span><span class="num">${fmtH(hrs[s.k])}h</span></div></div>
       ${rounds}
-      <div class="subj-tasks">${tog('sch|'+s.k,'슈바이저 노트')}${tog('eco|'+s.k,'Ecosystem 문제')}${tog('qb|'+s.k,'QBank')}</div>
+      <div class="subj-tasks">${tog('sch|'+s.k,'슈웨이저 노트')}${tog('eco|'+s.k,'Ecosystem 문제')}${tog('qb|'+s.k,'QBank')}</div>
     </div>`;
   }).join('');
 }
@@ -1551,7 +1554,8 @@ $('focus').addEventListener('click', e => {
 if (F && F.stage) { showFocus(); }
 
 // ---------- chapter check table ----------
-let qSub = null, ltBulkOpen = false;
+let qSub = null, ltBulkOpen = false, ltShow = false;
+try { ltShow = localStorage.getItem('cfa-lt-show') === '1'; } catch(_) {}
 const pctOf = sc => { const m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(sc || ''); return m && +m[2] > 0 ? Math.round(+m[1] / +m[2] * 100) : null; };
 const pctCls = p => p >= 70 ? 'g' : p >= 50 ? 'w' : 'b';
 function renderQ(){
@@ -1567,16 +1571,18 @@ function renderQ(){
     const k1 = key(s.k,1,i), k2 = key(s.k,2,i), k3 = key(s.k,3,i);
     [k1,k2,k3].forEach((k, j) => { const m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec((S.st[k] && S.st[k].sc) || ''); if (m) { sums[j+1][0] += +m[1]; sums[j+1][1] += +m[2]; } });
     if (stepDone(k1,'l')) lecDone++; if (stepDone(k1,'q')) qDone++;
-    rows += `<tr><td>${i}강</td><td class="ltc"><input class="ltin" data-lt="${s.k}|${i}" value="${esc(ltOf(s.k, i))}" placeholder="강의 제목" maxlength="80" aria-label="${s.n} ${i}강 제목"></td><td class="grp">${cb(k1,'l')}${S.lm[k1] ? ` <span class="pct">${Math.round(S.lm[k1])}분</span>` : ''}</td><td>${cb(k1,'n')}</td><td>${cb(k1,'q')}</td><td>${scIn(k1)}</td>
+    rows += `<tr><td class="stk">${i}강</td><td class="ltc"><input class="ltin" data-lt="${s.k}|${i}" value="${esc(ltOf(s.k, i))}" placeholder="강의 제목" maxlength="80" aria-label="${s.n} ${i}강 제목"></td><td class="grp">${cb(k1,'l')}${S.lm[k1] ? ` <span class="pct">${Math.round(S.lm[k1])}분</span>` : ''}</td><td>${cb(k1,'n')}</td><td>${cb(k1,'q')}</td><td>${scIn(k1)}</td>
       <td class="grp">${cb(k2,'n')}</td><td>${cb(k2,'q')}</td><td>${scIn(k2)}</td><td class="grp">${cb(k3,'n')}</td><td>${cb(k3,'q')}</td><td>${scIn(k3)}</td></tr>`;
   }
   const avg = r => sums[r][1] ? Math.round(sums[r][0] / sums[r][1] * 100) + '%' : '—';
   $('qSum').innerHTML = `<span>강의 들음 <b>${lecDone}/${s.L}</b></span><span>1회독 문제 <b>${qDone}/${s.L}</b></span><span>정답률 R1 <b>${avg(1)}</b> · R2 <b>${avg(2)}</b> · R3 <b>${avg(3)}</b></span>`;
-  $('qTable').innerHTML = `<table class="qt" style="--c:${c}"><thead><tr><th rowspan="2">강</th><th rowspan="2" class="ltc">강의 제목</th><th class="grp" colspan="4">1회독</th><th class="grp" colspan="3">2회독</th><th class="grp" colspan="3">3회독</th></tr>
+  $('ltShow').textContent = ltShow ? '강의 제목 숨기기' : '강의 제목 열기'; $('ltShow').setAttribute('aria-pressed', ltShow);
+  $('qTable').innerHTML = `<table class="qt${ltShow ? '' : ' hide-lt'}" style="--c:${c}"><thead><tr><th rowspan="2" class="stk">강</th><th rowspan="2" class="ltc">강의 제목</th><th class="grp" colspan="4">1회독</th><th class="grp" colspan="3">2회독</th><th class="grp" colspan="3">3회독</th></tr>
     <tr><th class="grp">강의 (90분)</th><th>노트</th><th>문제</th><th>점수</th><th class="grp">노트 재독</th><th>Ecosystem</th><th>점수</th><th class="grp">요약·오답</th><th>QBank</th><th>점수</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 $('qTabs').addEventListener('click', e => { const b = e.target.closest('[data-qs]'); if (b) { qSub = b.dataset.qs; renderQ(); if (ltBulkOpen) fillBulk(); } });
 function fillBulk(){ const L = SMAP[qSub].L, lines = []; for (let i = 1; i <= L; i++) lines.push(ltOf(qSub, i)); $('ltText').value = lines.join('\n').replace(/\n+$/, ''); }
+$('ltShow').addEventListener('click', () => { ltShow = !ltShow; try { localStorage.setItem('cfa-lt-show', ltShow ? '1' : '0'); } catch(_) {} renderQ(); });
 $('ltBulkBtn').addEventListener('click', () => { ltBulkOpen = !ltBulkOpen; renderQ(); if (ltBulkOpen) fillBulk(); });
 $('ltSave').addEventListener('click', () => {
   const lines = $('ltText').value.split('\n').map(x => x.trim().slice(0, 80)); S.lt = S.lt || {};
