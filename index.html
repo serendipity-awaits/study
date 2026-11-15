@@ -359,6 +359,23 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .nt-row input[type=time]{margin-left:auto;font:inherit;font-size:16px;font-weight:700;padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
 #notiSec{--sec:var(--t-pink)}
 @media (max-width:520px){.nt-grid{grid-template-columns:minmax(0,1fr)}}
+#r1Sec{--sec:var(--vpink)}
+.r1{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:22px;align-items:start}
+.r1-main{display:flex;flex-direction:column;gap:10px}
+.r1-big{font-size:56px;font-weight:800;line-height:1;letter-spacing:-.02em;color:var(--fg)}
+.r1-big small{font-size:22px;font-weight:700;margin-left:2px}
+.r1-track{position:relative;height:16px;border-radius:8px;background:var(--sunk);overflow:hidden}
+.r1-track span{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:8px}
+.r1-track em{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--fg);border-radius:2px}
+.r1-facts{display:flex;gap:14px;flex-wrap:wrap;font-size:14px}
+.r1-foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.r1-list{display:flex;flex-direction:column;gap:7px}
+.r1-row{display:grid;grid-template-columns:62px minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13.5px}
+.r1-n{font-weight:800;white-space:nowrap}
+.r1-bar{height:12px;border-radius:6px;background:color-mix(in srgb,var(--c) 14%,var(--sunk));overflow:hidden}
+.r1-bar span{display:block;height:100%;background:var(--c);border-radius:6px}
+.r1-v{text-align:right;white-space:nowrap;font-size:13px}
+@media (max-width:820px){.r1{grid-template-columns:minmax(0,1fr)}}
 .code-card{border:2px solid var(--warn);background:var(--warn-soft);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;max-width:560px}
 .code-val{font-family:var(--font-mono);font-size:clamp(17px,4.6vw,22px);font-weight:600;letter-spacing:.04em;user-select:all;word-break:break-all;color:var(--fg)}
 .warn-box{background:var(--warn-soft);border-radius:8px;padding:10px 12px;font-size:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -598,6 +615,11 @@ section,aside{scroll-margin-top:12px}
       <div class="bar"><span id="allBar" style="width:0"></span></div>
       <div class="note" id="allNote"></div>
     </div>
+  </section>
+
+  <section class="panel" id="r1Sec" aria-label="1회독 진도">
+    <div class="sec-head"><h2>1회독 진도</h2><span class="note">강의를 처음 끝까지 한 번 보는 단계</span></div>
+    <div class="r1" id="r1Board"></div>
   </section>
 
   <section class="panel" id="tlSec" aria-label="학습 단계">
@@ -1855,7 +1877,25 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('mess
 if (location.hash === '#today') setTimeout(() => setView('today'), 0);
 renderNoti(); refreshReminderText();
 
-function renderAll(){ renderHeader(); renderSummary(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); renderMap(); renderLec(); }
+function renderR1(){
+  const el = $('r1Board'); if (!el) return;
+  const N = UNITS.length, done = doneRound(1), pct = N ? Math.round(done / N * 1000) / 10 : 0;
+  const planned = TODAY < START ? 0 : roundPlanTotalBy(1, TODAY > END ? END : TODAY), delta = done - planned;
+  const ph = PHASES.find(p => p.id === 1), left = ph ? diffD(TODAY, ph.b) : 0;
+  const dot = d => d.slice(5).replace('-', '/');
+  const pill = TODAY < START ? '<span class="pill neutral">11/15부터 시작</span>'
+    : delta >= 0 ? `<span class="pill good">계획보다 ${delta}강 앞섬</span>` : `<span class="pill ${delta >= -5 ? 'warn' : 'bad'}">${-delta}강 뒤처짐</span>`;
+  const rows = mapOrder(1).map(k => { const s = SMAP[k], d = doneSubj(k, 1), p = Math.round(d / s.L * 100);
+    return `<div class="r1-row" style="--c:${col(k)}"><span class="r1-n" title="${s.full}">${s.n}</span><div class="r1-bar"><span style="width:${p}%"></span></div><span class="r1-v"><b>${p}%</b> <span class="muted">${d}/${s.L}</span></span></div>`; }).join('');
+  el.innerHTML = `<div class="r1-main">
+      <div class="r1-big">${pct % 1 ? pct.toFixed(1) : pct}<small>%</small></div>
+      <div class="r1-track"><span style="width:${Math.min(100, done / N * 100)}%"></span>${planned ? `<em style="left:${Math.min(99.5, planned / N * 100)}%" title="오늘까지 계획"></em>` : ''}</div>
+      <div class="r1-facts"><span><b>${done}</b> / ${N}강 완료</span><span>남은 <b>${N - done}</b>강</span><span>오늘까지 계획 <b>${planned}</b>강</span></div>
+      <div class="r1-foot">${pill}${ph ? `<span class="note">1회독 끝나는 날 <b>${dot(ph.b)}</b>${left >= 0 ? ` · D-${left}` : ''}</span>` : ''}</div>
+    </div>
+    <div class="r1-list">${rows}</div>`;
+}
+function renderAll(){ renderHeader(); renderSummary(); renderR1(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); renderMap(); renderLec(); }
 renderAll(); setSync();
 let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(renderStats, 150); });
 $('goal').value = S.goal;
