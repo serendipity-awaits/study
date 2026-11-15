@@ -380,6 +380,36 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .r1-bar span{display:block;height:100%;background:var(--c);border-radius:6px}
 .r1-v{text-align:right;white-space:nowrap;font-size:13px}
 @media (max-width:820px){.r1{grid-template-columns:minmax(0,1fr)}}
+.rv{display:flex;flex-direction:column;gap:8px}
+.rv-item{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.rv-t{font-weight:700;font-size:14.5px}
+.rv-meta{font-size:12px;color:var(--muted)}
+.rv-add{display:flex;gap:6px}
+.rv-add input{flex:1;min-width:0;font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.ifcard p{margin:6px 0 0;font-size:15px}
+.cardbtn{display:flex;flex-direction:column;gap:4px;text-align:left;cursor:pointer;border-color:var(--accent)}
+.cardbtn b{font-size:16px}
+.cardbtn:hover{background:var(--accent-soft)}
+.if-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.if-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr) auto;gap:6px;align-items:center}
+.if-row input{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);min-width:0}
+.if-k{font-weight:800;font-size:13px}
+.if-presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.chipbtn{border:1px dashed var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:600;color:var(--fg)}
+.chipbtn:hover{border-color:var(--accent)}
+#ifSec{--sec:var(--t-amber)}
+.cards{justify-content:flex-start;gap:14px}
+.fc-top{width:min(100%,560px);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.fc-body{width:min(100%,560px);display:flex;flex-direction:column;align-items:center;gap:12px;flex:1;justify-content:center}
+.fcard{width:100%;min-height:220px;border:2px solid var(--line);border-radius:18px;background:var(--surface);padding:22px;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;text-align:center;box-shadow:0 8px 24px var(--shadow);color:var(--fg)}
+.fcard.flip{border-color:var(--accent)}
+.fc-front{font-size:20px;font-weight:800;line-height:1.4}
+.fc-back{font-size:17px;font-weight:600;line-height:1.55;color:var(--accent);border-top:1px dashed var(--line);padding-top:12px;width:100%}
+.fc-hint{font-size:13px;color:var(--muted)}
+.fc-add{width:100%;display:flex;flex-direction:column;gap:6px}
+.fc-add input{font:inherit;font-size:16px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.fc-note{max-width:520px;text-align:center}
+@media (max-width:640px){.if-row{grid-template-columns:auto minmax(0,1fr) auto;margin-bottom:6px}.if-row .linkbtn{grid-row:1;grid-column:3}.if-row input[data-if-t]{grid-row:2;grid-column:2/4}.cards .fc-top{flex-wrap:nowrap}.cards .otab{padding:5px 9px}.if-row .if-k:nth-of-type(2){display:none}.if-row input{font-size:16px}.rv-add input{font-size:16px}}
 .code-card{border:2px solid var(--warn);background:var(--warn-soft);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;max-width:560px}
 .code-val{font-family:var(--font-mono);font-size:clamp(17px,4.6vw,22px);font-weight:600;letter-spacing:.04em;user-select:all;word-break:break-all;color:var(--fg)}
 .warn-box{background:var(--warn-soft);border-radius:8px;padding:10px 12px;font-size:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -544,6 +574,10 @@ section,aside{scroll-margin-top:12px}
   <div id="mapView" class="view" hidden></div>
   <div id="setView" class="view" hidden>
     <div class="tb-head"><h2>설정</h2><span class="note">계획 조정 · 시험 설정은 가끔만 쓰는 기능이라 여기 모았어요</span></div>
+    <section class="panel" id="ifSec" aria-label="만약 하면 계획">
+      <div class="sec-head"><h2>"만약 ~하면" 계획</h2><span class="note">미리 정해 두면 시작이 쉬워져요</span></div>
+      <div id="ifBody"></div>
+    </section>
     <section class="panel" id="notiSec" aria-label="매일 알림">
       <div class="sec-head"><h2>매일 알림</h2><span class="note">하루 최대 4번 · 이 기기로 알림이 와요</span></div>
       <div id="notiBody"></div>
@@ -711,6 +745,7 @@ section,aside{scroll-margin-top:12px}
   </div>
 </div>
 <div id="focus" class="focus" hidden role="dialog" aria-modal="true" aria-label="집중 타이머"></div>
+<div id="cards" class="focus cards" hidden role="dialog" aria-modal="true" aria-label="플래시카드"></div>
 <nav class="mnav" aria-label="빠른 이동">
   <button type="button" data-view="today">오늘 공부</button>
   <button type="button" data-view="map">진도 지도</button>
@@ -872,7 +907,7 @@ const roundPlanTotalBy = (r, date) => {
 // ---------- state ----------
 const LS_KEY = 'cfa-l1-pacer-v1', AKEY = 'cfa-l1-pacer-auth';
 let auth = null; try { auth = JSON.parse(localStorage.getItem(AKEY) || 'null'); } catch(e) {}
-let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}, lc:null, lw:null, lt:{}, lastSeen:null, welcome:null};
+let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}, lc:null, lw:null, lt:{}, lastSeen:null, welcome:null, rv:{}, fc:{}, myc:{}, ifs:[]};
 try { const raw = localStorage.getItem(LS_KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
 S.plans = cleanPlans(S.plans) || [basePlan(S.cfg)];
 S.lc = APPLIED.lc; S.lw = APPLIED.lw; S.sd = APPLIED.sd; S.ed = APPLIED.ed; S.lt = S.lt || {};
@@ -894,7 +929,7 @@ function persist(docId, getData){
     finally { inflight[docId] = false; }
   }, 700);
 }
-const saveProgress = () => { try { refreshReminderText(); } catch(_) {} return persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome})); };
+const saveProgress = () => { try { refreshReminderText(); } catch(_) {} return persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome, rv:S.rv, fc:S.fc, myc:S.myc, ifs:S.ifs})); };
 const saveLog = d => persist('d'+d, () => ({date:d, h:(S.logs[d]||{}).h||{}, memo:(S.logs[d]||{}).memo||'', at:Date.now()}));
 const $ = id => document.getElementById(id);
 function setSave(t){ $('saveState').textContent = t; }
@@ -1420,11 +1455,14 @@ function renderToday(){
         </div>
         ${main}
         ${addPanel(ref, units)}
+        ${rvPanel()}
         ${behind ? `<div class="behind"><span>지난 계획 중 아직 안 한 강의가 <b>${behind}개</b> 있어요. 괜찮아요.</span><button type="button" class="btn" id="replanBtn">남은 날짜에 다시 나누기</button></div>` : ''}
       </div>
       <div class="tb-side">
+        ${ifToday() ? `<div class="panel ifcard"><span class="label">오늘의 "만약 ~하면"</span><p><b>${esc(ifToday().i)}</b> → ${esc(ifToday().t)}</p></div>` : ''}
+        <button type="button" class="panel cardbtn" id="openCards"><span class="label">1분 플래시카드</span><b>공식 ${fcDue('f').length} · Ethics ${fcDue('e').length} · 내 카드 ${fcDue('m').length}</b><span class="note">오늘 볼 카드 · 눌러서 시작</span></button>
         <div class="panel okday">${r2(mins, goalMin)}<div><b>${mins >= goalMin ? '오늘 성공 ✓' : `오늘 ${mins}분`}</b><div class="note">${mins >= goalMin ? `${fmtH(dayHours(TODAY))}시간 공부했어요` : `${goalMin}분만 해도 오늘은 성공이에요`}</div></div></div>
-        <div class="panel"><div class="sec-head" style="margin-bottom:8px"><span class="label">이번 주</span><span class="note num">${wk.done}/${wk.planned}강</span></div><div class="bar" style="margin-bottom:10px"><span style="width:${wk.planned ? wk.done / wk.planned * 100 : 0}%"></span></div><div class="wk7">${week}</div><p class="note" style="margin-top:8px">초록 칸 = 10분 이상 공부한 날</p></div>
+        <div class="panel"><div class="sec-head" style="margin-bottom:8px"><span class="label">이번 주</span><span class="note num">${wk.done}/${wk.planned}강</span></div><div class="bar" style="margin-bottom:10px"><span style="width:${wk.planned ? wk.done / wk.planned * 100 : 0}%"></span></div><div class="wk7">${week}</div><p class="note" style="margin-top:8px">색칠된 칸 = 10분 이상 공부한 날</p></div>
         <div class="panel"><span class="label">오늘 기록</span><p class="note" style="white-space:pre-wrap;margin-top:6px">${esc(((S.logs[TODAY] || {}).memo || '').trim()) || '타이머를 쓰면 공부한 내용이 여기에 자동으로 쌓여요.'}</p></div>
       </div>
     </div>`;
@@ -1445,6 +1483,10 @@ $('todayView').addEventListener('click', e => {
   const enb = t.closest('[data-en]'); if (enb) { S.en[clampDay(TODAY)] = enb.dataset.en; saveProgress(); renderToday(); return; }
   const fmb = t.closest('[data-fm]'); if (fmb) { S.fm = +fmb.dataset.fm; saveProgress(); renderToday(); return; }
   const gb = t.closest('#goBtn'); if (gb) startFocus(gb.dataset.k, gb.dataset.st);
+  if (t.closest('#openCards')) { openCards(fcDue('f').length || !fcDue('e').length ? 'f' : 'e'); return; }
+  const ro = t.closest('[data-rv-ok]'); if (ro) { rvAct(ro.dataset.rvOk, true); return; }
+  const rn = t.closest('[data-rv-no]'); if (rn) { rvAct(rn.dataset.rvNo, false); return; }
+  const rd = t.closest('[data-rv-del]'); if (rd) { delete S.rv[rd.dataset.rvDel]; saveProgress(); renderToday(); return; }
 });
 
 // ---------- focus timer ----------
@@ -1522,6 +1564,9 @@ function commitFocus(){
     const line = `· ${hhmm()} ${F.k ? unitName({s:F.subj, i:+F.k.split('|')[2]}) + ' ' : ''}${F.stepName || '공부'} ${Math.round(min)}분${sc ? ' · 점수 ' + sc : ''}${chips.length ? ' · ' + chips.join(', ') : ''}${memo ? ' — ' + memo : ''}`;
     log.memo = ((log.memo || '').trim() ? log.memo.trim() + '\n' : '') + line;
     if (sc && F.k) { S.st[F.k] = S.st[F.k] || {}; S.st[F.k].sc = sc; }
+    const nm = F.k ? unitName({s:F.subj, i:+F.k.split('|')[2]}) : '';
+    if (chips.some(c => c === '헷갈림' || c === '다시 볼 것' || c === '계산 연습 필요')) rvAdd('m' + Date.now().toString(36), `${nm ? nm + ' · ' : ''}${chips.filter(c => c !== '이해됨').join(', ')}${memo ? ' — ' + memo : ''}`, F.k);
+    const pc = pctOf(sc); if (F.k && pc != null && pc < 70) rvAdd('sc|' + F.k, `${nm} 문제 ${sc} (${pc}%) · 틀린 문제 다시 풀기`, F.k);
     saveLog(d);
   }
   if (F.k && $('fMark') && $('fMark').checked) setStep(F.k, F.st, true);
@@ -1595,8 +1640,9 @@ $('qTable').addEventListener('change', e => {
   const inp = e.target.closest('[data-qsc]'); if (!inp) return;
   const k = inp.dataset.qsc, v = inp.value.trim().replace(/\s+/g, '');
   if (v && !/^\d+\/\d+$/.test(v)) { inp.value = (S.st[k] && S.st[k].sc) || ''; setSave('점수는 "맞은 수/전체" 형식으로 적어주세요 (예: 7/10)'); return; }
-  S.st[k] = S.st[k] || {}; if (v) { S.st[k].sc = v; if (!stepDone(k, 'q')) setStep(k, 'q', true); } else { delete S.st[k].sc; if (!Object.keys(S.st[k]).length) delete S.st[k]; }
-  saveProgress(); renderAll();
+  S.st[k] = S.st[k] || {}; if (v && pctOf(v) != null && pctOf(v) < 70) rvAdd('sc|' + k, `${unitName({s:k.split('|')[0], i:+k.split('|')[2]})} R${k.split('|')[1]} 문제 ${v} (${pctOf(v)}%) · 틀린 문제 다시 풀기`, k);
+  if (v) { S.st[k].sc = v; if (!stepDone(k, 'q')) setStep(k, 'q', true); } else { delete S.st[k].sc; if (!Object.keys(S.st[k]).length) delete S.st[k]; }
+  saveProgress(); setTimeout(renderAll, 0);
 });
 
 // ---------- progress map: every subject is a country, every lecture one hex of land ----------
@@ -1830,6 +1876,7 @@ function dayMsgs(){
     } else if (p.kind === 'review') out[d] = '오늘은 복습하고 밀린 강의를 따라잡는 날이에요. 5분만!';
     else if (p.kind === 'mock') out[d] = `오늘은 ${p.label}! 시간 재고 풀어봐요 💪`;
     else out[d] = p.label + ' · 5분만 시작해 볼까요?';
+    const L = (S.ifs || []).filter(x => x.i && x.t); if (L.length) { const x = L[Math.abs(diffD(START, d)) % L.length]; out[d] += ` 💡 ${x.i} → ${x.t}`; }
   }
   return out;
 }
@@ -1919,7 +1966,189 @@ function renderR1(){
     </div>
     <div class="r1-list">${rows}</div>`;
 }
-function renderAll(){ renderHeader(); renderSummary(); renderR1(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); renderMap(); renderLec(); }
+// ---------- study tools: review queue, flashcards, if-then plans ----------
+const RV_GAPS = [1, 3, 7, 14];           // days until the next look, by how many times it has been remembered
+const FC_GAPS = [1, 2, 4, 8, 16, 30];
+// Built-in decks (drafted from the Level I curriculum; edit or add your own cards in "내 카드")
+const DECK_F = [
+  ['quant','실효연이율 EAR','(1 + 기간이자율)^m − 1  (m = 1년 복리 횟수)'],
+  ['quant','연속복리 EAR','e^r − 1  (r = 연 명목이자율)'],
+  ['quant','영구연금(perpetuity) 현재가치','PV = PMT ÷ r'],
+  ['quant','보유기간수익률 HPR','(P1 − P0 + D1) ÷ P0'],
+  ['quant','기하평균수익률','[(1+R1)(1+R2)…(1+Rn)]^(1/n) − 1'],
+  ['quant','표본분산','Σ(Xi − X̄)² ÷ (n − 1)'],
+  ['quant','변동계수 CV','표준편차 ÷ 평균  (s / X̄)'],
+  ['quant','샤프 비율','(Rp − Rf) ÷ σp'],
+  ['quant','상관계수','ρ = Cov(X,Y) ÷ (σX · σY)'],
+  ['quant','2자산 포트폴리오 분산','w1²σ1² + w2²σ2² + 2·w1·w2·ρ·σ1·σ2'],
+  ['quant','표본평균의 표준오차','σ ÷ √n'],
+  ['quant','베이즈 정리','P(A|B) = P(B|A) · P(A) ÷ P(B)'],
+  ['corp','WACC','wd·rd·(1 − t) + wp·rp + we·re'],
+  ['corp','CAPM 요구수익률','re = Rf + β·[E(Rm) − Rf]'],
+  ['corp','영업·재무·총 레버리지','DOL = %ΔEBIT ÷ %Δ매출 · DFL = %ΔEPS ÷ %ΔEBIT · DTL = DOL × DFL'],
+  ['corp','NPV','Σ CFt ÷ (1 + r)^t − 초기투자액'],
+  ['corp','현금전환주기 CCC','재고일수 DOH + 매출채권일수 DSO − 매입채무일수 DPO'],
+  ['fsa','기본 EPS','(순이익 − 우선주 배당) ÷ 가중평균 보통주식수'],
+  ['fsa','유동비율 · 당좌비율','유동자산 ÷ 유동부채 · (현금 + 단기유가증권 + 매출채권) ÷ 유동부채'],
+  ['fsa','듀퐁 3단계 ROE','순이익률(NI/매출) × 자산회전율(매출/자산) × 재무레버리지(자산/자본)'],
+  ['fsa','이자보상배율','EBIT ÷ 이자비용'],
+  ['fsa','재고회전율 · 재고일수','매출원가 ÷ 평균재고 · 365 ÷ 재고회전율'],
+  ['fsa','물가 상승기 LIFO vs FIFO','LIFO: 매출원가↑ · 순이익↓ · 기말재고↓ · 법인세↓(현금흐름↑)'],
+  ['fsa','FCFF','CFO + 이자 × (1 − t) − 고정자본투자 FCInv'],
+  ['equity','고든 성장모형','V0 = D1 ÷ (r − g)'],
+  ['equity','내재 P/E (선행)','배당성향 ÷ (r − g)  = (D1/E1) ÷ (r − g)'],
+  ['equity','지속가능성장률','g = 유보율 b × ROE'],
+  ['equity','마진콜 가격','P0 × (1 − 초기증거금률) ÷ (1 − 유지증거금률)'],
+  ['fi','채권 가격','Σ C ÷ (1+r)^t + FV ÷ (1+r)^N'],
+  ['fi','수정듀레이션','맥컬리 듀레이션 ÷ (1 + 기간당 수익률)'],
+  ['fi','가격변동 근사 (듀레이션+컨벡시티)','%ΔP ≈ −ModDur × Δy + ½ × Convexity × (Δy)²'],
+  ['fi','경상수익률 current yield','연 쿠폰 ÷ 채권 가격'],
+  ['deriv','풋-콜 패리티','S0 + p0 = c0 + PV(X)'],
+  ['deriv','선도가격 (보유수익 없음)','F0 = S0 × (1 + r)^T'],
+  ['deriv','만기 페이오프','콜 = max(0, ST − X) · 풋 = max(0, X − ST)'],
+  ['econ','피셔 관계','(1 + 명목금리) ≈ (1 + 실질금리)(1 + 기대인플레이션)'],
+  ['econ','재정승수','1 ÷ [1 − MPC × (1 − t)]'],
+  ['econ','커버드 이자율 평가 (선물환)','F = S × (1 + i가격통화) ÷ (1 + i기준통화)'],
+  ['pm','베타','Cov(Ri, Rm) ÷ σm²'],
+  ['pm','트레이너 비율 · 젠센 알파','(Rp − Rf) ÷ βp · αp = Rp − [Rf + βp(Rm − Rf)]'],
+  ['pm','M²','Rf + (Rp − Rf) × σm ÷ σp'],
+  ['alt','자본환원율 cap rate','순영업소득 NOI ÷ 부동산 가치'],
+];
+const DECK_E = [
+  ['I(A) Knowledge of the Law','법·규정·윤리기준 중 더 엄격한 것을 따른다. 위반에 가담하지 않고, 알게 되면 관여에서 빠진다(dissociate).'],
+  ['I(B) Independence and Objectivity','독립성과 객관성을 해칠 수 있는 선물·혜택을 주고받지 않는다.'],
+  ['I(C) Misrepresentation','투자분석·추천·경력 등에 대해 고의로 사실과 다르게 표현하지 않는다(표절 포함).'],
+  ['I(D) Misconduct','정직·성실성·전문가 평판을 해치는 행위를 하지 않는다.'],
+  ['II(A) Material Nonpublic Information','중요한 미공개정보로 거래하거나 남이 거래하게 하지 않는다.'],
+  ['II(B) Market Manipulation','가격을 왜곡하거나 거래량을 부풀려 시장참여자를 속이지 않는다.'],
+  ['III(A) Loyalty, Prudence, and Care','고객 이익을 회사·자기 이익보다 우선하고, 신중하게 판단한다.'],
+  ['III(B) Fair Dealing','추천·조치를 할 때 모든 고객을 공정하게 대한다.'],
+  ['III(C) Suitability','고객의 목표·제약을 파악하고 적합성을 검토한 뒤 추천한다.'],
+  ['III(D) Performance Presentation','운용성과를 공정·정확·완전하게 제시한다.'],
+  ['III(E) Preservation of Confidentiality','고객 정보는 비밀로 지킨다(불법행위, 법적 요구, 고객 허락은 예외).'],
+  ['IV(A) Loyalty (고용주)','고용주에게 해가 되는 행동을 하지 않는다. 퇴사 전 고객 유치·기밀 반출 금지.'],
+  ['IV(B) Additional Compensation Arrangements','고용주와 경쟁하거나 이해상충이 될 수 있는 보상은 고용주의 서면 동의를 받는다.'],
+  ['IV(C) Responsibilities of Supervisors','감독 대상자가 법·규정·기준을 지키도록 합리적인 노력을 한다.'],
+  ['V(A) Diligence and Reasonable Basis','분석·추천에 성실하고 합리적이며 충분한 근거를 갖춘다.'],
+  ['V(B) Communication with Clients','투자 과정의 기본 원칙, 위험, 사실과 의견의 구분을 고객에게 알린다.'],
+  ['V(C) Record Retention','분석·추천의 근거 기록을 보관한다(규정이 없으면 최소 7년 권고).'],
+  ['VI(A) Disclosure of Conflicts','독립성·객관성을 해칠 수 있는 모든 이해상충을 고객·고용주에게 알린다.'],
+  ['VI(B) Priority of Transactions','거래 우선순위: 고객 → 고용주 → 본인.'],
+  ['VI(C) Referral Fees','소개 대가(받거나 주는 것)를 고용주·고객에게 공개한다.'],
+  ['VII(A) Conduct in CFA Programs','CFA 시험·프로그램의 신뢰성과 보안을 해치지 않는다(시험 문제 공개 금지 등).'],
+  ['VII(B) Reference to CFA Institute / Designation','CFA 자격·응시 사실을 과장하지 않는다. "CFA"는 명사 대신 형용사로 쓴다.'],
+  ['GIPS 기본','자발적 기준 · 회사 전체 단위로 준수 · 성과는 컴포지트(composite)로 제시'],
+];
+const deckCards = deck => deck === 'f' ? DECK_F.map((c, i) => ({id: 'f' + i, tag: SMAP[c[0]] ? SMAP[c[0]].n : c[0], front: c[1], back: c[2]}))
+  : deck === 'e' ? DECK_E.map((c, i) => ({id: 'e' + i, tag: 'Ethics', front: c[0], back: c[1]}))
+  : Object.entries(S.myc || {}).map(([id, c]) => ({id, tag: '내 카드', front: c.f, back: c.b}));
+const fcDue = deck => deckCards(deck).filter(c => { const st = (S.fc || {})[c.id]; return !st || st.d <= TODAY; });
+
+// review queue (오답 다시 보기)
+function rvAdd(id, text, k){
+  S.rv = S.rv || {};
+  if (S.rv[id] && !S.rv[id].x) { S.rv[id].t = text; return; }
+  S.rv[id] = {t: text.slice(0, 160), k: k || '', s: 0, d: addD(TODAY, RV_GAPS[0]), c: TODAY};
+}
+const rvDueList = () => Object.entries(S.rv || {}).filter(([, v]) => !v.x && v.d <= TODAY).sort((a, b) => a[1].d < b[1].d ? -1 : 1);
+const rvOpen = () => Object.values(S.rv || {}).filter(v => !v.x).length;
+function rvPanel(){
+  const due = rvDueList();
+  const items = due.slice(0, 5).map(([id, v]) => `<div class="rv-item"><div class="rv-t">${esc(v.t)}</div><div class="rv-meta">${v.s ? `${v.s}번째 다시 보기` : '첫 다시 보기'} · ${v.c.slice(5).replace('-', '/')}에 남김</div>
+    <div class="adj-btns"><button type="button" class="btn primary" data-rv-ok="${id}">기억났어요 ✓</button><button type="button" class="btn" data-rv-no="${id}">아직 헷갈려요</button><button type="button" class="linkbtn" data-rv-del="${id}">지우기</button></div></div>`).join('');
+  return `<div class="panel rv"><div class="sec-head" style="margin-bottom:8px"><span class="label">오늘 다시 볼 것</span><span class="note num">${due.length}개${due.length > 5 ? ' · 5개씩 보여줘요' : ''}</span></div>
+    ${due.length ? items : `<p class="note" style="margin:0">오늘 다시 볼 오답이 없어요.${rvOpen() ? ` 나중에 볼 것 ${rvOpen()}개가 기다리고 있어요.` : ''} 점수 70% 미만 챕터나 타이머에서 "헷갈림 · 다시 볼 것"을 누른 내용이 자동으로 여기 들어와요.</p>`}
+    <form class="rv-add" id="rvAddForm"><input id="rvAddIn" maxlength="160" placeholder="다시 볼 것 직접 적기 (예: FI 듀레이션 계산 실수)" aria-label="다시 볼 것 추가"><button type="submit" class="btn">추가</button></form></div>`;
+}
+function rvAct(id, ok){
+  const v = S.rv[id]; if (!v) return;
+  if (ok) { v.s++; if (v.s >= RV_GAPS.length) { v.x = TODAY; setSave('완전히 외웠어요! 다시 보기 목록에서 졸업 🎓'); } else { v.d = addD(TODAY, RV_GAPS[v.s]); setSave(`좋아요! ${RV_GAPS[v.s]}일 뒤에 한 번 더 볼게요`); } }
+  else { v.s = 0; v.d = addD(TODAY, 1); setSave('괜찮아요. 내일 다시 보여줄게요'); }
+  saveProgress(); renderToday();
+}
+
+// if-then plans
+const IF_PRESETS = [['퇴근하고 집에 들어오면', '책상에 앉아 강의 영상만 켠다'], ['저녁을 먹고 나면', '타이머 5분만 누른다'], ['휴대폰을 집어 들면', '플래시카드 3장만 넘긴다'], ['공부하기 싫다는 생각이 들면', '"5분만 하고 그만둬도 돼"라고 말하고 시작한다'], ['주말 아침 커피를 마시면', '오늘 공부 화면부터 연다']];
+const ifToday = () => { const L = (S.ifs || []).filter(x => x.i && x.t); if (!L.length) return null; return L[diffD(START, TODAY) % L.length < 0 ? 0 : diffD(START, TODAY) % L.length]; };
+function renderIfs(){
+  const b = $('ifBody'); if (!b) return;
+  const L = S.ifs || [];
+  b.innerHTML = `<div class="if-list">${L.map((x, i) => `<div class="if-row"><span class="if-k">만약</span><input data-if-i="${i}" value="${esc(x.i)}" maxlength="60" aria-label="상황 ${i + 1}"><span class="if-k">→</span><input data-if-t="${i}" value="${esc(x.t)}" maxlength="60" aria-label="행동 ${i + 1}"><button type="button" class="linkbtn" data-if-del="${i}" aria-label="${i + 1}번 계획 지우기">지우기</button></div>`).join('') || '<p class="note" style="margin:0">아직 만든 계획이 없어요. 아래 예시를 누르면 바로 추가돼요.</p>'}</div>
+    ${L.length < 5 ? `<div class="if-presets"><span class="note">예시</span>${IF_PRESETS.filter(p => !L.some(x => x.i === p[0])).map((p, i) => `<button type="button" class="chipbtn" data-if-pre="${IF_PRESETS.indexOf(p)}">${p[0]} → ${p[1]}</button>`).join('')}<button type="button" class="chipbtn" id="ifBlank">+ 직접 만들기</button></div>` : '<p class="note">계획은 5개까지 만들 수 있어요.</p>'}
+    <p class="note">하루에 하나씩 돌아가며 오늘 공부 화면과 알림에 나와요. "언제·어디서"를 구체적으로 적을수록 잘 지켜져요.</p>`;
+}
+
+// flashcard overlay
+let FK = null;
+function openCards(deck){
+  const due = fcDue(deck), all = deckCards(deck);
+  const queue = (due.length ? due : all.slice().sort(() => Math.random() - .5)).slice(0, 10).map(c => c.id);
+  FK = {deck, queue, i: 0, flip: false, ok: 0, extra: !due.length};
+  $('cards').hidden = false; document.body.style.overflow = 'hidden'; renderCards();
+}
+function closeCards(){ FK = null; $('cards').hidden = true; document.body.style.overflow = ''; renderToday(); }
+function renderCards(){
+  const box = $('cards'); if (!FK) { box.hidden = true; return; }
+  const tabs = [['f', '공식'], ['e', 'Ethics'], ['m', '내 카드']].map(([d, n]) => `<button type="button" class="otab${FK.deck === d ? ' on' : ''}" data-deck="${d}">${n} <span class="num">${fcDue(d).length}</span></button>`).join('');
+  const all = deckCards(FK.deck), map = Object.fromEntries(all.map(c => [c.id, c]));
+  let body;
+  if (FK.deck === 'm' && FK.adding) {
+    body = `<form class="fc-add" id="fcAddForm"><label class="note" for="fcF">앞면 (질문)</label><input id="fcF" maxlength="120" required><label class="note" for="fcB">뒷면 (답)</label><textarea id="fcB" maxlength="300" required></textarea><div class="adj-btns"><button type="submit" class="btn primary">카드 저장</button><button type="button" class="btn" id="fcAddCancel">취소</button></div></form>`;
+  } else if (!all.length) {
+    body = `<p class="fsub">아직 내 카드가 없어요. 헷갈리는 개념을 카드로 만들어 보세요.</p>`;
+  } else if (FK.i >= FK.queue.length) {
+    body = `<span class="fbig">✓ ${FK.queue.length}장</span><h2>${FK.extra ? '복습 끝!' : '오늘 카드 끝!'}</h2><span class="fsub">알았던 카드 ${FK.ok}장 · 모르는 카드는 내일 다시 나와요</span><div class="fbtns"><button type="button" class="btn primary" data-deck="${FK.deck}">한 번 더</button><button type="button" class="btn" id="fcClose2">닫기</button></div>`;
+  } else {
+    const c = map[FK.queue[FK.i]];
+    body = `<span class="fsub">${FK.i + 1} / ${FK.queue.length} · ${esc(c.tag)}</span>
+      <button type="button" class="fcard${FK.flip ? ' flip' : ''}" id="fcCard" aria-label="카드 뒤집기"><span class="fc-front">${esc(c.front)}</span>${FK.flip ? `<span class="fc-back">${esc(c.back)}</span>` : '<span class="fc-hint">눌러서 답 보기</span>'}</button>
+      ${FK.flip ? `<div class="fbtns"><button type="button" class="btn" id="fcNo">몰라요 · 내일 다시</button><button type="button" class="btn primary" id="fcOk">알아요 ✓</button></div>` : ''}
+      ${FK.deck === 'm' ? `<button type="button" class="linkbtn" data-fc-del="${c.id}">이 카드 지우기</button>` : ''}`;
+  }
+  box.innerHTML = `<div class="fc-top"><div class="otabs">${tabs}</div><button type="button" class="btn" id="fcClose">닫기</button></div>
+    <div class="fc-body">${body}</div>
+    ${FK.deck === 'm' && !FK.adding ? '<button type="button" class="btn" id="fcAddOpen">+ 내 카드 만들기</button>' : ''}
+    ${FK.deck !== 'm' ? '<p class="note fc-note">기본 카드는 커리큘럼 기준으로 정리한 요약이에요. 교재와 다르면 내 카드로 만들어 쓰세요.</p>' : ''}`;
+}
+
+$('cards').addEventListener('click', e => {
+  const t = e.target; if (!FK) return;
+  const dk = t.closest('[data-deck]'); if (dk) { openCards(dk.dataset.deck); return; }
+  if (t.closest('#fcClose') || t.closest('#fcClose2')) { closeCards(); return; }
+  if (t.closest('#fcCard')) { FK.flip = !FK.flip; renderCards(); return; }
+  if (t.closest('#fcOk') || t.closest('#fcNo')) {
+    const id = FK.queue[FK.i], ok = !!t.closest('#fcOk'); S.fc = S.fc || {};
+    const cur = S.fc[id] || {b: 0}, b = ok ? Math.min(cur.b + 1, FC_GAPS.length - 1) : 0;
+    S.fc[id] = {b, d: addD(TODAY, ok ? FC_GAPS[b] : 1)}; if (ok) FK.ok++;
+    FK.i++; FK.flip = false; saveProgress(); renderCards(); return;
+  }
+  if (t.closest('#fcAddOpen')) { FK.adding = true; renderCards(); setTimeout(() => $('fcF') && $('fcF').focus(), 30); return; }
+  if (t.closest('#fcAddCancel')) { FK.adding = false; renderCards(); return; }
+  const del = t.closest('[data-fc-del]'); if (del) { delete (S.myc || {})[del.dataset.fcDel]; delete (S.fc || {})[del.dataset.fcDel]; saveProgress(); openCards('m'); return; }
+});
+$('cards').addEventListener('submit', e => {
+  e.preventDefault(); if (e.target.id !== 'fcAddForm') return;
+  const f = $('fcF').value.trim(), b = $('fcB').value.trim(); if (!f || !b) return;
+  S.myc = S.myc || {}; S.myc['m' + Date.now().toString(36)] = {f, b}; saveProgress(); FK.adding = false; setSave('내 카드를 만들었어요'); openCards('m');
+});
+$('todayView').addEventListener('submit', e => {
+  if (e.target.id !== 'rvAddForm') return; e.preventDefault();
+  const v = $('rvAddIn').value.trim(); if (!v) return;
+  rvAdd('u' + Date.now().toString(36), v); S.rv[Object.keys(S.rv).pop()].d = TODAY; saveProgress(); renderToday(); setSave('다시 볼 것에 추가했어요');
+});
+$('ifBody').addEventListener('click', e => {
+  const t = e.target; S.ifs = S.ifs || [];
+  const pre = t.closest('[data-if-pre]'); if (pre) { const p = IF_PRESETS[+pre.dataset.ifPre]; S.ifs.push({i: p[0], t: p[1]}); saveProgress(); renderIfs(); return; }
+  if (t.closest('#ifBlank')) { S.ifs.push({i: '', t: ''}); renderIfs(); const ins = document.querySelectorAll('[data-if-i]'); ins[ins.length - 1].focus(); return; }
+  const del = t.closest('[data-if-del]'); if (del) { S.ifs.splice(+del.dataset.ifDel, 1); saveProgress(); renderIfs(); }
+});
+$('ifBody').addEventListener('change', e => {
+  const a = e.target.closest('[data-if-i]'), b = e.target.closest('[data-if-t]'); S.ifs = S.ifs || [];
+  if (a) S.ifs[+a.dataset.ifI].i = a.value.trim(); if (b) S.ifs[+b.dataset.ifT].t = b.value.trim();
+  S.ifs = S.ifs.filter((x, i, arr) => x.i || x.t || i === arr.length - 1); saveProgress();
+});
+
+function renderAll(){ renderHeader(); renderSummary(); renderR1(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); renderMap(); renderLec(); renderIfs(); }
 renderAll(); setSync();
 let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(renderStats, 150); });
 $('goal').value = S.goal;
@@ -1929,7 +2158,7 @@ const WORKER = 'https://app.cfa-study-pacer.workers.dev';
 const API = /\.workers\.dev$/.test(location.hostname) ? '' : WORKER;
 const loggedIn = () => !!auth;
 function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
-function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome}; }
+function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome, rv:S.rv, fc:S.fc, myc:S.myc, ifs:S.ifs}; }
 function payload(){ return JSON.stringify({...payloadObj(), updatedAt:S.updatedAt || 0}); }
 function saveAuth(){ try { if (auth) localStorage.setItem(AKEY, JSON.stringify(auth)); else localStorage.removeItem(AKEY); } catch(e) {} }
 async function api(path, opt = {}){
@@ -1948,7 +2177,7 @@ const srvErr = e => !e ? '' : e.status === 0 ? '서버에 연결할 수 없습�
 function onAuthLost(e){ if (e && e.status === 401 && auth) { auth = null; saveAuth(); setSync(); renderSyncPanel(); } }
 function adopt(r){
   S.c = r.c || {}; S.m = r.m || {}; if (typeof r.goal === 'number') S.goal = r.goal;
-  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {}; S.lt = r.lt || {}; S.lastSeen = r.lastSeen || S.lastSeen || null; S.welcome = r.welcome || null;
+  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {}; S.rv = r.rv || {}; S.fc = r.fc || {}; S.myc = r.myc || {}; S.ifs = Array.isArray(r.ifs) ? r.ifs : []; S.lt = r.lt || {}; S.lastSeen = r.lastSeen || S.lastSeen || null; S.welcome = r.welcome || null;
   S.lc = cleanLC(r.lc); S.lw = cleanLW(r.lw); S.sd = okDate(r.sd) ? r.sd : null; S.ed = okDate(r.ed) ? r.ed : null; if (typeof r.fm === 'number') S.fm = r.fm;
   if (appliedSig(S) !== appliedSig(APPLIED)) { S.plans = Array.isArray(r.plans) ? r.plans : S.plans; S.logs = r.logs || {}; S.updatedAt = r.updatedAt || Date.now(); writeLS(); location.reload(); return; }
   S.logs = r.logs || {}; S.plans = cleanPlans(r.plans) || S.plans; S.updatedAt = r.updatedAt || Date.now();
@@ -1976,8 +2205,8 @@ function mergeMap(b, l, r){
 }
 function merge3(b, l, r){
   b = b || {}; const out = {};
-  for (const f of ['goal', 'fm', 'plans', 'lc', 'lw', 'sd', 'ed', 'welcome']) out[f] = same3(l[f], b[f]) ? r[f] : l[f];
-  for (const f of ['c', 'm', 'st', 'lm', 'td', 'en', 'lt']) out[f] = mergeMap(b[f], l[f], r[f]);
+  for (const f of ['goal', 'fm', 'plans', 'lc', 'lw', 'sd', 'ed', 'welcome', 'ifs']) out[f] = same3(l[f], b[f]) ? r[f] : l[f];
+  for (const f of ['c', 'm', 'st', 'lm', 'td', 'en', 'lt', 'rv', 'fc', 'myc']) out[f] = mergeMap(b[f], l[f], r[f]);
   out.lastSeen = [l.lastSeen, r.lastSeen].filter(Boolean).sort().pop() || null;
   const bl = b.logs || {}, ll = l.logs || {}, rl = r.logs || {}; out.logs = {};
   for (const d of new Set([...Object.keys(bl), ...Object.keys(ll), ...Object.keys(rl)])) {
@@ -2288,7 +2517,7 @@ if (!auth) { try { maybeWelcome(); } catch(_) {} }
         }
       }
       if (snap.metadata && snap.metadata.hasPendingWrites) return;
-      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {}; S.st = prog.st || {}; S.lm = prog.lm || {}; S.en = prog.en || {}; S.td = prog.td || {}; S.lt = prog.lt || {}; S.lastSeen = prog.lastSeen || S.lastSeen || null; S.welcome = prog.welcome || null; if (typeof prog.fm === 'number') S.fm = prog.fm;
+      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {}; S.st = prog.st || {}; S.lm = prog.lm || {}; S.en = prog.en || {}; S.td = prog.td || {}; S.lt = prog.lt || {}; S.rv = prog.rv || {}; S.fc = prog.fc || {}; S.myc = prog.myc || {}; S.ifs = Array.isArray(prog.ifs) ? prog.ifs : []; S.lastSeen = prog.lastSeen || S.lastSeen || null; S.welcome = prog.welcome || null; if (typeof prog.fm === 'number') S.fm = prog.fm;
         const np = cleanPlans(prog.plans) || (prog.cfg ? [basePlan(prog.cfg)] : null);
         if (np && JSON.stringify(np) !== JSON.stringify(S.plans)) { const wasDirty = draftDirty(); S.plans = np; rebuild(); if (!wasDirty) resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7); } if (typeof prog.goal === 'number') { S.goal = prog.goal; if (document.activeElement !== $('goal')) $('goal').value = S.goal; } }
       for (const d2 in logs) if (!inflight['d'+d2] && !timers_pending('d'+d2)) S.logs[d2] = logs[d2];
