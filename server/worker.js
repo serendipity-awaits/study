@@ -312,13 +312,92 @@ async function putData(req, env, me) {
   return json({ ok: true, updatedAt });
 }
 
+// ---------- 알림 (Web Push) ----------
+// 알림 내용은 보내지 않고(빈 푸시), 휴대폰의 서비스 워커가 /api/push/msg 에서 문구를 받아 보여줍니다.
+const STATIC = { '/sw.js': 'text/javascript; charset=utf-8', '/manifest.webmanifest': 'application/manifest+json', '/icon-192.png': 'image/png', '/icon-512.png': 'image/png' };
+const RAW = 'https://raw.githubusercontent.com/serendipity-awates/study/main';
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const validTime = t => typeof t === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
+let VAPID_KEY = null;
+async function vapidHeaders(env, endpoint) {
+  if (!VAPID_KEY) VAPID_KEY = await crypto.subtle.importKey('jwk', JSON.parse(env.VAPID_PRIVATE_JWK), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  const aud = new URL(endpoint).origin;
+  const head = b64url(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
+  const body = b64url(enc.encode(JSON.stringify({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: 'https://app.cfa-study-pacer.workers.dev' })));
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, VAPID_KEY, enc.encode(head + '.' + body));
+  return { Authorization: 'vapid t=' + head + '.' + body + '.' + b64url(sig) + ', k=' + env.VAPID_PUBLIC, TTL: '3600', Urgency: 'high', 'Content-Length': '0' };
+}
+async function sendPush(env, sub) {
+  const r = await fetch(sub.endpoint, { method: 'POST', headers: await vapidHeaders(env, sub.endpoint) });
+  if (r.status === 404 || r.status === 410) await env.DB.prepare('DELETE FROM push_subs WHERE id = ?').bind(sub.id).run();
+  return r.status;
+}
+const localNow = tz => { const d = new Date(Date.now() + tz * 60000); return { date: d.toISOString().slice(0, 10), min: d.getUTCHours() * 60 + d.getUTCMinutes() }; };
+async function studiedMin(env, userId, date) {
+  const row = await env.DB.prepare('SELECT body FROM data WHERE user_id = ?').bind(userId).first();
+  if (!row) return 0;
+  try { const h = ((JSON.parse(row.body).logs || {})[date] || {}).h || {}; return Math.round(Object.values(h).reduce((a, b) => a + (+b || 0), 0) * 60); } catch { return 0; }
+}
+async function pushSubscribe(req, env, me) {
+  if (!env.VAPID_PUBLIC) return fail(503, '알림 기능이 아직 준비되지 않았습니다');
+  const { endpoint, times, tz, msgs } = await readJson(req);
+  if (typeof endpoint !== 'string' || !/^https:\/\//.test(endpoint) || endpoint.length > 1000) return fail(400, '알림 구독 정보가 올바르지 않습니다');
+  const ts = Array.isArray(times) ? [...new Set(times.filter(validTime))].slice(0, 4).sort() : [];
+  const tzm = Number.isFinite(tz) && Math.abs(tz) <= 840 ? Math.round(tz) : 540;
+  const m = msgs && typeof msgs === 'object' ? JSON.stringify(msgs).slice(0, 20000) : '{}';
+  const h = await sha256('push:' + endpoint);
+  await env.DB.prepare('INSERT INTO push_subs (user_id, endpoint, eph, times, tz, msgs, last_slot, created) VALUES (?, ?, ?, ?, ?, ?, NULL, ?) ON CONFLICT(endpoint) DO UPDATE SET user_id = excluded.user_id, times = excluded.times, tz = excluded.tz, msgs = excluded.msgs')
+    .bind(me.id, endpoint, h, JSON.stringify(ts), tzm, m, Date.now()).run();
+  return json({ ok: true, times: ts });
+}
+async function pushMessage(env, eph) {
+  const sub = await env.DB.prepare('SELECT * FROM push_subs WHERE eph = ?').bind(eph || '').first();
+  const fallback = { title: 'CFA 페이스메이커', body: '5분만 시작해 볼까요? 시작이 제일 어려워요 🙂' };
+  if (!sub) return fallback;
+  const { date, min } = localNow(sub.tz);
+  let msgs = {}; try { msgs = JSON.parse(sub.msgs || '{}'); } catch {}
+  const today = msgs[date] || '오늘 계획을 확인해 볼까요?';
+  const done = await studiedMin(env, sub.user_id, date);
+  if (done >= 10) return { title: '오늘 벌써 ' + done + '분 했어요 👏', body: '정말 잘하고 있어요. 여유 있으면 한 번만 더 5분?' };
+  const hour = Math.floor(min / 60);
+  const head = hour < 11 ? '좋은 아침이에요 ☀️' : hour < 17 ? '잠깐 5분 어때요?' : hour < 21 ? '오늘 아직 기록이 없어요' : '자기 전에 딱 5분 🌙';
+  return { title: head, body: today };
+}
+async function runReminders(env) {
+  if (!env.VAPID_PUBLIC || !env.VAPID_PRIVATE_JWK) return;
+  const { results } = await env.DB.prepare('SELECT * FROM push_subs').all();
+  for (const sub of results || []) {
+    let times = []; try { times = JSON.parse(sub.times || '[]'); } catch {}
+    const { date, min } = localNow(sub.tz);
+    for (const t of times) {
+      const tm = +t.slice(0, 2) * 60 + +t.slice(3);
+      const slot = date + ' ' + t;
+      if (min - tm >= 0 && min - tm < 5 && sub.last_slot !== slot) {
+        await env.DB.prepare('UPDATE push_subs SET last_slot = ? WHERE id = ?').bind(slot, sub.id).run();
+        // 오늘 이미 10분 이상 했으면 첫 축하 한 번만 보내고 나머지는 쉽니다
+        const done = await studiedMin(env, sub.user_id, date);
+        if (done >= 10 && sub.congrats === date) break;
+        if (done >= 10) await env.DB.prepare('UPDATE push_subs SET congrats = ? WHERE id = ?').bind(date, sub.id).run();
+        try { await sendPush(env, sub); } catch {}
+        break;
+      }
+    }
+  }
+}
+
 export default {
+  async scheduled(event, env, ctx) { ctx.waitUntil(runReminders(env)); },
   async fetch(req, env) {
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     try {
       if (!url.pathname.startsWith('/api/')) {
         if (req.method !== 'GET' && req.method !== 'HEAD') return fail(405, '허용되지 않는 요청입니다');
+        if (STATIC[url.pathname]) {
+          const r = await fetch(RAW + url.pathname, { cf: { cacheTtl: 300, cacheEverything: true } });
+          if (!r.ok) return fail(404, '없는 파일입니다');
+          return new Response(r.body, { headers: { 'Content-Type': STATIC[url.pathname], 'Cache-Control': url.pathname === '/sw.js' ? 'no-cache' : 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff' } });
+        }
         if (url.pathname !== '/' && url.pathname !== '/index.html') return Response.redirect(url.origin + '/', 302);
         return new Response(await html(), { headers: {
           'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache',
@@ -332,6 +411,9 @@ export default {
       if (route === 'POST /api/google') return await googleLogin(req, env);
       if (route === 'GET /api/config') return json({ googleClientId: env.GOOGLE_CLIENT_ID || null, email: !!env.RESEND_API_KEY });
       if (route === 'POST /api/forgot') return await forgotStart(req, env);
+      if (route === 'GET /api/push/key') return json({ publicKey: env.VAPID_PUBLIC || null });
+      if (route === 'GET /api/push/msg') return json(await pushMessage(env, url.searchParams.get('h')));
+      if (route === 'POST /api/push/unsubscribe') { const { endpoint } = await readJson(req); if (typeof endpoint === 'string') await env.DB.prepare('DELETE FROM push_subs WHERE endpoint = ?').bind(endpoint).run(); return json({ ok: true }); }
       if (route === 'POST /api/forgot/confirm') return await forgotConfirm(req, env);
       const me = await currentUser(req, env);
       if (!me) return fail(401, '로그인이 필요합니다');
@@ -340,6 +422,14 @@ export default {
       if (route === 'POST /api/password') return await changePassword(req, env, me);
       if (route === 'GET /api/me') return json({ username: me.username, hasRecovery: !!me.has_recovery, google: !!me.has_google, hasPassword: !!me.has_pw, email: me.email_verified ? me.email : null });
       if (route === 'POST /api/email') return await emailStart(req, env, me);
+      if (route === 'POST /api/push/subscribe') return await pushSubscribe(req, env, me);
+      if (route === 'POST /api/push/test') {
+        const { endpoint } = await readJson(req);
+        const sub = await env.DB.prepare('SELECT * FROM push_subs WHERE endpoint = ? AND user_id = ?').bind(endpoint || '', me.id).first();
+        if (!sub) return fail(404, '이 기기의 알림이 아직 켜져 있지 않아요');
+        const st = await sendPush(env, sub);
+        return st >= 200 && st < 300 ? json({ ok: true }) : fail(502, '알림을 보내지 못했어요 (' + st + ')');
+      }
       if (route === 'POST /api/email/confirm') return await emailConfirm(req, env, me);
       if (route === 'POST /api/recovery-code') return json({ recoveryCode: await issueCode(env, me.id) });
       if (route === 'POST /api/logout') {

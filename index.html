@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#FCF9F1">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -349,6 +352,13 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .ltin{width:100%;font:inherit;font-size:13px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
 .lt-bulk{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
 .lt-bulk textarea{min-height:140px}
+.nt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.nt-row{display:flex;align-items:center;gap:10px;background:var(--sunk);border-radius:10px;padding:8px 12px;font-weight:700}
+.nt-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.nt-row .nt-n{min-width:34px}
+.nt-row input[type=time]{margin-left:auto;font:inherit;font-size:16px;font-weight:700;padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+#notiSec{--sec:var(--t-pink)}
+@media (max-width:520px){.nt-grid{grid-template-columns:minmax(0,1fr)}}
 .code-card{border:2px solid var(--warn);background:var(--warn-soft);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;max-width:560px}
 .code-val{font-family:var(--font-mono);font-size:clamp(17px,4.6vw,22px);font-weight:600;letter-spacing:.04em;user-select:all;word-break:break-all;color:var(--fg)}
 .warn-box{background:var(--warn-soft);border-radius:8px;padding:10px 12px;font-size:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -513,6 +523,10 @@ section,aside{scroll-margin-top:12px}
   <div id="mapView" class="view" hidden></div>
   <div id="setView" class="view" hidden>
     <div class="tb-head"><h2>설정</h2><span class="note">계획 조정 · 시험 설정은 가끔만 쓰는 기능이라 여기 모았어요</span></div>
+    <section class="panel" id="notiSec" aria-label="매일 알림">
+      <div class="sec-head"><h2>매일 알림</h2><span class="note">하루 최대 4번 · 이 기기로 알림이 와요</span></div>
+      <div id="notiBody"></div>
+    </section>
   <section class="panel" id="adjSec" aria-label="계획 조정">
     <div class="sec-head"><h2>계획 조정</h2><span class="note">지난 날짜의 계획은 그대로 두고, 적용한 날부터 남은 강의만 새 순서·분량으로 다시 배치합니다</span></div>
     <div class="adj">
@@ -854,7 +868,7 @@ function persist(docId, getData){
     finally { inflight[docId] = false; }
   }, 700);
 }
-const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome}));
+const saveProgress = () => { try { refreshReminderText(); } catch(_) {} return persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome})); };
 const saveLog = d => persist('d'+d, () => ({date:d, h:(S.logs[d]||{}).h||{}, memo:(S.logs[d]||{}).memo||'', at:Date.now()}));
 const $ = id => document.getElementById(id);
 function setSave(t){ $('saveState').textContent = t; }
@@ -865,6 +879,7 @@ function setSync(){
   $('syncText').textContent = mode === 'db' ? '계정에 저장 · 기기 간 동기화' : g ? `${auth.username} · 서버에 저장` : '로그인 전 · 이 기기에만 저장';
   c.disabled = mode === 'db';
   $('loginBtn').hidden = mode === 'db';
+  try { renderNoti(); } catch(_) {}
   if (mode === 'db') $('syncPanel').hidden = true;
 }
 
@@ -1766,6 +1781,79 @@ $('lecSave').addEventListener('click', async () => {
   if (mode !== 'db' && auth) { clearTimeout(pushT); pushT = null; try { await srvPush(); } catch(_) {} }
   setTimeout(() => location.reload(), mode === 'db' ? 1500 : 50);
 });
+
+// ---------- daily reminders (web push) ----------
+const NKEY = 'cfa-l1-pacer-noti';
+const DEF_NT = [{t:'08:30', on:true}, {t:'12:30', on:true}, {t:'19:00', on:true}, {t:'21:30', on:true}];
+let NT = null; try { NT = JSON.parse(localStorage.getItem(NKEY) || 'null'); } catch(_) {}
+if (!NT || !Array.isArray(NT.times) || NT.times.length !== 4) NT = {times: DEF_NT.map(x => ({...x})), sub: false};
+const saveNT = () => { try { localStorage.setItem(NKEY, JSON.stringify(NT)); } catch(_) {} };
+const pushOK = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && (/\.workers\.dev$/.test(location.hostname) || location.hostname === 'localhost');
+let notiMsg = '';
+const b64ToU8 = b => { const p = '='.repeat((4 - b.length % 4) % 4), r = atob((b + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(r, c => c.charCodeAt(0)); };
+function dayMsgs(){
+  const out = {};
+  for (let k = 0; k < 14; k++) {
+    const d = addD(TODAY, k), p = PLAN[d]; if (!p) continue;
+    if (p.kind === 'lec') {
+      const left = unitsOf(p).filter(u => !S.c[u.k]);
+      out[d] = left.length ? `오늘은 ${left.slice(0, 2).map(u => unitName(u) + (ltOf(u.s, u.i) ? ' · ' + ltOf(u.s, u.i) : '')).join(', ')}${left.length > 2 ? ' 외 ' + (left.length - 2) + '강' : ''} · 5분만 시작해 볼까요?` : '오늘 계획한 강의는 다 했어요! 복습 5분 어때요?';
+    } else if (p.kind === 'review') out[d] = '오늘은 복습하고 밀린 강의를 따라잡는 날이에요. 5분만!';
+    else if (p.kind === 'mock') out[d] = `오늘은 ${p.label}! 시간 재고 풀어봐요 💪`;
+    else out[d] = p.label + ' · 5분만 시작해 볼까요?';
+  }
+  return out;
+}
+async function pushReg(){ return navigator.serviceWorker.register('/sw.js'); }
+async function syncSub(sub){
+  const tz = -new Date().getTimezoneOffset();
+  await api('/api/push/subscribe', {method:'POST', body:{endpoint: sub.endpoint, times: NT.times.filter(x => x.on).map(x => x.t), tz, msgs: dayMsgs()}});
+}
+async function notiOn(){
+  if (!auth) { notiMsg = '알림은 로그인해야 쓸 수 있어요'; renderNoti(); return; }
+  notiMsg = '알림 허용을 물어볼게요…'; renderNoti();
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') { notiMsg = '알림이 허용되지 않았어요. 휴대폰 설정 → 앱 → 브라우저 → 알림에서 허용한 뒤 다시 눌러 주세요'; renderNoti(); return; }
+  try {
+    const {publicKey} = await api('/api/push/key', {noAuth:true});
+    if (!publicKey) throw new Error('서버 알림 준비가 아직 안 됐어요');
+    const reg = await pushReg(); await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: b64ToU8(publicKey)});
+    await syncSub(sub);
+    NT.sub = true; saveNT(); notiMsg = '알림을 켰어요! "테스트 알림 보내기"로 확인해 보세요'; renderNoti();
+  } catch (e) { notiMsg = '알림을 켜지 못했어요: ' + (e.message || e); renderNoti(); }
+}
+async function currentSub(){ try { const reg = await navigator.serviceWorker.getRegistration('/'); return reg ? await reg.pushManager.getSubscription() : null; } catch(_) { return null; } }
+function renderNoti(){
+  const b = $('notiBody'); if (!b) return;
+  if (!pushOK()) { b.innerHTML = `<p class="note">이 화면에서는 알림을 켤 수 없어요. 휴대폰 크롬이나 삼성 인터넷에서 <b>app.cfa-study-pacer.workers.dev</b> 를 열어 주세요. 아이폰은 사파리에서 <b>공유 → 홈 화면에 추가</b>한 뒤, 홈 화면 아이콘으로 열어야 알림이 와요.</p>`; return; }
+  const rows = NT.times.map((x, i) => `<label class="nt-row"><input type="checkbox" data-nton="${i}" ${x.on ? 'checked' : ''} aria-label="${i + 1}번째 알림 켜기"><span class="nt-n">${['아침', '점심', '저녁', '밤'][i]}</span><input type="time" data-ntt="${i}" value="${x.t}" aria-label="${i + 1}번째 알림 시각"></label>`).join('');
+  b.innerHTML = `${!auth ? '<p class="warn-box" style="margin:0">알림은 로그인해야 쓸 수 있어요. 위쪽 <b>로그인</b> 버튼을 먼저 눌러 주세요.</p>' : ''}
+    <div class="nt-grid">${rows}</div>
+    <div class="adj-btns" style="margin-top:10px">${NT.sub ? '<button type="button" class="btn primary" id="ntSave">시각 저장</button><button type="button" class="btn" id="ntTest">테스트 알림 보내기</button><button type="button" class="btn" id="ntOff">이 기기 알림 끄기</button>' : '<button type="button" class="btn primary" id="ntOn">알림 켜기</button>'}</div>
+    ${notiMsg ? `<p class="note" role="status" style="margin-top:8px"><b>${esc(notiMsg)}</b></p>` : ''}
+    <p class="note" style="margin-top:6px">알림 내용은 그날 계획에 맞춰 바뀌어요 (예: "오늘은 FSA 7강 · 5분만 시작해 볼까요?"). 그날 10분 이상 공부했으면 칭찬 알림 한 번만 보내고 나머지는 쉬어요. 알림은 설정한 시각부터 5분 안에 와요.</p>`;
+}
+$('notiBody').addEventListener('click', async e => {
+  const t = e.target;
+  if (t.closest('#ntOn')) { notiOn(); return; }
+  if (t.closest('#ntSave')) { const sub = await currentSub(); if (!sub) { NT.sub = false; saveNT(); renderNoti(); return; } try { await syncSub(sub); notiMsg = '알림 시각을 저장했어요'; } catch (err) { notiMsg = srvErr(err); } renderNoti(); return; }
+  if (t.closest('#ntTest')) { const sub = await currentSub(); if (!sub) { NT.sub = false; saveNT(); renderNoti(); return; } try { await syncSub(sub); await api('/api/push/test', {method:'POST', body:{endpoint: sub.endpoint}}); notiMsg = '테스트 알림을 보냈어요. 몇 초 안에 와요'; } catch (err) { notiMsg = srvErr(err); } renderNoti(); return; }
+  if (t.closest('#ntOff')) { const sub = await currentSub(); if (sub) { try { await api('/api/push/unsubscribe', {method:'POST', body:{endpoint: sub.endpoint}, noAuth:true}); } catch(_) {} try { await sub.unsubscribe(); } catch(_) {} } NT.sub = false; saveNT(); notiMsg = '이 기기의 알림을 껐어요'; renderNoti(); }
+});
+$('notiBody').addEventListener('change', e => {
+  const c = e.target.closest('[data-nton]'), tm = e.target.closest('[data-ntt]');
+  if (c) NT.times[+c.dataset.nton].on = c.checked;
+  if (tm && /^\d\d:\d\d$/.test(tm.value)) NT.times[+tm.dataset.ntt].t = tm.value;
+  saveNT(); if (NT.sub) { notiMsg = '"시각 저장"을 눌러야 적용돼요'; renderNoti(); }
+});
+// keep the next two weeks of reminder texts fresh on the server
+let ntSyncT = null;
+function refreshReminderText(){ if (!NT.sub || !auth || !pushOK()) return; clearTimeout(ntSyncT); ntSyncT = setTimeout(async () => { const sub = await currentSub(); if (sub) syncSub(sub).catch(() => {}); }, 4000); }
+if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.go === 'today') setView('today'); });
+if (location.hash === '#today') setTimeout(() => setView('today'), 0);
+renderNoti(); refreshReminderText();
 
 function renderAll(){ renderHeader(); renderSummary(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); renderMap(); renderLec(); }
 renderAll(); setSync();
