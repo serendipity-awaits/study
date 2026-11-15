@@ -380,6 +380,33 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .r1-bar span{display:block;height:100%;background:var(--c);border-radius:6px}
 .r1-v{text-align:right;white-space:nowrap;font-size:13px}
 @media (max-width:820px){.r1{grid-template-columns:minmax(0,1fr)}}
+.wkc{display:flex;flex-direction:column;gap:8px;border:2px solid var(--accent)}
+.wkc.wkdone{border:1px solid var(--line)}
+.wkc p{margin:0}
+.wk-stat{font-size:14.5px}
+.wk-q{font-weight:800;font-size:14px;margin-top:4px}
+.wkc input:not([type=radio]){font:inherit;font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.wk-pace{flex-wrap:wrap}
+.wk-opt{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:700;cursor:pointer;background:var(--surface)}
+.wk-opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.wk-opt:has(input:disabled){opacity:.45}
+.wk-opt em{font-style:normal;font-weight:500;font-size:11.5px;color:var(--muted)}
+.wk-opt input{accent-color:var(--accent)}
+.wk-opt small{color:var(--accent);font-weight:800}
+.wkgoal{border-color:var(--accent)}
+.buddy{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 14px;max-width:min(100%,420px)}
+.bd-scene{position:relative;width:92px;height:78px;flex:none;overflow:hidden}
+.bd-yj{position:absolute;left:25px;top:2px;width:42px;height:auto;transform-origin:50% 100%}
+.bd-desk{position:absolute;left:0;bottom:0;width:92px;height:31px}
+.buddy.on .bd-yj{animation:bdBob 2.6s ease-in-out infinite}
+.buddy.on .bd-pen{animation:bdPen .9s ease-in-out infinite;transform-origin:77px 20px}
+.bd-txt{display:flex;flex-direction:column;gap:3px;text-align:left}
+.bd-txt b{font-size:14.5px}
+.bd-txt .linkbtn{font-size:12px;padding:0}
+@keyframes bdBob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(2px) rotate(-3deg)}}
+@keyframes bdPen{0%,100%{transform:translateX(0)}50%{transform:translateX(-5px)}}
+@media (prefers-reduced-motion:reduce){.buddy.on .bd-yj,.buddy.on .bd-pen{animation:none}}
+@media (max-width:640px){.wkc input:not([type=radio]){font-size:16px}}
 .rv{display:flex;flex-direction:column;gap:8px}
 .rv-item{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
 .rv-t{font-weight:700;font-size:14.5px}
@@ -907,7 +934,7 @@ const roundPlanTotalBy = (r, date) => {
 // ---------- state ----------
 const LS_KEY = 'cfa-l1-pacer-v1', AKEY = 'cfa-l1-pacer-auth';
 let auth = null; try { auth = JSON.parse(localStorage.getItem(AKEY) || 'null'); } catch(e) {}
-let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}, lc:null, lw:null, lt:{}, lastSeen:null, welcome:null, rv:{}, fc:{}, myc:{}, ifs:[]};
+let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}, lc:null, lw:null, lt:{}, lastSeen:null, welcome:null, rv:{}, fc:{}, myc:{}, ifs:[], wk:{}, buddy:true};
 try { const raw = localStorage.getItem(LS_KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
 S.plans = cleanPlans(S.plans) || [basePlan(S.cfg)];
 S.lc = APPLIED.lc; S.lw = APPLIED.lw; S.sd = APPLIED.sd; S.ed = APPLIED.ed; S.lt = S.lt || {};
@@ -929,7 +956,7 @@ function persist(docId, getData){
     finally { inflight[docId] = false; }
   }, 700);
 }
-const saveProgress = () => { try { refreshReminderText(); } catch(_) {} return persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome, rv:S.rv, fc:S.fc, myc:S.myc, ifs:S.ifs})); };
+const saveProgress = () => { try { refreshReminderText(); } catch(_) {} return persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome, rv:S.rv, fc:S.fc, myc:S.myc, ifs:S.ifs, wk:S.wk, buddy:S.buddy})); };
 const saveLog = d => persist('d'+d, () => ({date:d, h:(S.logs[d]||{}).h||{}, memo:(S.logs[d]||{}).memo||'', at:Date.now()}));
 const $ = id => document.getElementById(id);
 function setSave(t){ $('saveState').textContent = t; }
@@ -1448,6 +1475,7 @@ function renderToday(){
     <div class="tb">
       <div class="tb-main">
         ${welcomeCard()}
+        ${wkCard()}
         <div class="tb-head"><h2>${TODAY < START ? '내일부터 시작 · 미리 해도 돼요' : '오늘은 이것만'}</h2><span class="note">${fmtLong(ref)}</span></div>
         <div class="go">${go}
           <div class="chipsel" role="group" aria-label="오늘 컨디션"><span>오늘 컨디션</span>${[['low','낮음 · 1강만'],['mid','보통'],['high','좋음 · 1강 더']].map(([v, t]) => `<button type="button" data-en="${v}" class="${en === v ? 'on' : ''}" aria-pressed="${en === v}">${t}</button>`).join('')}</div>
@@ -1459,6 +1487,7 @@ function renderToday(){
         ${behind ? `<div class="behind"><span>지난 계획 중 아직 안 한 강의가 <b>${behind}개</b> 있어요. 괜찮아요.</span><button type="button" class="btn" id="replanBtn">남은 날짜에 다시 나누기</button></div>` : ''}
       </div>
       <div class="tb-side">
+        ${wkGoal() ? `<div class="panel ifcard wkgoal"><span class="label">이번 주 딱 하나</span><p><b>${esc(wkGoal())}</b></p></div>` : ''}
         ${ifToday() ? `<div class="panel ifcard"><span class="label">오늘의 "만약 ~하면"</span><p><b>${esc(ifToday().i)}</b> → ${esc(ifToday().t)}</p></div>` : ''}
         <button type="button" class="panel cardbtn" id="openCards"><span class="label">1분 플래시카드</span><b>공식 ${fcDue('f').length} · Ethics ${fcDue('e').length} · 내 카드 ${fcDue('m').length}</b><span class="note">오늘 볼 카드 · 눌러서 시작</span></button>
         <div class="panel okday">${r2(mins, goalMin)}<div><b>${mins >= goalMin ? '오늘 성공 ✓' : `오늘 ${mins}분`}</b><div class="note">${mins >= goalMin ? `${fmtH(dayHours(TODAY))}시간 공부했어요` : `${goalMin}분만 해도 오늘은 성공이에요`}</div></div></div>
@@ -1483,6 +1512,9 @@ $('todayView').addEventListener('click', e => {
   const enb = t.closest('[data-en]'); if (enb) { S.en[clampDay(TODAY)] = enb.dataset.en; saveProgress(); renderToday(); return; }
   const fmb = t.closest('[data-fm]'); if (fmb) { S.fm = +fmb.dataset.fm; saveProgress(); renderToday(); return; }
   const gb = t.closest('#goBtn'); if (gb) startFocus(gb.dataset.k, gb.dataset.st);
+  if (t.closest('#wkOpen')) { wkOpen = true; renderToday(); setTimeout(() => $('wkGood') && $('wkGood').focus(), 30); return; }
+  if (t.closest('#wkClose')) { wkOpen = false; renderToday(); return; }
+  if (t.closest('#wkUndo')) { const R = wkRef(), w = R && S.wk[R.mon]; if (w && w.undo) { try { S.plans = cleanPlans(JSON.parse(w.undo)) || S.plans; } catch(_) {} w.undo = null; w.pace = 0; rebuild(); resetDraft(); saveProgress(); renderAll(); setSave('분량 조절을 되돌렸어요'); } return; }
   if (t.closest('#openCards')) { openCards(fcDue('f').length || !fcDue('e').length ? 'f' : 'e'); return; }
   const ro = t.closest('[data-rv-ok]'); if (ro) { rvAct(ro.dataset.rvOk, true); return; }
   const rn = t.closest('[data-rv-no]'); if (rn) { rvAct(rn.dataset.rvNo, false); return; }
@@ -1514,6 +1546,7 @@ function showFocus(){
 function tickFocus(){
   if (!F) return;
   if (F.stage === 'run' && F.run && elapsed() >= F.target) { F.acc = elapsed(); F.run = false; F.stage = F.warm ? 'ask' : 'done'; saveF(); beep(); renderFocus(); return; }
+  if (F.stage === 'run' && F.run) { const bm = $('fBuddyMsg'), bn = $('fBuddyMin'); if (bm) bm.textContent = BUDDY_MSG[Math.floor(elapsed() / 120000) % BUDDY_MSG.length]; if (bn) bn.textContent = Math.round(elapsed() / 60000); }
   if (F.stage === 'run') { const rem = Math.max(0, F.target - elapsed()); const el = $('fTime'); if (el) el.textContent = mmss(rem); const arc = $('fArc'); if (arc) arc.setAttribute('stroke-dashoffset', String(FC * (1 - rem / F.target))); document.title = mmss(rem) + ' · ' + F.name; }
 }
 const FC = 2 * Math.PI * 44;
@@ -1530,6 +1563,7 @@ function renderFocus(){
       <h2>${esc(F.stepName || '집중')}</h2>
       <div class="fring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="var(--sunk)" stroke-width="8"/><circle id="fArc" cx="50" cy="50" r="44" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${FC}" stroke-dashoffset="${FC * (1 - rem / F.target)}" transform="rotate(-90 50 50)"/></svg><div class="c"><span><span id="fTime">${mmss(rem)}</span><small>${F.warm ? '5분만 해봐요' : F.run ? '남음' : '멈춤'}</small></span></div></div>
       ${nextStep ? `<span class="fnext">다음: ${nextStep[1]}</span>` : ''}
+      ${buddyHTML()}
       ${F.run
         ? `<div class="fbtns"><button class="btn" id="fPause" type="button">⏸ 일시정지</button>${k ? '<button class="btn primary" id="fStepDone" type="button">이 단계 끝</button>' : ''}<button class="btn" id="fStop" type="button">그만하기</button></div>`
         : `<div class="fpaused"><b>일시정지 중 · 지금까지 ${fmtMin(elapsed())}</b><span class="fsub">닫아도 이 상태는 그대로 남아 있어요.</span>
@@ -1579,6 +1613,7 @@ function closeFocus(){
 }
 $('focus').addEventListener('click', e => {
   const t = e.target; if (!F) return;
+  if (t.closest('#buddyOff') || t.closest('#buddyOn')) { S.buddy = !!t.closest('#buddyOn'); saveProgress(); renderFocus(); return; }
   if (t.closest('[data-chip]')) { t.closest('[data-chip]').classList.toggle('on'); return; }
   if (t.closest('#fPause')) { if (F.run) { F.acc = elapsed(); F.run = false; } else { F.t0 = Date.now(); F.run = true; } F.confirmDel = false; saveF(); renderFocus(); document.title = 'CFA L1 페이스메이커'; return; }
   if (t.closest('#fSave')) { const m = fmtMin(elapsed()); commitFocus(); closeFocus(); setSave(m + ' 저장했어요. 다음에 "5분만 시작"을 누르면 이어서 할 수 있어요'); return; }
@@ -1877,6 +1912,7 @@ function dayMsgs(){
     else if (p.kind === 'mock') out[d] = `오늘은 ${p.label}! 시간 재고 풀어봐요 💪`;
     else out[d] = p.label + ' · 5분만 시작해 볼까요?';
     const L = (S.ifs || []).filter(x => x.i && x.t); if (L.length) { const x = L[Math.abs(diffD(START, d)) % L.length]; out[d] += ` 💡 ${x.i} → ${x.t}`; }
+    if (pd(d).getDay() === 0 && !(S.wk || {})[monOf(d)]) out[d] += ' 📝 오늘은 일요일 5분 점검도 해봐요';
   }
   return out;
 }
@@ -2148,6 +2184,80 @@ $('ifBody').addEventListener('change', e => {
   S.ifs = S.ifs.filter((x, i, arr) => x.i || x.t || i === arr.length - 1); saveProgress();
 });
 
+// ---------- Sunday 5-minute check-in ----------
+let wkOpen = false;
+const monOf = d => addD(d, -((pd(d).getDay() + 6) % 7));
+// the week to look back on: this week on Sunday, last week on Monday if Sunday was missed
+function wkRef(){
+  if (TODAY < START || TODAY > END) return null;
+  const w = pd(TODAY).getDay();
+  const ref = w === 0 ? TODAY : w === 1 ? addD(TODAY, -1) : null;
+  if (!ref || ref < START) return null;
+  const mon = monOf(ref); if ((S.wk || {})[mon] && S.wk[mon].at && S.wk[mon].at !== TODAY) return null;
+  return {ref, mon, from: addD(mon, 7)};
+}
+function paceInfo(from){
+  const p = PLAN[from], r = p && p.phase <= 3 ? p.phase : null; if (!r) return null;
+  const pl = [...S.plans].reverse().find(x => x.from <= from) || curPlan(), c = pl.cfg['r' + r];
+  return {r, sat: c[1], sun: c[2]};
+}
+function pacePlans(delta, from){
+  const pi = paceInfo(from); if (!pi || !delta) return null;
+  const pl = [...S.plans].reverse().find(x => x.from <= from) || curPlan();
+  const cfg = JSON.parse(JSON.stringify(pl.cfg)), c = cfg['r' + pi.r];
+  c[1] = Math.max(1, Math.min(30, c[1] + delta)); c[2] = Math.max(1, Math.min(30, c[2] + delta));
+  if (c[1] === pi.sat && c[2] === pi.sun) return null;
+  const rem = snapshotRem();
+  // lectures still scheduled before the new pace starts stay where they are
+  for (let d = TODAY; d < from; d = addD(d, 1)) for (const u of unitsOf(PLAN[d])) { const t = rem[u.r][u.s]; rem[u.r][u.s] = t.slice(0, u.i - 1) + '0' + t.slice(u.i); }
+  const out = S.plans.filter(p => p.from < from).concat([{from, orders: JSON.parse(JSON.stringify(pl.orders)), cfg, rem, mocksDone: MOCKS.map((_, i) => i).filter(i => S.m['mock|' + i]), at: TODAY}]);
+  if (out.length === 1) out[0].from = START;
+  return out;
+}
+function applyPace(delta, from){ const np = pacePlans(delta, from); if (!np) return false; S.plans = np; rebuild(); resetDraft(); return true; }
+const paceEnd = (delta, from) => { const np = delta ? pacePlans(delta, from) : null; return np ? compute(np).end : END; };
+const shortD = d => d.slice(2).replace(/-/g, '.');
+function wkCard(){
+  const R = wkRef(); if (!R) return '';
+  const done = (S.wk || {})[R.mon];
+  if (done) return `<div class="panel wkc wkdone"><span class="label">일요일 5분 점검 ✓</span><p>이번 주 정리 끝! 다음 주 하나만: <b>${esc(done.one || '—')}</b></p>${done.pace ? `<p class="note">${done.pace > 0 ? '다음 주부터 주말 강의를 1개씩 늘렸어요' : '다음 주부터 주말 강의를 1개씩 줄였어요'} · 끝나는 날 ${done.end ? done.end.slice(2).replace(/-/g, '.') : ''}</p>` : ''}${done.undo ? '<button type="button" class="linkbtn" id="wkUndo">분량 조절 되돌리기</button>' : ''}</div>`;
+  const wk = weekInfo(R.ref); let hrs = 0; wk.days.forEach(d => hrs += dayHours(d));
+  const rate = wk.planned ? wk.done / wk.planned : 1, pi = paceInfo(R.from);
+  const rec = !pi ? 0 : rate < 0.6 && (pi.sat > 1 || pi.sun > 1) ? -1 : 0;
+  const head = `<span class="label">${R.ref === TODAY ? '일요일 5분 점검' : '어제 못 한 주간 점검'}</span><p class="wk-stat">이번 주 <b>${wk.done}/${wk.planned}강</b> · <b>${fmtH(hrs)}시간</b> · 공부한 날 <b>${wk.days.filter(d => minsOn(d) >= 10).length}일</b></p>`;
+  if (!wkOpen) return `<div class="panel wkc">${head}<button type="button" class="btn primary" id="wkOpen">질문 3개 답하기 · 5분</button></div>`;
+  const opts = pi ? [[-1, `줄이기 · 주말 ${Math.max(1, pi.sat - 1)}+${Math.max(1, pi.sun - 1)}강`], [0, `그대로 · 주말 ${pi.sat}+${pi.sun}강`], [1, `늘리기 · 주말 ${pi.sat + 1}+${pi.sun + 1}강`]] : [];
+  return `<form class="panel wkc" id="wkForm">${head}
+    <label class="wk-q" for="wkGood">1. 이번 주 잘한 것 <span class="note">(작은 것도 좋아요)</span></label><input id="wkGood" maxlength="120" placeholder="예: 평일에 두 번 5분 시작함">
+    <label class="wk-q" for="wkStuck">2. 막혔던 것</label><input id="wkStuck" maxlength="120" placeholder="예: 목요일 야근, FSA 4강 어려움">
+    <label class="wk-q" for="wkOne">3. 다음 주에 딱 하나만 한다면</label><input id="wkOne" maxlength="80" placeholder="예: 토요일 오전에 FSA 5강">
+    ${pi ? `<span class="wk-q">다음 주 분량 <span class="note">(평일은 그대로 1강)</span></span><div class="chipsel wk-pace" role="radiogroup" aria-label="다음 주 분량">${opts.map(([v, t]) => `<label class="wk-opt${v === rec ? ' rec' : ''}"><input type="radio" name="wkPace" value="${v}" ${v === rec ? 'checked' : ''} ${v === -1 && pi.sat <= 1 && pi.sun <= 1 ? 'disabled' : ''}>${t}${v === rec ? ' <small>추천</small>' : ''}<em>끝 ${shortD(paceEnd(v, R.from))}</em></label>`).join('')}</div>
+    <p class="note">${rate < 0.6 ? '이번 주 계획보다 적게 했어요. 분량을 줄이면 끝나는 날은 늦어지지만 매주 "해냈다"를 느끼기 쉬워요.' : rate >= 1 ? '계획을 다 했어요! 여유가 있으면 늘려도 좋아요.' : '지금 속도가 괜찮아요.'}</p>` : ''}
+    <div class="adj-btns"><button type="submit" class="btn primary">점검 저장</button><button type="button" class="btn" id="wkClose">나중에</button></div></form>`;
+}
+const wkGoal = () => { if (pd(TODAY).getDay() === 0) return null; const x = (S.wk || {})[addD(monOf(TODAY), -7)]; return x && x.one ? x.one : null; };
+
+// ---------- body doubling: 여정이 studies beside you ----------
+const BUDDY_MSG = ['여정이도 옆에서 같이 공부하고 있어요', '여정이는 노트 정리 중 ✏️', '딴생각이 나도 괜찮아요. 다시 화면으로 돌아오면 돼요', '여정이도 지금 문제 푸는 중이에요', '물 한 모금 마시고 계속 가요', '혼자가 아니에요. 같이 하고 있어요'];
+function buddyHTML(){
+  if (S.buddy === false) return `<button type="button" class="linkbtn" id="buddyOn">여정이랑 같이 공부하기</button>`;
+  const run = F && F.run, m = Math.floor(elapsed() / 120000);
+  return `<div class="buddy${run ? ' on' : ''}" aria-live="off"><div class="bd-scene" aria-hidden="true"><img src="${YJ_SRC}" alt="" class="bd-yj"><svg class="bd-desk" viewBox="0 0 120 40"><rect x="0" y="24" width="120" height="16" fill="var(--surface)"/><rect x="4" y="22" width="112" height="6" rx="3" fill="var(--head2)"/><path d="M38 21 L58 15 L60 21 Z" fill="var(--surface)" stroke="var(--line)"/><path d="M82 21 L62 15 L60 21 Z" fill="var(--surface)" stroke="var(--line)"/><g class="bd-pen"><rect x="76" y="6" width="3" height="14" rx="1.5" fill="var(--accent)" transform="rotate(30 77 20)"/></g><rect x="14" y="28" width="5" height="12" fill="var(--head2)"/><rect x="101" y="28" width="5" height="12" fill="var(--head2)"/></svg></div>
+    <div class="bd-txt"><b id="fBuddyMsg">${run ? BUDDY_MSG[m % BUDDY_MSG.length] : '여정이도 잠깐 쉬는 중 ☕'}</b><span class="fsub">같이 <span id="fBuddyMin">${Math.max(0, Math.round(elapsed() / 60000))}</span>분째 · <button type="button" class="linkbtn" id="buddyOff">혼자 할래요</button></span></div></div>`;
+}
+
+$('todayView').addEventListener('submit', e => {
+  if (e.target.id !== 'wkForm') return; e.preventDefault();
+  const R = wkRef(); if (!R) return;
+  const pace = +((document.querySelector('[name=wkPace]:checked') || {}).value || 0), undo = JSON.stringify(S.plans), prevEnd = END;
+  const changed = pace ? applyPace(pace, R.from) : false;
+  S.wk = S.wk || {};
+  S.wk[R.mon] = {good: $('wkGood').value.trim(), stuck: $('wkStuck').value.trim(), one: $('wkOne').value.trim(), pace: changed ? pace : 0, at: TODAY, end: changed ? END : null, prevEnd: changed ? prevEnd : null, undo: changed ? undo : null};
+  const note = `· 주간 점검 — 잘한 것: ${S.wk[R.mon].good || '-'} / 막힌 것: ${S.wk[R.mon].stuck || '-'} / 다음 주 하나: ${S.wk[R.mon].one || '-'}`;
+  const lg = S.logs[TODAY] = S.logs[TODAY] || {h:{}, memo:''}; lg.memo = ((lg.memo || '').trim() ? lg.memo.trim() + '\n' : '') + note; saveLog(TODAY);
+  wkOpen = false; saveProgress(); renderAll(); setSave(changed ? `점검 저장 · 다음 주부터 주말 분량을 ${pace > 0 ? '늘렸어요' : '줄였어요'}` : '이번 주 점검을 저장했어요. 수고했어요!');
+});
+
 function renderAll(){ renderHeader(); renderSummary(); renderR1(); renderTimeline(); renderCal(); renderHoursInputs(); renderDay(); renderSubjects(); renderQ(); renderMilestones(); renderStats(); renderAdjust(); renderToday(); renderMap(); renderLec(); renderIfs(); }
 renderAll(); setSync();
 let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(renderStats, 150); });
@@ -2158,7 +2268,7 @@ const WORKER = 'https://app.cfa-study-pacer.workers.dev';
 const API = /\.workers\.dev$/.test(location.hostname) ? '' : WORKER;
 const loggedIn = () => !!auth;
 function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
-function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome, rv:S.rv, fc:S.fc, myc:S.myc, ifs:S.ifs}; }
+function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome, rv:S.rv, fc:S.fc, myc:S.myc, ifs:S.ifs, wk:S.wk, buddy:S.buddy}; }
 function payload(){ return JSON.stringify({...payloadObj(), updatedAt:S.updatedAt || 0}); }
 function saveAuth(){ try { if (auth) localStorage.setItem(AKEY, JSON.stringify(auth)); else localStorage.removeItem(AKEY); } catch(e) {} }
 async function api(path, opt = {}){
@@ -2177,7 +2287,7 @@ const srvErr = e => !e ? '' : e.status === 0 ? '서버에 연결할 수 없습�
 function onAuthLost(e){ if (e && e.status === 401 && auth) { auth = null; saveAuth(); setSync(); renderSyncPanel(); } }
 function adopt(r){
   S.c = r.c || {}; S.m = r.m || {}; if (typeof r.goal === 'number') S.goal = r.goal;
-  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {}; S.rv = r.rv || {}; S.fc = r.fc || {}; S.myc = r.myc || {}; S.ifs = Array.isArray(r.ifs) ? r.ifs : []; S.lt = r.lt || {}; S.lastSeen = r.lastSeen || S.lastSeen || null; S.welcome = r.welcome || null;
+  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {}; S.rv = r.rv || {}; S.fc = r.fc || {}; S.myc = r.myc || {}; S.ifs = Array.isArray(r.ifs) ? r.ifs : []; S.wk = r.wk || {}; S.buddy = r.buddy !== false; S.lt = r.lt || {}; S.lastSeen = r.lastSeen || S.lastSeen || null; S.welcome = r.welcome || null;
   S.lc = cleanLC(r.lc); S.lw = cleanLW(r.lw); S.sd = okDate(r.sd) ? r.sd : null; S.ed = okDate(r.ed) ? r.ed : null; if (typeof r.fm === 'number') S.fm = r.fm;
   if (appliedSig(S) !== appliedSig(APPLIED)) { S.plans = Array.isArray(r.plans) ? r.plans : S.plans; S.logs = r.logs || {}; S.updatedAt = r.updatedAt || Date.now(); writeLS(); location.reload(); return; }
   S.logs = r.logs || {}; S.plans = cleanPlans(r.plans) || S.plans; S.updatedAt = r.updatedAt || Date.now();
@@ -2205,8 +2315,8 @@ function mergeMap(b, l, r){
 }
 function merge3(b, l, r){
   b = b || {}; const out = {};
-  for (const f of ['goal', 'fm', 'plans', 'lc', 'lw', 'sd', 'ed', 'welcome', 'ifs']) out[f] = same3(l[f], b[f]) ? r[f] : l[f];
-  for (const f of ['c', 'm', 'st', 'lm', 'td', 'en', 'lt', 'rv', 'fc', 'myc']) out[f] = mergeMap(b[f], l[f], r[f]);
+  for (const f of ['goal', 'fm', 'plans', 'lc', 'lw', 'sd', 'ed', 'welcome', 'ifs', 'buddy']) out[f] = same3(l[f], b[f]) ? r[f] : l[f];
+  for (const f of ['c', 'm', 'st', 'lm', 'td', 'en', 'lt', 'rv', 'fc', 'myc', 'wk']) out[f] = mergeMap(b[f], l[f], r[f]);
   out.lastSeen = [l.lastSeen, r.lastSeen].filter(Boolean).sort().pop() || null;
   const bl = b.logs || {}, ll = l.logs || {}, rl = r.logs || {}; out.logs = {};
   for (const d of new Set([...Object.keys(bl), ...Object.keys(ll), ...Object.keys(rl)])) {
@@ -2517,7 +2627,7 @@ if (!auth) { try { maybeWelcome(); } catch(_) {} }
         }
       }
       if (snap.metadata && snap.metadata.hasPendingWrites) return;
-      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {}; S.st = prog.st || {}; S.lm = prog.lm || {}; S.en = prog.en || {}; S.td = prog.td || {}; S.lt = prog.lt || {}; S.rv = prog.rv || {}; S.fc = prog.fc || {}; S.myc = prog.myc || {}; S.ifs = Array.isArray(prog.ifs) ? prog.ifs : []; S.lastSeen = prog.lastSeen || S.lastSeen || null; S.welcome = prog.welcome || null; if (typeof prog.fm === 'number') S.fm = prog.fm;
+      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {}; S.st = prog.st || {}; S.lm = prog.lm || {}; S.en = prog.en || {}; S.td = prog.td || {}; S.lt = prog.lt || {}; S.rv = prog.rv || {}; S.fc = prog.fc || {}; S.myc = prog.myc || {}; S.ifs = Array.isArray(prog.ifs) ? prog.ifs : []; S.wk = prog.wk || {}; S.buddy = prog.buddy !== false; S.lastSeen = prog.lastSeen || S.lastSeen || null; S.welcome = prog.welcome || null; if (typeof prog.fm === 'number') S.fm = prog.fm;
         const np = cleanPlans(prog.plans) || (prog.cfg ? [basePlan(prog.cfg)] : null);
         if (np && JSON.stringify(np) !== JSON.stringify(S.plans)) { const wasDirty = draftDirty(); S.plans = np; rebuild(); if (!wasDirty) resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7); } if (typeof prog.goal === 'number') { S.goal = prog.goal; if (document.activeElement !== $('goal')) $('goal').value = S.goal; } }
       for (const d2 in logs) if (!inflight['d'+d2] && !timers_pending('d'+d2)) S.logs[d2] = logs[d2];
