@@ -875,7 +875,7 @@ function cleanPlans(arr){
 }
 const isRem = (rem, r, s, i) => { if (!rem) return true; const str = rem[r] && rem[r][s]; return typeof str === 'string' ? str[i-1] !== '0' : true; };
 const remCount = (rem, r, s) => { let n = 0; for (const x of (s ? [SMAP[s]] : SUBJ)) for (let i = 1; i <= x.L; i++) if (isRem(rem, r, x.k, i)) n++; return n; };
-function snapshotRem(){ const o = {}; for (const r of [1,2,3]) { o[r] = {}; for (const s of SUBJ) { let t = ''; for (let i = 1; i <= s.L; i++) t += S.c[key(s.k, r, i)] ? '0' : '1'; o[r][s.k] = t; } } return o; }
+function snapshotRem(){ const o = {}; for (const r of [1,2,3]) { o[r] = {}; for (const s of SUBJ) { let t = ''; for (let i = 1; i <= s.L; i++) t += heard(key(s.k, r, i)) ? '0' : '1'; o[r][s.k] = t; } } return o; }
 const STOP = {};
 function genSegment(pl, until, P){
   let d = pl.from;
@@ -979,17 +979,19 @@ const STEPS = {1:[['l','강의 듣기'],['n','노트 읽기'],['q','문제 풀�
 const LEC_MIN = 90;
 const rOf = k => +k.split('|')[1];
 const stepDone = (k, st) => !!S.c[k] || !!(S.st[k] && S.st[k][st]);
+// progress counts a lecture once its first step (강의 듣기 in round 1) is done; 노트·문제 are tracked separately
+const heard = k => !!S.c[k] || !!(S.st[k] && S.st[k][STEPS[rOf(k)][0][0]]);
 const stepsDoneN = k => STEPS[rOf(k)].filter(([st]) => stepDone(k, st)).length;
 // a lecture finished ahead of (or behind) schedule still shows up on today's board
 function noteDone(k, was){
-  if (was || !S.c[k] || TODAY < START) return;
+  if (was || !heard(k) || TODAY < START) return;
   try {
     const ref = clampDay(TODAY); if (todayTargets(ref).some(u => u.k === k)) return;
     const td = S.td[ref] = S.td[ref] || {}; td.add = (td.add || []).filter(x => x !== k).concat(k); td.rm = (td.rm || []).filter(x => x !== k);
   } catch(_) {}
 }
 function setStep(k, st, v){
-  const was = !!S.c[k];
+  const was = heard(k);
   if (S.c[k] && !(S.st[k] && STEPS[rOf(k)].every(([x]) => S.st[k][x]))) { S.st[k] = Object.assign(S.st[k] || {}, Object.fromEntries(STEPS[rOf(k)].map(([x]) => [x, 1]))); }
   const o = S.st[k] = S.st[k] || {};
   if (v) o[st] = 1; else delete o[st];
@@ -998,14 +1000,15 @@ function setStep(k, st, v){
   noteDone(k, was);
 }
 function setAll(k, v){
-  const was = !!S.c[k], o = S.st[k] = S.st[k] || {};
+  const was = heard(k), o = S.st[k] = S.st[k] || {};
   STEPS[rOf(k)].forEach(([x]) => { if (v) o[x] = 1; else delete o[x]; });
   if (v) S.c[k] = 1; else delete S.c[k];
   if (!Object.keys(o).length) delete S.st[k];
   noteDone(k, was);
 }
-const doneRound = r => { let n = 0; for (const u of UNITS) if (S.c[key(u.s, r, u.i)]) n++; return n; };
-const doneSubj = (s, r) => { let n = 0; for (let i = 1; i <= SMAP[s].L; i++) if (S.c[key(s, r, i)]) n++; return n; };
+const doneRound = r => { let n = 0; for (const u of UNITS) if (heard(key(u.s, r, u.i))) n++; return n; };
+const fullRound = r => { let n = 0; for (const u of UNITS) if (S.c[key(u.s, r, u.i)]) n++; return n; };
+const doneSubj = (s, r) => { let n = 0; for (let i = 1; i <= SMAP[s].L; i++) if (heard(key(s, r, i))) n++; return n; };
 const dayHours = d => { const h = (S.logs[d]||{}).h || {}; return Object.values(h).reduce((a,b) => a + (+b||0), 0); };
 const mkey = d => PLAN[d].mk || 'day|'+d;
 const planDone = d => { const p = PLAN[d]; if (!p) return false; if (p.kind === 'lec') return p.items.every(it => { for (let i = it.a; i <= it.b; i++) if (!S.c[key(it.s, it.r, i)]) return false; return true; }); return !!S.m[mkey(d)]; };
@@ -1360,12 +1363,12 @@ document.querySelector('.views').addEventListener('click', e => { const b = e.ta
 const unitsOf = p => { const out = []; if (p && p.kind === 'lec') p.items.forEach(it => { for (let i = it.a; i <= it.b; i++) out.push({s:it.s, r:it.r, i, k:key(it.s, it.r, i)}); }); return out; };
 function nextUndone(afterDate, n){
   const out = [];
-  for (const d of ALL_DAYS) { if (d <= afterDate) continue; for (const u of unitsOf(PLAN[d])) { if (!S.c[u.k] && !out.some(x => x.k === u.k)) out.push(u); if (out.length >= n) return out; } }
+  for (const d of ALL_DAYS) { if (d <= afterDate) continue; for (const u of unitsOf(PLAN[d])) { if (!heard(u.k) && !out.some(x => x.k === u.k)) out.push(u); if (out.length >= n) return out; } }
   return out;
 }
 function behindUnits(date){
   const pl = [...S.plans].reverse().find(p => p.from <= date) || S.plans[0], out = [];
-  for (const d of ALL_DAYS) { if (d < pl.from) continue; if (d >= date) break; for (const u of unitsOf(PLAN[d])) if (!S.c[u.k]) out.push(u); }
+  for (const d of ALL_DAYS) { if (d < pl.from) continue; if (d >= date) break; for (const u of unitsOf(PLAN[d])) if (!heard(u.k)) out.push(u); }
   return out;
 }
 const curStep = k => STEPS[rOf(k)].find(([st]) => !stepDone(k, st));
@@ -1395,7 +1398,7 @@ function tdEdit(ref, k, op){
 }
 let addOpen = false, addSub = null, addRound = null;
 function addPanel(ref, units){
-  const next = (() => { for (const d of ALL_DAYS) { if (d <= ref) continue; for (const u of unitsOf(PLAN[d])) if (!S.c[u.k] && !units.some(x => x.k === u.k)) return u; } return null; })();
+  const next = (() => { for (const d of ALL_DAYS) { if (d <= ref) continue; for (const u of unitsOf(PLAN[d])) if (!heard(u.k) && !units.some(x => x.k === u.k)) return u; } return null; })();
   const rmd = ((S.td[ref] || {}).rm || []).filter(validKey).map(unitOf);
   const quick = next ? `<button type="button" class="btn primary" data-add="${next.k}">＋ 다음 강의 추가 · ${unitName(next)}${next.r > 1 ? ' (R' + next.r + ')' : ''}</button>` : '';
   let pick = '';
@@ -1418,7 +1421,7 @@ function addPanel(ref, units){
 function weekInfo(ref){
   const d0 = pd(ref); d0.setDate(d0.getDate() - ((d0.getDay() + 6) % 7));
   const mon = ds(d0), days = []; let planned = 0, done = 0;
-  for (let i = 0; i < 7; i++) { const d = addD(mon, i); days.push(d); for (const u of unitsOf(PLAN[d])) { planned++; if (S.c[u.k]) done++; } }
+  for (let i = 0; i < 7; i++) { const d = addD(mon, i); days.push(d); for (const u of unitsOf(PLAN[d])) { planned++; if (heard(u.k)) done++; } }
   return {days, planned, done};
 }
 function replanNow(from){
@@ -1432,7 +1435,7 @@ function replanNow(from){
 function backfillAhead(){
   try { if (localStorage.getItem('cfa-bf1') || TODAY < START || diffD(START, TODAY) > 1) return; localStorage.setItem('cfa-bf1', '1'); } catch(_) { return; }
   const ref = clampDay(TODAY), tgt = todayTargets(ref).map(u => u.k), seen = new Set(Object.values(S.td).flatMap(t => t.add || []));
-  const ks = ALL_DAYS.filter(d => d > ref).flatMap(d => unitsOf(PLAN[d]).map(u => u.k)).filter(k => S.c[k] && !tgt.includes(k) && !seen.has(k));
+  const ks = ALL_DAYS.filter(d => d > ref).flatMap(d => unitsOf(PLAN[d]).map(u => u.k)).filter(k => heard(k) && !tgt.includes(k) && !seen.has(k));
   if (!ks.length) return;
   const td = S.td[ref] = S.td[ref] || {}; td.add = (td.add || []).concat(ks); saveProgress();
 }
@@ -1748,7 +1751,7 @@ let mapRound = 1, mapSel = null;
 function mapOrder(r){ const pl = [...S.plans].reverse().find(p => p.from <= clampDay(TODAY)) || S.plans[0]; return pl.orders[r]; }
 function mapStatus(r){
   const order = mapOrder(r); let here = null; const per = {}; let done = 0;
-  for (const k of order) { let d = 0; for (let i = 1; i <= SMAP[k].L; i++) { const kk = key(k, r, i); if (S.c[kk]) d++; else if (!here) here = {s:k, i}; } per[k] = d; done += d; }
+  for (const k of order) { let d = 0; for (let i = 1; i <= SMAP[k].L; i++) { const kk = key(k, r, i); if (heard(kk)) d++; else if (!here) here = {s:k, i}; } per[k] = d; done += d; }
   return {order, per, done, here};
 }
 const YJ_SRC = 'data:image/webp;base64,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';
@@ -2017,7 +2020,7 @@ function renderR1(){
   el.innerHTML = `<div class="r1-main">
       <div class="r1-big">${pct % 1 ? pct.toFixed(1) : pct}<small>%</small></div>
       <div class="r1-track"><span style="width:${Math.min(100, done / N * 100)}%"></span>${planned ? `<em style="left:${Math.min(99.5, planned / N * 100)}%" title="오늘까지 계획"></em>` : ''}</div>
-      <div class="r1-facts"><span><b>${done}</b> / ${N}강 완료</span><span>남은 <b>${N - done}</b>강</span><span>오늘까지 계획 <b>${planned}</b>강</span></div>
+      <div class="r1-facts"><span><b>${done}</b> / ${N}강 들음</span><span>문제까지 끝 <b>${fullRound(1)}</b>강</span><span>남은 <b>${N - done}</b>강</span><span>오늘까지 계획 <b>${planned}</b>강</span></div>
       <div class="r1-foot">${pill}${ph ? `<span class="note">1회독 끝나는 날 <b>${dot(ph.b)}</b>${left >= 0 ? ` · D-${left}` : ''}</span>` : ''}</div>
     </div>
     <div class="r1-list">${rows}</div>`;
@@ -2243,7 +2246,7 @@ function wkCard(){
   if (done) return `<div class="panel wkc wkdone"><span class="label">일요일 5분 점검 ✓</span><p>이번 주 정리 끝! 다음 주 하나만: <b>${esc(done.one || '—')}</b></p>${done.pace ? `<p class="note">${done.pace > 0 ? '다음 주부터 주말 강의를 1개씩 늘렸어요' : '다음 주부터 주말 강의를 1개씩 줄였어요'} · 끝나는 날 ${done.end ? done.end.slice(2).replace(/-/g, '.') : ''}</p>` : ''}${done.undo ? '<button type="button" class="linkbtn" id="wkUndo">분량 조절 되돌리기</button>' : ''}</div>`;
   const wk = weekInfo(R.ref); let hrs = 0; wk.days.forEach(d => hrs += dayHours(d));
   const inWk = new Set(wk.days.flatMap(d => unitsOf(PLAN[d]).map(u => u.k)));
-  const ahead = new Set(wk.days.flatMap(d => ((S.td[d] || {}).add || []).filter(k => S.c[k] && !inWk.has(k)))).size;
+  const ahead = new Set(wk.days.flatMap(d => ((S.td[d] || {}).add || []).filter(k => heard(k) && !inWk.has(k)))).size;
   const rate = wk.planned ? wk.done / wk.planned : 1, pi = paceInfo(R.from);
   const rec = !pi ? 0 : rate < 0.6 && (pi.sat > 1 || pi.sun > 1) ? -1 : 0;
   const head = `<span class="label">${R.ref === TODAY ? '일요일 5분 점검' : '어제 못 한 주간 점검'}</span><p class="wk-stat">이번 주 <b>${wk.done}/${wk.planned}강</b>${ahead ? ` + 앞당겨 <b>${ahead}강</b>` : ''} · <b>${fmtH(hrs)}시간</b> · 공부한 날 <b>${wk.days.filter(d => minsOn(d) >= 10).length}일</b></p>`;
