@@ -122,7 +122,7 @@ label.btn{cursor:pointer;display:inline-flex;align-items:center}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn.done{background:var(--good-soft);border-color:transparent;color:var(--good)}
 .pace-rows{display:flex;flex-direction:column;gap:6px}
-.pace-row{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;font-size:12px}
+.pace-row{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;font-size:12px}
 .bar{height:8px;border-radius:4px;background:var(--sunk);position:relative;overflow:hidden}
 .bar>span{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:4px}
 .bar>em{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--fg);opacity:.55}
@@ -190,7 +190,7 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .field input{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);min-width:0}
 .ltabs{display:flex;gap:6px;flex-wrap:wrap}
 .views{display:flex;gap:4px;background:var(--sunk);padding:4px;border-radius:12px;align-self:flex-start}
-.views button{border:0;background:transparent;border-radius:9px;padding:8px 18px;font-size:14.5px;font-weight:700;color:var(--muted)}
+.views button{white-space:nowrap;border:0;background:transparent;border-radius:9px;padding:8px 16px;font-size:14.5px;font-weight:700;color:var(--muted)}
 .views button.on{background:var(--surface);color:var(--point);font-weight:800;font-size:15.5px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .vhint{color:var(--accent)}
 .view{display:flex;flex-direction:column;gap:20px;min-width:0}
@@ -335,11 +335,20 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 .pct.g{color:var(--good)} .pct.w{color:var(--warn)} .pct.b{color:var(--bad)}
 .cell.part{background:color-mix(in srgb,var(--c) 35%,var(--sunk));border-color:var(--c);color:var(--fg)}
 @media (max-width:980px){.tb{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:640px){.qs{font-size:16px;width:70px}.views{align-self:stretch}.views button{flex:1}}
+@media (max-width:640px){.qs{font-size:16px;width:70px}.views{align-self:stretch}.views button{flex:1;padding:8px 4px;font-size:14px}.views button.on{font-size:14.5px}}
+@media (max-width:420px){.mnav button{font-size:12.5px;padding:10px 2px}}
 .gor{display:flex;align-items:center;gap:10px;color:var(--faint);font-size:12px}
 .gor::before,.gor::after{content:"";flex:1;height:1px;background:var(--line)}
 #gBtn,#gLink{min-height:44px}
 .glink{display:flex;flex-direction:column;gap:6px}
+.welcome{background:var(--accent-soft);border:2px solid var(--accent);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.welcome .w-big{font-size:18px;font-weight:800}
+.behind{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--warn-soft);border-radius:12px;padding:10px 12px;font-size:13.5px}
+.lt-sub{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-top:2px}
+.qt td.ltc,.qt th.ltc{text-align:left;min-width:180px}
+.ltin{width:100%;font:inherit;font-size:13px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+.lt-bulk{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.lt-bulk textarea{min-height:140px}
 .code-card{border:2px solid var(--warn);background:var(--warn-soft);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;max-width:560px}
 .code-val{font-family:var(--font-mono);font-size:clamp(17px,4.6vw,22px);font-weight:600;letter-spacing:.04em;user-select:all;word-break:break-all;color:var(--fg)}
 .warn-box{background:var(--warn-soft);border-radius:8px;padding:10px 12px;font-size:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -430,9 +439,9 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 section,aside{scroll-margin-top:12px}
 @media (max-width:980px){
   body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
-  .mnav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  .mnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);
     padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
-  .mnav button{border:0;background:transparent;font-size:13.5px;font-weight:800;padding:10px 4px;border-radius:10px;color:var(--fg)}
+  .mnav button{white-space:nowrap;letter-spacing:-.03em;border:0;background:transparent;font-size:13.5px;font-weight:800;padding:10px 4px;border-radius:10px;color:var(--fg)}
   .mnav button:active{background:var(--sunk)}
 }
 @media (max-width:640px){
@@ -497,45 +506,13 @@ section,aside{scroll-margin-top:12px}
     <button type="button" role="tab" id="tabDash" data-view="dash" aria-selected="true" class="on">대시보드</button>
     <button type="button" role="tab" id="tabToday" data-view="today" aria-selected="false">오늘 공부</button>
     <button type="button" role="tab" id="tabMap" data-view="map" aria-selected="false">진도 지도</button>
+    <button type="button" role="tab" id="tabSet" data-view="set" aria-selected="false">설정</button>
   </div>
 
   <div id="todayView" class="view" hidden></div>
   <div id="mapView" class="view" hidden></div>
-  <div id="dashView" class="view">
-  <section class="summary" aria-label="요약">
-    <div class="card today">
-      <div class="sec-head" style="margin:0"><span class="label" id="todayLabel">오늘의 계획</span><span class="pill neutral" id="todayPhase"></span></div>
-      <div class="today-items" id="todayItems"></div>
-      <div class="note" id="todayWhat"></div>
-      <div><button class="btn primary" id="todayDone" type="button">오늘 계획 완료</button></div>
-    </div>
-    <div class="card">
-      <span class="label">강의 페이스</span>
-      <div class="big" id="paceBig">0</div>
-      <div id="pacePill"></div>
-      <div class="pace-rows" id="paceRows"></div>
-    </div>
-    <div class="card">
-      <span class="label">누적 공부시간</span>
-      <div class="big" id="hTotal">0<small> h</small></div>
-      <div id="hPill"></div>
-      <div class="note" id="hNote"></div>
-      <div class="goal-row"><label for="goal">하루 목표</label><input id="goal" type="number" min="0" max="16" step="0.5" value="4"><span>시간</span></div>
-    </div>
-    <div class="card">
-      <span class="label">전체 진도 (3회독 기준)</span>
-      <div class="big" id="allPct">0<small>%</small></div>
-      <div class="bar"><span id="allBar" style="width:0"></span></div>
-      <div class="note" id="allNote"></div>
-    </div>
-  </section>
-
-  <section class="panel" id="tlSec" aria-label="학습 단계">
-    <div class="sec-head"><h2>학습 단계</h2><span class="note" id="endNote"></span></div>
-    <div class="timeline" id="timeline"></div>
-    <div class="tl-legend" id="tlLegend"></div>
-  </section>
-
+  <div id="setView" class="view" hidden>
+    <div class="tb-head"><h2>설정</h2><span class="note">계획 조정 · 시험 설정은 가끔만 쓰는 기능이라 여기 모았어요</span></div>
   <section class="panel" id="adjSec" aria-label="계획 조정">
     <div class="sec-head"><h2>계획 조정</h2><span class="note">지난 날짜의 계획은 그대로 두고, 적용한 날부터 남은 강의만 새 순서·분량으로 다시 배치합니다</span></div>
     <div class="adj">
@@ -577,6 +554,42 @@ section,aside{scroll-margin-top:12px}
       <div class="adj-btns"><button class="btn primary" id="lecSave" type="button" disabled>저장하고 다시 계산</button><button class="btn" id="lecReset" type="button">처음 값으로</button></div>
     </div>
     <p class="note">체크해 둔 기록은 지워지지 않아요. 강의 수를 줄이면 뒤쪽 강의 기록은 숨겨지고, 다시 늘리면 돌아옵니다. 저장하면 날짜별 계획과 진도 지도가 새 강의 수로 다시 만들어지고, 로그인돼 있으면 다른 기기에도 적용됩니다.</p>
+  </section>
+
+  </div>
+  <div id="dashView" class="view">
+  <section class="summary" aria-label="요약">
+    <div class="card today">
+      <div class="sec-head" style="margin:0"><span class="label" id="todayLabel">오늘의 계획</span><span class="pill neutral" id="todayPhase"></span></div>
+      <div class="today-items" id="todayItems"></div>
+      <div class="note" id="todayWhat"></div>
+      <div><button class="btn primary" id="todayDone" type="button">오늘 계획 완료</button></div>
+    </div>
+    <div class="card">
+      <span class="label">강의 페이스</span>
+      <div class="big" id="paceBig">0</div>
+      <div id="pacePill"></div>
+      <div class="pace-rows" id="paceRows"></div>
+    </div>
+    <div class="card">
+      <span class="label">누적 공부시간</span>
+      <div class="big" id="hTotal">0<small> h</small></div>
+      <div id="hPill"></div>
+      <div class="note" id="hNote"></div>
+      <div class="goal-row"><label for="goal">하루 목표</label><input id="goal" type="number" min="0" max="16" step="0.5" value="4"><span>시간</span></div>
+    </div>
+    <div class="card">
+      <span class="label">전체 진도 (3회독 기준)</span>
+      <div class="big" id="allPct">0<small>%</small></div>
+      <div class="bar"><span id="allBar" style="width:0"></span></div>
+      <div class="note" id="allNote"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="tlSec" aria-label="학습 단계">
+    <div class="sec-head"><h2>학습 단계</h2><span class="note" id="endNote"></span></div>
+    <div class="timeline" id="timeline"></div>
+    <div class="tl-legend" id="tlLegend"></div>
   </section>
 
   <section class="cal-layout" id="calSec" aria-label="달력과 기록">
@@ -635,6 +648,8 @@ section,aside{scroll-margin-top:12px}
     <div class="sec-head"><h2>챕터별 강의·문제 체크</h2><span class="note">칸을 누르면 체크 · 점수는 "맞은 수/전체" (예: 7/10)</span></div>
     <div class="otabs" id="qTabs" role="tablist" aria-label="과목 선택"></div>
     <div class="qsum" id="qSum"></div>
+    <div class="adj-btns" style="margin-bottom:8px"><button type="button" class="btn" id="ltBulkBtn">제목 한꺼번에 넣기</button></div>
+    <div class="lt-bulk" id="ltBulk" hidden><label for="ltText" class="note">선택한 과목의 강의 제목을 <b>한 줄에 하나씩</b> 붙여 넣으세요. 첫 줄이 1강입니다.</label><textarea id="ltText" rows="6" placeholder="Introduction to Financial Statement Analysis&#10;Analyzing Income Statements&#10;..."></textarea><div class="adj-btns"><button type="button" class="btn primary" id="ltSave">제목 저장</button></div></div>
     <div class="qwrap" id="qTable"></div>
   </section>
 
@@ -661,6 +676,7 @@ section,aside{scroll-margin-top:12px}
   <button type="button" data-view="map">진도 지도</button>
   <button type="button" data-go="calSec">달력</button>
   <button type="button" data-go="qSec">문제 체크</button>
+  <button type="button" data-view="set">설정</button>
 </nav>
 
 <script>
@@ -816,10 +832,10 @@ const roundPlanTotalBy = (r, date) => {
 // ---------- state ----------
 const LS_KEY = 'cfa-l1-pacer-v1', AKEY = 'cfa-l1-pacer-auth';
 let auth = null; try { auth = JSON.parse(localStorage.getItem(AKEY) || 'null'); } catch(e) {}
-let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}, lc:null, lw:null};
+let S = {c:{}, m:{}, goal:4, logs:{}, cfg:DEF_CFG, updatedAt:0, st:{}, lm:{}, en:{}, fm:25, td:{}, lc:null, lw:null, lt:{}, lastSeen:null, welcome:null};
 try { const raw = localStorage.getItem(LS_KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {}
 S.plans = cleanPlans(S.plans) || [basePlan(S.cfg)];
-S.lc = APPLIED.lc; S.lw = APPLIED.lw; S.sd = APPLIED.sd; S.ed = APPLIED.ed;
+S.lc = APPLIED.lc; S.lw = APPLIED.lw; S.sd = APPLIED.sd; S.ed = APPLIED.ed; S.lt = S.lt || {};
 delete S.cfg;
 rebuild();
 let db = null, uid = null, mode = 'local';
@@ -838,7 +854,7 @@ function persist(docId, getData){
     finally { inflight[docId] = false; }
   }, 700);
 }
-const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed}));
+const saveProgress = () => persist('progress', () => ({c:S.c, m:S.m, goal:S.goal, plans:S.plans, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome}));
 const saveLog = d => persist('d'+d, () => ({date:d, h:(S.logs[d]||{}).h||{}, memo:(S.logs[d]||{}).memo||'', at:Date.now()}));
 const $ = id => document.getElementById(id);
 function setSave(t){ $('saveState').textContent = t; }
@@ -921,7 +937,7 @@ function renderSummary(){
   for (const r of [1,2,3]) {
     const pl = roundPlanTotalBy(r, asOf), dn2 = doneRound(r), N = UNITS.length;
     planned += pl; done += dn2;
-    rows += `<div class="pace-row"><span class="num">R${r}</span><div class="bar"><span style="width:${dn2/N*100}%"></span>${pl ? `<em style="left:${Math.min(pl/N*100,99.5)}%" title="계획선"></em>` : ''}</div><span class="num muted">${dn2}/${pl}</span></div>`;
+    rows += `<div class="pace-row"><span class="num">R${r}</span><div class="bar"><span style="width:${dn2/N*100}%"></span>${pl ? `<em style="left:${Math.min(pl/N*100,99.5)}%" title="계획선"></em>` : ''}</div><span class="num muted"><b>${dn2}</b>강 · 계획 ${pl}</span></div>`;
   }
   $('paceRows').innerHTML = rows;
   const delta = done - planned;
@@ -1087,12 +1103,13 @@ function renderStats(){
   let g = '';
   for (let v = 0; v <= top; v += step) g += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Noto Sans KR,sans-serif">${v}</text>`;
   const curWk = weeks.findIndex(x => TODAY >= x.w && TODAY < addD(x.w,7));
+  const lblStep = Math.max(1, Math.ceil(38 / bw));
   weeks.forEach((x, i) => {
     const bx = L + i*bw + bw*0.18, bwid = bw*0.64, cur = i === curWk;
     if (x.t > 0) g += `<rect x="${bx}" y="${y(x.t)}" width="${bwid}" height="${y(0)-y(x.t)}" rx="2" fill="var(--accent)" opacity="${cur ? 1 : .7}"><title>${x.w} 주: ${fmtH(x.t)}h</title></rect>`;
     else g += `<rect x="${bx}" y="${y(0)-2}" width="${bwid}" height="2" fill="var(--line)"/>`;
     if (cur) g += `<text x="${bx+bwid/2}" y="${y(x.t)-4}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--fg)" font-family="Noto Sans KR,sans-serif">${fmtH(x.t)}</text>`;
-    const d = pd(x.w); if (i % 2 === 0 || cur) g += `<text x="${bx+bwid/2}" y="${H-8}" text-anchor="middle" font-size="9.5" fill="${cur ? 'var(--fg)' : 'var(--muted)'}" font-family="Noto Sans KR,sans-serif">${d.getMonth()+1}/${d.getDate()}</text>`;
+    const d = pd(x.w); if ((i % lblStep === 0 && !(curWk >= 0 && Math.abs(i - curWk) < lblStep && i !== curWk)) || cur) g += `<text x="${bx+bwid/2}" y="${H-8}" text-anchor="middle" font-size="9.5" fill="${cur ? 'var(--fg)' : 'var(--muted)'}" font-family="Noto Sans KR,sans-serif">${d.getMonth()+1}/${d.getDate()}</text>`;
   });
   if (goalW > 0 && goalW <= top) g += `<line x1="${L}" x2="${W-R}" y1="${y(goalW)}" y2="${y(goalW)}" stroke="var(--s-pm)" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${W-R}" y="${y(goalW)-4}" text-anchor="end" font-size="10" font-weight="600" fill="var(--s-pm)">주간 목표 ${fmtH(goalW)}h</text>`;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.style.minWidth = '520px';
@@ -1201,12 +1218,12 @@ $('hist').addEventListener('click', e => {
 
 // ---------- views: dashboard ↔ today ----------
 let view = 'dash';
-const VIEWS = ['dash', 'today', 'map'];
+const VIEWS = ['dash', 'today', 'map', 'set'];
 function setView(v, dir){
   if (v === view) return;
   const from = VIEWS.indexOf(view); view = v;
   VIEWS.forEach(x => { $(x + 'View').hidden = x !== v; });
-  ['tabDash','tabToday','tabMap'].forEach(id => { const on = $(id).dataset.view === v; $(id).classList.toggle('on', on); $(id).setAttribute('aria-selected', on); });
+  ['tabDash','tabToday','tabMap','tabSet'].forEach(id => { const on = $(id).dataset.view === v; $(id).classList.toggle('on', on); $(id).setAttribute('aria-selected', on); });
   const el = $(v + 'View');
   el.classList.remove('slide-l','slide-r'); void el.offsetWidth; el.classList.add(dir || (VIEWS.indexOf(v) > from ? 'slide-l' : 'slide-r'));
   if (v === 'today') renderToday();
@@ -1239,6 +1256,7 @@ function behindUnits(date){
 }
 const curStep = k => STEPS[rOf(k)].find(([st]) => !stepDone(k, st));
 const unitName = u => `${SMAP[u.s].n} ${u.i}강`;
+const ltOf = (s1, i) => (S.lt || {})[s1 + '|' + i] || '';
 const minsOn = d => Math.round(dayHours(d) * 60);
 function todayTargets(ref){
   const p = PLAN[ref], en = S.en[ref] || 'mid';
@@ -1289,6 +1307,34 @@ function weekInfo(ref){
   for (let i = 0; i < 7; i++) { const d = addD(mon, i); days.push(d); for (const u of unitsOf(PLAN[d])) { planned++; if (S.c[u.k]) done++; } }
   return {days, planned, done};
 }
+function replanNow(from){
+  const cp = curPlan();
+  S.plans = S.plans.filter(p => p.from < from).concat([{from, orders: JSON.parse(JSON.stringify(cp.orders)), cfg: JSON.parse(JSON.stringify(cp.cfg)), rem: snapshotRem(), mocksDone: MOCKS.map((_, i) => i).filter(i => S.m['mock|' + i]), at: TODAY}]);
+  if (S.plans.length === 1) S.plans[0].from = START;
+  rebuild(); resetDraft();
+}
+// after two or more days away with lectures left behind, spread them over the remaining days automatically and greet instead of scolding
+function maybeWelcome(){
+  if (TODAY <= START || TODAY > END) { if (S.lastSeen !== TODAY && TODAY >= START) { S.lastSeen = TODAY; saveProgress(); } return; }
+  const gap = S.lastSeen ? diffD(S.lastSeen, TODAY) : 0, behind = behindUnits(TODAY).length;
+  if (behind > 0 && gap >= 2 && curPlan().from !== TODAY && !(S.welcome && S.welcome.date === TODAY)) {
+    const prevEnd = END, undo = JSON.stringify(S.plans);
+    replanNow(TODAY);
+    S.welcome = {date: TODAY, n: behind, gap, prevEnd, newEnd: END, undo, en: S.en[TODAY] || null};
+    if (!S.en[TODAY]) S.en[TODAY] = 'low';
+  }
+  if (S.lastSeen !== TODAY || S.welcome && S.welcome.date === TODAY) { S.lastSeen = TODAY; saveProgress(); }
+  renderAll();
+  if (S.welcome && S.welcome.date === TODAY && !S.welcome.ok) setView('today');
+}
+function welcomeCard(){
+  const w = S.welcome; if (!w || w.date !== TODAY || w.ok) return '';
+  const dot = d => d.slice(5).replace('-', '/');
+  return `<div class="welcome" role="status"><b class="w-big">다시 왔네요! 잘 돌아왔어요 🙂</b>
+    <span>${w.gap}일 만이에요. 밀린 <b>${w.n}강</b>은 남은 날짜에 다시 나눠 뒀어요${w.prevEnd !== w.newEnd ? ` (종료일 ${dot(w.prevEnd)} → <b>${dot(w.newEnd)}</b>)` : ' (종료일은 그대로)'}.</span>
+    <span>오늘은 컨디션을 <b>낮음 · 1강만</b>으로 맞춰 뒀어요. 가볍게 5분만 시작해 봐요.</span>
+    <div class="adj-btns"><button type="button" class="btn primary" id="wOk">좋아요</button><button type="button" class="btn" id="wUndo">원래 계획으로 되돌리기</button></div></div>`;
+}
 function renderToday(){
   if (view !== 'today') return;
   const ref = clampDay(TODAY), p = PLAN[ref], en = S.en[ref] || 'mid';
@@ -1305,7 +1351,7 @@ function renderToday(){
         const bar = st === 'l' && !on ? `<div class="lbar"><span style="width:${Math.min(100, (S.lm[u.k] || 0) / LEC_MIN * 100)}%"></span></div>` : '';
         return `<button type="button" class="st${on ? ' on' : ''}${now ? ' now' : ''}" data-step="${u.k}|${st}" aria-pressed="${on}"><span class="bx">${on ? '✓' : ''}</span><span class="nm">${nm}${bar}</span><span class="meta">${meta}</span></button>`;
       }).join('');
-      return `<div class="unit${isCur ? ' cur' : ''}${done ? ' done' : ''}" style="--c:${col(u.s)}"><div class="unit-h"><b>${SMAP[u.s].full} ${u.i}강</b><span class="unit-tools"><span class="pill neutral">R${u.r} ${PH_TXT[u.r][0]}${done ? ' · 완료' : ''}${(S.td[ref] && (S.td[ref].add || []).includes(u.k)) ? ' · 추가함' : ''}</span><button type="button" class="xbtn" data-rm="${u.k}" aria-label="${unitName(u)} 오늘에서 빼기" title="오늘에서 빼기">✕ 빼기</button></span></div><div class="steps2">${steps}</div></div>`;
+      return `<div class="unit${isCur ? ' cur' : ''}${done ? ' done' : ''}" style="--c:${col(u.s)}"><div class="unit-h"><b>${SMAP[u.s].full} ${u.i}강${ltOf(u.s, u.i) ? `<span class="lt-sub">${esc(ltOf(u.s, u.i))}</span>` : ''}</b><span class="unit-tools"><span class="pill neutral">R${u.r} ${PH_TXT[u.r][0]}${done ? ' · 완료' : ''}${(S.td[ref] && (S.td[ref].add || []).includes(u.k)) ? ' · 추가함' : ''}</span><button type="button" class="xbtn" data-rm="${u.k}" aria-label="${unitName(u)} 오늘에서 빼기" title="오늘에서 빼기">✕ 빼기</button></span></div><div class="steps2">${steps}</div></div>`;
     }).join('');
   } else if (p) {
     main = `<div class="unit" style="--c:var(--accent)"><div class="unit-h"><b>${p.label}</b><span class="pill neutral">${PH_TXT[p.phase][0]}</span></div><p class="note" style="margin:0">${whatText(p)}</p></div>`;
@@ -1325,6 +1371,7 @@ function renderToday(){
   $('todayView').innerHTML = `
     <div class="tb">
       <div class="tb-main">
+        ${welcomeCard()}
         <div class="tb-head"><h2>${TODAY < START ? '내일부터 시작 · 미리 해도 돼요' : '오늘은 이것만'}</h2><span class="note">${fmtLong(ref)}</span></div>
         <div class="go">${go}
           <div class="chipsel" role="group" aria-label="오늘 컨디션"><span>오늘 컨디션</span>${[['low','낮음 · 1강만'],['mid','보통'],['high','좋음 · 1강 더']].map(([v, t]) => `<button type="button" data-en="${v}" class="${en === v ? 'on' : ''}" aria-pressed="${en === v}">${t}</button>`).join('')}</div>
@@ -1332,7 +1379,7 @@ function renderToday(){
         </div>
         ${main}
         ${addPanel(ref, units)}
-        ${behind ? `<p class="note">지난 계획 중 아직 안 한 강의가 ${behind}개 있어요. 괜찮아요. 대시보드의 <b>계획 조정</b>에서 "이대로 적용"을 누르면 남은 날짜에 다시 나눠 줍니다.</p>` : ''}
+        ${behind ? `<div class="behind"><span>지난 계획 중 아직 안 한 강의가 <b>${behind}개</b> 있어요. 괜찮아요.</span><button type="button" class="btn" id="replanBtn">남은 날짜에 다시 나누기</button></div>` : ''}
       </div>
       <div class="tb-side">
         <div class="panel okday">${r2(mins, goalMin)}<div><b>${mins >= goalMin ? '오늘 성공 ✓' : `오늘 ${mins}분`}</b><div class="note">${mins >= goalMin ? `${fmtH(dayHours(TODAY))}시간 공부했어요` : `${goalMin}분만 해도 오늘은 성공이에요`}</div></div></div>
@@ -1343,6 +1390,9 @@ function renderToday(){
 }
 $('todayView').addEventListener('click', e => {
   const t = e.target;
+  if (t.closest('#wOk')) { S.welcome.ok = true; saveProgress(); renderToday(); return; }
+  if (t.closest('#wUndo')) { try { S.plans = cleanPlans(JSON.parse(S.welcome.undo)) || S.plans; } catch(_) {} if (S.welcome.en) S.en[TODAY] = S.welcome.en; else delete S.en[TODAY]; S.welcome.ok = true; rebuild(); resetDraft(); saveProgress(); renderAll(); setSave('원래 계획으로 되돌렸어요'); return; }
+  if (t.closest('#replanBtn')) { const n = behindUnits(clampDay(TODAY)).length, prev = END; replanNow(clampDay(TODAY)); saveProgress(); renderAll(); setSave(`밀린 ${n}강을 남은 날짜에 다시 나눴어요` + (prev !== END ? ` · 종료일 ${END.slice(5).replace('-', '/')}` : '')); return; }
   const stb = t.closest('[data-step]');
   if (stb) { const [s1, r1, i1, st] = stb.dataset.step.split('|'), k = `${s1}|${r1}|${i1}`; setStep(k, st, !stepDone(k, st)); saveProgress(); renderAll(); return; }
   const ad = t.closest('[data-add]'); if (ad) { tdEdit(clampDay(TODAY), ad.dataset.add, 'add'); setSave(unitName(unitOf(ad.dataset.add)) + '을 오늘 목록에 추가했어요'); return; }
@@ -1370,7 +1420,7 @@ function startFocus(k, st, warm = true){
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume && audio.resume(); } catch(_) {}
   try { navigator.wakeLock && navigator.wakeLock.request('screen').then(w => wake = w).catch(() => {}); } catch(_) {}
   const u = k ? {s:k.split('|')[0], r:+k.split('|')[1], i:+k.split('|')[2]} : null;
-  F = {k: k || '', st: st || '', subj: u ? u.s : 'etc', name: u ? `${SMAP[u.s].full} ${u.i}강` : (PLAN[clampDay(TODAY)] || {}).label || '자유 공부',
+  F = {k: k || '', st: st || '', subj: u ? u.s : 'etc', name: u ? `${SMAP[u.s].full} ${u.i}강${ltOf(u.s, u.i) ? ' · ' + ltOf(u.s, u.i) : ''}` : (PLAN[clampDay(TODAY)] || {}).label || '자유 공부',
        stepName: u ? (STEPS[u.r].find(x => x[0] === st) || ['', ''])[1] : '', t0: Date.now(), acc: 0, run: true, target: (warm ? 5 : S.fm) * 60000, warm, stage: 'run', date: TODAY};
   saveF(); showFocus();
 }
@@ -1463,11 +1513,13 @@ $('focus').addEventListener('click', e => {
 if (F && F.stage) { showFocus(); }
 
 // ---------- chapter check table ----------
-let qSub = null;
+let qSub = null, ltBulkOpen = false;
 const pctOf = sc => { const m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(sc || ''); return m && +m[2] > 0 ? Math.round(+m[1] / +m[2] * 100) : null; };
 const pctCls = p => p >= 70 ? 'g' : p >= 50 ? 'w' : 'b';
 function renderQ(){
   const list = ordered(); if (!qSub || !SMAP[qSub]) qSub = list[0].k;
+  if ($('ltBulk')) $('ltBulk').hidden = !ltBulkOpen;
+  if ($('ltBulkBtn')) $('ltBulkBtn').textContent = ltBulkOpen ? '닫기' : '제목 한꺼번에 넣기';
   $('qTabs').innerHTML = list.map(s => `<button type="button" role="tab" class="otab${s.k === qSub ? ' on' : ''}" data-qs="${s.k}" aria-selected="${s.k === qSub}">${s.n}</button>`).join('');
   const s = SMAP[qSub], c = col(s.k);
   const cb = (k, st) => { const on = stepDone(k, st); return `<button type="button" class="qc${on ? ' on' : ''}" data-qk="${k}|${st}" aria-pressed="${on}" aria-label="${s.n} ${k.split('|')[2]}강 R${rOf(k)} ${STEPS[rOf(k)].find(x => x[0] === st)[1]}">${on ? '✓' : ''}</button>`; };
@@ -1477,15 +1529,23 @@ function renderQ(){
     const k1 = key(s.k,1,i), k2 = key(s.k,2,i), k3 = key(s.k,3,i);
     [k1,k2,k3].forEach((k, j) => { const m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec((S.st[k] && S.st[k].sc) || ''); if (m) { sums[j+1][0] += +m[1]; sums[j+1][1] += +m[2]; } });
     if (stepDone(k1,'l')) lecDone++; if (stepDone(k1,'q')) qDone++;
-    rows += `<tr><td>${i}강</td><td class="grp">${cb(k1,'l')}${S.lm[k1] ? ` <span class="pct">${Math.round(S.lm[k1])}분</span>` : ''}</td><td>${cb(k1,'n')}</td><td>${cb(k1,'q')}</td><td>${scIn(k1)}</td>
+    rows += `<tr><td>${i}강</td><td class="ltc"><input class="ltin" data-lt="${s.k}|${i}" value="${esc(ltOf(s.k, i))}" placeholder="강의 제목" maxlength="80" aria-label="${s.n} ${i}강 제목"></td><td class="grp">${cb(k1,'l')}${S.lm[k1] ? ` <span class="pct">${Math.round(S.lm[k1])}분</span>` : ''}</td><td>${cb(k1,'n')}</td><td>${cb(k1,'q')}</td><td>${scIn(k1)}</td>
       <td class="grp">${cb(k2,'n')}</td><td>${cb(k2,'q')}</td><td>${scIn(k2)}</td><td class="grp">${cb(k3,'n')}</td><td>${cb(k3,'q')}</td><td>${scIn(k3)}</td></tr>`;
   }
   const avg = r => sums[r][1] ? Math.round(sums[r][0] / sums[r][1] * 100) + '%' : '—';
   $('qSum').innerHTML = `<span>강의 들음 <b>${lecDone}/${s.L}</b></span><span>1회독 문제 <b>${qDone}/${s.L}</b></span><span>정답률 R1 <b>${avg(1)}</b> · R2 <b>${avg(2)}</b> · R3 <b>${avg(3)}</b></span>`;
-  $('qTable').innerHTML = `<table class="qt" style="--c:${c}"><thead><tr><th rowspan="2">강</th><th class="grp" colspan="4">1회독</th><th class="grp" colspan="3">2회독</th><th class="grp" colspan="3">3회독</th></tr>
+  $('qTable').innerHTML = `<table class="qt" style="--c:${c}"><thead><tr><th rowspan="2">강</th><th rowspan="2" class="ltc">강의 제목</th><th class="grp" colspan="4">1회독</th><th class="grp" colspan="3">2회독</th><th class="grp" colspan="3">3회독</th></tr>
     <tr><th class="grp">강의 (90분)</th><th>노트</th><th>문제</th><th>점수</th><th class="grp">노트 재독</th><th>Ecosystem</th><th>점수</th><th class="grp">요약·오답</th><th>QBank</th><th>점수</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
-$('qTabs').addEventListener('click', e => { const b = e.target.closest('[data-qs]'); if (b) { qSub = b.dataset.qs; renderQ(); } });
+$('qTabs').addEventListener('click', e => { const b = e.target.closest('[data-qs]'); if (b) { qSub = b.dataset.qs; renderQ(); if (ltBulkOpen) fillBulk(); } });
+function fillBulk(){ const L = SMAP[qSub].L, lines = []; for (let i = 1; i <= L; i++) lines.push(ltOf(qSub, i)); $('ltText').value = lines.join('\n').replace(/\n+$/, ''); }
+$('ltBulkBtn').addEventListener('click', () => { ltBulkOpen = !ltBulkOpen; renderQ(); if (ltBulkOpen) fillBulk(); });
+$('ltSave').addEventListener('click', () => {
+  const lines = $('ltText').value.split('\n').map(x => x.trim().slice(0, 80)); S.lt = S.lt || {};
+  for (let i = 1; i <= SMAP[qSub].L; i++) { const v = (lines[i - 1] || '').replace(/^\s*\d+\s*[.)강:-]\s*/, ''); if (v) S.lt[qSub + '|' + i] = v; else delete S.lt[qSub + '|' + i]; }
+  saveProgress(); ltBulkOpen = false; renderAll(); setSave(SMAP[qSub].n + ' 강의 제목을 저장했어요');
+});
+$('qTable').addEventListener('input', e => { const t = e.target.closest('[data-lt]'); if (!t) return; S.lt = S.lt || {}; const v = t.value.trim(); if (v) S.lt[t.dataset.lt] = v; else delete S.lt[t.dataset.lt]; clearTimeout(t._t); t._t = setTimeout(saveProgress, 600); });
 $('qTable').addEventListener('click', e => { const b = e.target.closest('[data-qk]'); if (!b) return; const [a1, a2, a3, st] = b.dataset.qk.split('|'), k = `${a1}|${a2}|${a3}`; setStep(k, st, !stepDone(k, st)); saveProgress(); renderAll(); });
 $('qTable').addEventListener('change', e => {
   const inp = e.target.closest('[data-qsc]'); if (!inp) return;
@@ -1717,7 +1777,7 @@ const WORKER = 'https://app.cfa-study-pacer.workers.dev';
 const API = /\.workers\.dev$/.test(location.hostname) ? '' : WORKER;
 const loggedIn = () => !!auth;
 function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
-function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed}; }
+function payloadObj(){ return {v:4, c:S.c, m:S.m, goal:S.goal, plans:S.plans, logs:S.logs, st:S.st, lm:S.lm, en:S.en, fm:S.fm, td:S.td, lc:S.lc, lw:S.lw, sd:S.sd, ed:S.ed, lt:S.lt, lastSeen:S.lastSeen, welcome:S.welcome}; }
 function payload(){ return JSON.stringify({...payloadObj(), updatedAt:S.updatedAt || 0}); }
 function saveAuth(){ try { if (auth) localStorage.setItem(AKEY, JSON.stringify(auth)); else localStorage.removeItem(AKEY); } catch(e) {} }
 async function api(path, opt = {}){
@@ -1736,7 +1796,7 @@ const srvErr = e => !e ? '' : e.status === 0 ? '서버에 연결할 수 없습�
 function onAuthLost(e){ if (e && e.status === 401 && auth) { auth = null; saveAuth(); setSync(); renderSyncPanel(); } }
 function adopt(r){
   S.c = r.c || {}; S.m = r.m || {}; if (typeof r.goal === 'number') S.goal = r.goal;
-  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {};
+  S.st = r.st || {}; S.lm = r.lm || {}; S.en = r.en || {}; S.td = r.td || {}; S.lt = r.lt || {}; S.lastSeen = r.lastSeen || S.lastSeen || null; S.welcome = r.welcome || null;
   S.lc = cleanLC(r.lc); S.lw = cleanLW(r.lw); S.sd = okDate(r.sd) ? r.sd : null; S.ed = okDate(r.ed) ? r.ed : null; if (typeof r.fm === 'number') S.fm = r.fm;
   if (appliedSig(S) !== appliedSig(APPLIED)) { S.plans = Array.isArray(r.plans) ? r.plans : S.plans; S.logs = r.logs || {}; S.updatedAt = r.updatedAt || Date.now(); writeLS(); location.reload(); return; }
   S.logs = r.logs || {}; S.plans = cleanPlans(r.plans) || S.plans; S.updatedAt = r.updatedAt || Date.now();
@@ -1748,12 +1808,53 @@ function adopt(r){
 const hhmm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 let lastSync = '';
 const hasData = () => Object.keys(S.c).length || Object.keys(S.logs).length || Object.keys(S.m).length;
+// ---- merging: changes made on two devices are combined key by key against the last state both had (base) ----
+const BKEY = 'cfa-l1-pacer-base';
+let BASE = null; try { BASE = JSON.parse(localStorage.getItem(BKEY) || 'null'); } catch(_) {}
+function setBase(body, at){ BASE = {body: JSON.parse(JSON.stringify(body)), updatedAt: at}; try { localStorage.setItem(BKEY, JSON.stringify(BASE)); } catch(_) {} }
+const stable = v => v && typeof v === 'object' ? (Array.isArray(v) ? '[' + v.map(stable).join(',') + ']' : '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}') : JSON.stringify(v === undefined ? null : v);
+const same3 = (a, b) => stable(a) === stable(b);
+function mergeMap(b, l, r){
+  b = b || {}; l = l || {}; r = r || {}; const out = {};
+  for (const k of new Set([...Object.keys(b), ...Object.keys(l), ...Object.keys(r)])) {
+    const v = same3(l[k], b[k]) ? r[k] : same3(r[k], b[k]) ? l[k] : l[k];
+    if (v !== undefined && v !== null) out[k] = v;
+  }
+  return out;
+}
+function merge3(b, l, r){
+  b = b || {}; const out = {};
+  for (const f of ['goal', 'fm', 'plans', 'lc', 'lw', 'sd', 'ed', 'welcome']) out[f] = same3(l[f], b[f]) ? r[f] : l[f];
+  for (const f of ['c', 'm', 'st', 'lm', 'td', 'en', 'lt']) out[f] = mergeMap(b[f], l[f], r[f]);
+  out.lastSeen = [l.lastSeen, r.lastSeen].filter(Boolean).sort().pop() || null;
+  const bl = b.logs || {}, ll = l.logs || {}, rl = r.logs || {}; out.logs = {};
+  for (const d of new Set([...Object.keys(bl), ...Object.keys(ll), ...Object.keys(rl)])) {
+    const B = bl[d], Lg = ll[d], Rg = rl[d];
+    let v;
+    if (same3(Lg, B)) v = Rg; else if (same3(Rg, B)) v = Lg;
+    else {
+      const lm = (Lg || {}).memo || '', rm = (Rg || {}).memo || '', bm = (B || {}).memo || '';
+      const memo = lm === bm ? rm : rm === bm ? lm : rm.includes(lm) ? rm : lm.includes(rm) ? lm : lm + '\n' + rm;
+      v = {h: mergeMap((B || {}).h, (Lg || {}).h, (Rg || {}).h), memo};
+    }
+    if (v) out.logs[d] = v;
+  }
+  return out;
+}
+const localDirty = () => !BASE || (S.updatedAt || 0) > (BASE.updatedAt || 0);
 async function srvPull(){
   if (!auth) return;
   const r = await api('/api/data');
   const remoteAt = r.updatedAt || 0;
-  if (r.body && remoteAt > (S.updatedAt || 0)) adopt({...r.body, updatedAt:remoteAt});
+  if (r.body && remoteAt > (S.updatedAt || 0)) {
+    if (localDirty() && hasData()) {
+      const merged = merge3(BASE ? BASE.body : {}, payloadObj(), r.body);
+      adopt({...merged, updatedAt: Date.now()}); await srvPush();
+      syncMsg('다른 기기의 기록과 이 기기의 기록을 합쳤어요');
+    } else { adopt({...r.body, updatedAt:remoteAt}); setBase(r.body, remoteAt); }
+  }
   else if ((S.updatedAt || 0) > remoteAt || (!r.body && hasData())) await srvPush();
+  else if (r.body && !BASE) setBase(r.body, remoteAt);
   lastSync = hhmm(); syncMsg('동기화됨 · ' + lastSync); renderSyncPanel();
 }
 let pushT = null, pushing = false;
@@ -1762,9 +1863,14 @@ async function srvPush(){
   if (!auth) return;
   if (pushing) { schedulePush(); return; }
   pushing = true; syncMsg('서버에 저장 중…');
-  try { await api('/api/data', {method:'PUT', body:{body:payloadObj(), updatedAt:S.updatedAt || Date.now()}}); lastSync = hhmm(); syncMsg('서버에 저장됨 · ' + lastSync); }
+  const body = payloadObj(), at = S.updatedAt || Date.now();
+  try { await api('/api/data', {method:'PUT', body:{body, updatedAt:at}}); setBase(body, at); lastSync = hhmm(); syncMsg('서버에 저장됨 · ' + lastSync); }
   catch (e) {
-    if (e.status === 409 && e.data && e.data.body) { adopt({...e.data.body, updatedAt:e.data.updatedAt}); syncMsg('다른 기기의 더 최신 기록을 불러왔습니다'); }
+    if (e.status === 409 && e.data && e.data.body) {
+      const merged = merge3(BASE ? BASE.body : {}, body, e.data.body), now = Math.max(Date.now(), (e.data.updatedAt || 0) + 1);
+      adopt({...merged, updatedAt: now});
+      try { const b2 = payloadObj(); await api('/api/data', {method:'PUT', body:{body:b2, updatedAt:now}}); setBase(b2, now); syncMsg('다른 기기의 기록과 합쳐서 저장했어요'); } catch (e2) { onAuthLost(e2); syncMsg(srvErr(e2)); }
+    }
     else { onAuthLost(e); syncMsg(srvErr(e)); }
   }
   finally { pushing = false; renderSyncPanel(); }
@@ -2001,10 +2107,11 @@ $('bkFile').addEventListener('change', async e => {
 });
 renderSyncPanel(); setSync();
 if (auth && !(window.claude && window.claude.use)) {
-  srvPull().catch(e => { onAuthLost(e); syncMsg(srvErr(e)); });
+  srvPull().catch(e => { onAuthLost(e); syncMsg(srvErr(e)); }).finally(() => { try { maybeWelcome(); } catch(_) {} });
   api('/api/me').then(r => { if (auth) { auth.hasRecovery = !!r.hasRecovery; auth.google = !!r.google; auth.hasPassword = r.hasPassword !== false; auth.email = r.email || null; auth.username = r.username || auth.username; saveAuth(); setSync(); renderSyncPanel(); if (!r.hasRecovery && !r.google && !r.email) syncMsg(emailOn ? '비밀번호 찾기용 이메일을 아직 등록하지 않았어요 · 내 계정에서 등록해 두세요' : '복구 코드가 없습니다 · 내 계정에서 만들어 두세요'); } }).catch(() => {});
 }
 if (!(window.claude && window.claude.use)) initGoogle();
+if (!auth) { try { maybeWelcome(); } catch(_) {} }
 
 // ---------- account storage via db ----------
 (async () => {
@@ -2029,7 +2136,7 @@ if (!(window.claude && window.claude.use)) initGoogle();
         }
       }
       if (snap.metadata && snap.metadata.hasPendingWrites) return;
-      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {}; S.st = prog.st || {}; S.lm = prog.lm || {}; S.en = prog.en || {}; S.td = prog.td || {}; if (typeof prog.fm === 'number') S.fm = prog.fm;
+      if (prog && !inflight.progress && !timers_pending('progress')) { S.c = prog.c || {}; S.m = prog.m || {}; S.st = prog.st || {}; S.lm = prog.lm || {}; S.en = prog.en || {}; S.td = prog.td || {}; S.lt = prog.lt || {}; S.lastSeen = prog.lastSeen || S.lastSeen || null; S.welcome = prog.welcome || null; if (typeof prog.fm === 'number') S.fm = prog.fm;
         const np = cleanPlans(prog.plans) || (prog.cfg ? [basePlan(prog.cfg)] : null);
         if (np && JSON.stringify(np) !== JSON.stringify(S.plans)) { const wasDirty = draftDirty(); S.plans = np; rebuild(); if (!wasDirty) resetDraft(); sel = clampDay(sel); if (!MONTHS.includes(curM)) curM = sel.slice(0,7); } if (typeof prog.goal === 'number') { S.goal = prog.goal; if (document.activeElement !== $('goal')) $('goal').value = S.goal; } }
       for (const d2 in logs) if (!inflight['d'+d2] && !timers_pending('d'+d2)) S.logs[d2] = logs[d2];
