@@ -88,6 +88,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 
 /* header */
+header .cow{display:none}
+@media (min-width:1000px){
+  header .cow{display:flex;align-items:center;gap:10px;margin:0 auto 0 28px;align-self:center}
+  .cow-face{width:64px;height:64px;animation:cowStep 3.2s ease-in-out infinite;transform-origin:50% 90%}
+  .cow-t{display:flex;flex-direction:column;font-weight:800;font-size:15px;color:var(--point);line-height:1.3}
+  .cow-t small{font-weight:500;font-size:12px;color:var(--muted)}
+}
+@keyframes cowStep{0%,100%{transform:rotate(0) translateY(0)}25%{transform:rotate(-4deg) translateY(-1px)}50%{transform:rotate(0) translateY(0)}75%{transform:rotate(4deg) translateY(-1px)}}
+@media (prefers-reduced-motion:reduce){.cow-face{animation:none}}
 header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
 .head-l{display:flex;flex-direction:column;gap:4px}
 .head-r{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -572,6 +581,20 @@ section,aside{scroll-margin-top:12px}
       <h1>CFA L1 페이스메이커</h1>
       <span class="muted" id="todayLine"></span>
     </div>
+    <div class="cow" title="우보천리(牛步千里): 소걸음으로 천 리를 간다"><svg class="cow-face" viewBox="0 0 64 64" aria-hidden="true">
+<defs><filter id="cowr" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs>
+<g filter="url(#cowr)" stroke="#3A2A20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M19 15 C17 8 21 5 24 7 C24 10 24 13 24 16 Z" fill="#FFF8EA"/>
+<path d="M40 16 C40 13 40 10 40 7 C44 5 47 9 45 15 Z" fill="#FFF8EA"/>
+<path d="M14 24 C5 19 1 25 4 29 C7 32 12 30 16 29 Z" fill="#E3B27C"/>
+<path d="M50 24 C59 19 63 25 60 29 C57 32 52 30 48 29 Z" fill="#E3B27C"/>
+<path d="M13 31 C12 18 21 12 32 12 C43 12 52 18 51 31 C50 40 43 46 32 46 C21 46 14 40 13 31 Z" fill="#E8B985"/>
+<path d="M13 44 C13 35 21 33 32 33 C43 33 51 35 51 44 C51 54 43 58 32 58 C21 58 13 54 13 44 Z" fill="#F7D3D6"/>
+<g fill="#3A2A20" stroke="none"><ellipse cx="25" cy="44" rx="2.4" ry="3.2"/><ellipse cx="39" cy="44" rx="2.4" ry="3.2"/></g>
+<path d="M20 25 Q23.5 29 27 25" fill="none"/><path d="M37 25 Q40.5 29 44 25" fill="none"/>
+<g fill="#F2A7B5" stroke="none"><ellipse cx="17" cy="32" rx="3.6" ry="2.4"/><ellipse cx="47" cy="32" rx="3.6" ry="2.4"/></g>
+</g>
+</svg><span class="cow-t">우보천리<small>소걸음으로 천 리</small></span></div>
     <div class="head-r">
       <button type="button" class="chip" id="sync" aria-controls="syncPanel"><span class="dot"></span><span id="syncText">불러오는 중</span></button>
       <button type="button" class="btn primary" id="loginBtn" aria-controls="syncPanel">로그인</button>
