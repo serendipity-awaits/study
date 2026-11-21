@@ -2364,7 +2364,8 @@ function adopt(r){
 }
 const hhmm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 let lastSync = '';
-const hasData = () => Object.keys(S.c).length || Object.keys(S.logs).length || Object.keys(S.m).length;
+const hasData = () => ['c', 'logs', 'm', 'st', 'lm', 'td', 'rv', 'myc', 'wk'].some(f => S[f] && Object.keys(S[f]).length);
+const bodyHasData = b => !!b && ['c', 'logs', 'm', 'st', 'lm', 'td', 'rv', 'myc', 'wk'].some(f => b[f] && typeof b[f] === 'object' && Object.keys(b[f]).length);
 // ---- merging: changes made on two devices are combined key by key against the last state both had (base) ----
 const BKEY = 'cfa-l1-pacer-base';
 let BASE = null; try { BASE = JSON.parse(localStorage.getItem(BKEY) || 'null'); } catch(_) {}
@@ -2403,7 +2404,11 @@ async function srvPull(){
   if (!auth) return;
   const r = await api('/api/data');
   const remoteAt = r.updatedAt || 0;
-  if (r.body && remoteAt > (S.updatedAt || 0)) {
+  // a browser with no study record (new address, cleared storage) never overwrites a server that has one
+  if (bodyHasData(r.body) && !hasData()) { adopt({...r.body, updatedAt:remoteAt}); setBase(r.body, remoteAt); }
+  // first sync in this browser while it already has its own record: combine both instead of letting the newer one win
+  else if (bodyHasData(r.body) && !BASE) { const merged = merge3({}, payloadObj(), r.body); adopt({...merged, updatedAt: Math.max(Date.now(), remoteAt + 1)}); await srvPush(); syncMsg('이 기기의 기록과 서버 기록을 합쳤어요'); }
+  else if (r.body && remoteAt > (S.updatedAt || 0)) {
     if (localDirty() && hasData()) {
       const merged = merge3(BASE ? BASE.body : {}, payloadObj(), r.body);
       adopt({...merged, updatedAt: Date.now()}); await srvPush();
