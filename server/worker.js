@@ -2,9 +2,17 @@
 // 페이지(index.html)와 로그인·기록 저장 API를 함께 제공합니다.
 // 페이지 본문은 GitHub 저장소의 index.html을 읽어와 5분간 캐시해서 보여줍니다.
 // 그래서 페이지를 고칠 때는 저장소의 index.html만 바꾸면 되고, 서버를 다시 배포할 필요가 없습니다.
-const PAGE_URL = 'https://raw.githubusercontent.com/serendipity-awates/study/main/index.html';
+// GitHub 계정 이름을 serendipity-awates 에서 serendipity-awaits 로 바꾸는 중이라 새 이름을 먼저 찾고, 없으면 옛 이름에서 찾습니다.
+const RAW_BASES = ['https://raw.githubusercontent.com/serendipity-awaits/study/main', 'https://raw.githubusercontent.com/serendipity-awates/study/main'];
+async function rawFetch(path) {
+  let last = null;
+  for (const base of RAW_BASES) {
+    try { const r = await fetch(base + path, { cf: { cacheTtl: 300, cacheEverything: true } }); if (r.ok) return r; last = r; } catch (_) {}
+  }
+  return last || new Response('', { status: 502 });
+}
 async function html() {
-  const r = await fetch(PAGE_URL, { cf: { cacheTtl: 300, cacheEverything: true } });
+  const r = await rawFetch('/index.html');
   if (!r.ok) throw fail(502, '페이지를 불러오지 못했습니다. 잠시 뒤 새로고침하세요');
   return r.text();
 }
@@ -315,7 +323,6 @@ async function putData(req, env, me) {
 // ---------- 알림 (Web Push) ----------
 // 알림 내용은 보내지 않고(빈 푸시), 휴대폰의 서비스 워커가 /api/push/msg 에서 문구를 받아 보여줍니다.
 const STATIC = { '/sw.js': 'text/javascript; charset=utf-8', '/manifest.webmanifest': 'application/manifest+json', '/icon-192.png': 'image/png', '/icon-512.png': 'image/png' };
-const RAW = 'https://raw.githubusercontent.com/serendipity-awates/study/main';
 const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const validTime = t => typeof t === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
 let VAPID_KEY = null;
@@ -323,7 +330,7 @@ async function vapidHeaders(env, endpoint) {
   if (!VAPID_KEY) VAPID_KEY = await crypto.subtle.importKey('jwk', JSON.parse(env.VAPID_PRIVATE_JWK), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   const aud = new URL(endpoint).origin;
   const head = b64url(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
-  const body = b64url(enc.encode(JSON.stringify({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: 'https://app.cfa-study-pacer.workers.dev' })));
+  const body = b64url(enc.encode(JSON.stringify({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: 'https://cfa.serendipity-awaits.workers.dev' })));
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, VAPID_KEY, enc.encode(head + '.' + body));
   return { Authorization: 'vapid t=' + head + '.' + body + '.' + b64url(sig) + ', k=' + env.VAPID_PUBLIC, TTL: '3600', Urgency: 'high', 'Content-Length': '0' };
 }
@@ -394,7 +401,7 @@ export default {
       if (!url.pathname.startsWith('/api/')) {
         if (req.method !== 'GET' && req.method !== 'HEAD') return fail(405, '허용되지 않는 요청입니다');
         if (STATIC[url.pathname]) {
-          const r = await fetch(RAW + url.pathname, { cf: { cacheTtl: 300, cacheEverything: true } });
+          const r = await rawFetch(url.pathname);
           if (!r.ok) return fail(404, '없는 파일입니다');
           return new Response(r.body, { headers: { 'Content-Type': STATIC[url.pathname], 'Cache-Control': url.pathname === '/sw.js' ? 'no-cache' : 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff' } });
         }
