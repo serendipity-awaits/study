@@ -198,6 +198,11 @@ textarea{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;
 #daySave{padding:9px 16px}
 #daySave.saved{background:var(--good);border-color:var(--good)}
 .save-state{margin-top:-6px}
+.today-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.savebtn{border:1px solid var(--line)!important;background:var(--surface);padding:3px 10px}
+.savebtn:hover{border-color:var(--accent)!important;background:var(--accent-soft)}
+.savebtn.ok{background:var(--accent-soft);border-color:var(--accent)!important}
+.save-st{font-size:12px;color:var(--muted)}
 .login-box{display:flex;flex-direction:column;gap:10px;max-width:520px}
 .field{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;align-items:center}
 .field input{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);min-width:0}
@@ -579,7 +584,7 @@ section,aside{scroll-margin-top:12px}
     <div class="head-l">
       <span class="label" id="periodLabel">CFA Level I</span>
       <h1>CFA L1 페이스메이커</h1>
-      <span class="muted" id="todayLine"></span>
+      <div class="today-row"><span class="muted" id="todayLine"></span><button type="button" class="chip savebtn" id="saveNow" title="지금까지의 기록을 서버에 바로 저장해요">💾 저장</button><span class="save-st" id="saveNowSt"></span></div>
     </div>
     <div class="cow" title="우보천리(牛步千里): 느리지만 꾸준한 진전이 결국 이뤄낸다"><svg class="cow-face" viewBox="0 0 64 64" aria-hidden="true">
 <defs><filter id="cowr" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter></defs>
@@ -2417,26 +2422,43 @@ async function srvPull(){
   }
   else if ((S.updatedAt || 0) > remoteAt || (!r.body && hasData())) await srvPush();
   else if (r.body && !BASE) setBase(r.body, remoteAt);
-  lastSync = hhmm(); syncMsg('동기화됨 · ' + lastSync); renderSyncPanel();
+  lastSync = hhmm(); syncMsg('동기화됨 · ' + lastSync); markSaved(); renderSyncPanel();
 }
 let pushT = null, pushing = false;
-function schedulePush(){ if (mode === 'db' || !auth) return; clearTimeout(pushT); syncMsg('저장 대기 중…'); pushT = setTimeout(() => { pushT = null; srvPush(); }, 1200); }
+function schedulePush(){ if (mode === 'db' || !auth) return; clearTimeout(pushT); syncMsg('저장 대기 중…'); const st = $('saveNowSt'); if (st) st.textContent = '저장 중…'; pushT = setTimeout(() => { pushT = null; srvPush(); }, 1200); }
 async function srvPush(){
-  if (!auth) return;
-  if (pushing) { schedulePush(); return; }
+  if (!auth) return false;
+  if (pushing) { schedulePush(); return false; }
   pushing = true; syncMsg('서버에 저장 중…');
   const body = payloadObj(), at = S.updatedAt || Date.now();
-  try { await api('/api/data', {method:'PUT', body:{body, updatedAt:at}}); setBase(body, at); lastSync = hhmm(); syncMsg('서버에 저장됨 · ' + lastSync); }
+  try { await api('/api/data', {method:'PUT', body:{body, updatedAt:at}}); setBase(body, at); lastSync = hhmm(); syncMsg('서버에 저장됨 · ' + lastSync); markSaved(); return true; }
   catch (e) {
     if (e.status === 409 && e.data && e.data.body) {
       const merged = merge3(BASE ? BASE.body : {}, body, e.data.body), now = Math.max(Date.now(), (e.data.updatedAt || 0) + 1);
       adopt({...merged, updatedAt: now});
-      try { const b2 = payloadObj(); await api('/api/data', {method:'PUT', body:{body:b2, updatedAt:now}}); setBase(b2, now); syncMsg('다른 기기의 기록과 합쳐서 저장했어요'); } catch (e2) { onAuthLost(e2); syncMsg(srvErr(e2)); }
+      try { const b2 = payloadObj(); await api('/api/data', {method:'PUT', body:{body:b2, updatedAt:now}}); setBase(b2, now); syncMsg('다른 기기의 기록과 합쳐서 저장했어요'); markSaved(); return true; } catch (e2) { onAuthLost(e2); syncMsg(srvErr(e2)); }
     }
     else { onAuthLost(e); syncMsg(srvErr(e)); }
+    return false;
   }
   finally { pushing = false; renderSyncPanel(); }
 }
+function markSaved(){ const el = $('saveNowSt'); if (el) el.textContent = '서버 저장 ' + hhmm(); }
+$('saveNow').addEventListener('click', async () => {
+  const b = $('saveNow'); if (b.disabled) return; b.disabled = true; b.textContent = '저장 중…';
+  saveProgress();
+  let ok = false, msg;
+  if (mode === 'db') { ok = true; msg = '저장했어요'; }
+  else if (!loggedIn()) { msg = '이 기기에만 저장됐어요 · 로그인하면 서버에도 저장돼요'; }
+  else {
+    if (pushT) { clearTimeout(pushT); pushT = null; }
+    for (let i = 0; i < 20 && pushing; i++) await new Promise(r => setTimeout(r, 150));
+    ok = await srvPush();
+    msg = ok ? `서버에 저장했어요 · ${hhmm()}` : '서버 저장에 실패했어요. 인터넷 연결을 확인하고 다시 눌러 주세요';
+  }
+  setSave(msg); $('saveNowSt').textContent = ok ? '서버 저장 ' + hhmm() : !loggedIn() && mode !== 'db' ? '이 기기에만 저장됨 · 로그인하면 서버에도 저장' : '저장 실패 · 다시 눌러 주세요'; b.textContent = ok ? '저장됨 ✓' : loggedIn() ? '다시 저장' : '💾 저장'; b.classList.toggle('ok', ok); b.disabled = false;
+  clearTimeout(b._t); b._t = setTimeout(() => { b.textContent = '💾 저장'; b.classList.remove('ok'); }, 2500);
+});
 document.addEventListener('visibilitychange', () => {
   if (mode === 'db' || !auth) return;
   if (document.visibilityState === 'hidden') { if (pushT) { clearTimeout(pushT); pushT = null; srvPush(); } }
