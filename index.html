@@ -2002,7 +2002,7 @@ async function notiTest(){
 async function currentSub(){ try { const reg = await navigator.serviceWorker.getRegistration('/'); return reg ? await reg.pushManager.getSubscription() : null; } catch(_) { return null; } }
 function renderNoti(){
   const b = $('notiBody'); if (!b) return;
-  if (!pushOK()) { b.innerHTML = `<p class="note">이 화면에서는 알림을 켤 수 없어요. 휴대폰 크롬이나 삼성 인터넷에서 <b>app.cfa-study-pacer.workers.dev</b> 를 열어 주세요. 아이폰은 사파리에서 <b>공유 → 홈 화면에 추가</b>한 뒤, 홈 화면 아이콘으로 열어야 알림이 와요.</p>`; return; }
+  if (!pushOK()) { b.innerHTML = `<p class="note">이 화면에서는 알림을 켤 수 없어요. 휴대폰 크롬이나 삼성 인터넷에서 <b>cfa.serendipity-awaits.workers.dev</b> 를 열어 주세요. 아이폰은 사파리에서 <b>공유 → 홈 화면에 추가</b>한 뒤, 홈 화면 아이콘으로 열어야 알림이 와요.</p>`; return; }
   const rows = NT.times.map((x, i) => `<label class="nt-row"><input type="checkbox" data-nton="${i}" ${x.on ? 'checked' : ''} aria-label="${i + 1}번째 알림 켜기"><span class="nt-n">${['아침', '점심', '저녁', '밤'][i]}</span><input type="time" data-ntt="${i}" value="${x.t}" aria-label="${i + 1}번째 알림 시각"></label>`).join('');
   b.innerHTML = `${!auth ? '<p class="warn-box" style="margin:0">알림은 로그인해야 쓸 수 있어요. 위쪽 <b>로그인</b> 버튼을 먼저 눌러 주세요.</p>' : ''}
     <div class="nt-grid">${rows}</div>
@@ -2330,7 +2330,7 @@ let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTime
 $('goal').value = S.goal;
 
 // ---------- server sync (Cloudflare Worker + D1) ----------
-const WORKER = 'https://app.cfa-study-pacer.workers.dev';
+const WORKER = 'https://cfa.serendipity-awaits.workers.dev';
 const API = /\.workers\.dev$/.test(location.hostname) ? '' : WORKER;
 const loggedIn = () => !!auth;
 function syncMsg(t){ const el = $('syncMsg'); if (el) el.textContent = t; if (mode !== 'db') setSave(t); }
